@@ -1,0 +1,2 @@
+
+alias rr="clear && nim c -r src/gitrelief"
