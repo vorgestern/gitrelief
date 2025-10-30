@@ -22,8 +22,8 @@ proc parseargs(query: string): Table[string,string]=
         for k in S:
                 let s=query[k]
                 let q=s.find('=')
-                if q>0: result.add(s.substr(0,q-1), s.substr(q+1))
-                else: result.add(s, "")
+                if q>0: result[s.substr(0,q-1)]=s.substr(q+1)
+                else: result[s]=""
 
 settings:
         # appname="gitrelief" Dieser Name wird am Anfang von urls entfernt, er ist kein hostname.
