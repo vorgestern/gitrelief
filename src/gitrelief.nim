@@ -1,6 +1,6 @@
 
 import jesterfork
-import mehr/[helper,git_log]
+import mehr/[helper,git_log,git_diff]
 import strutils
 
 # asyncdispatch
@@ -37,6 +37,9 @@ routes:
         get "/action/git_log":
                 let A=parseargs(request.query)
                 for k,v in A: echo "arg "&k&"="&v
-                resp git_log()
+                resp git_log(A)
+        get "/action/git_diff":
+                let A=parseargs(request.query)
+                resp git_diff(A)
         # error Http404: resp Http404, "Looks you took a wrong turn somewhere."
         error Exception: resp Http500, "Exception caught: "&exception.msg
