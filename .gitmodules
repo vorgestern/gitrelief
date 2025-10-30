@@ -4,3 +4,6 @@
 [submodule "httpbeast_fork"]
 	path = httpbeast_fork
 	url = https://github.com/ThomasTJdev/httpbeast_fork.git
+[submodule "npeg"]
+	path = npeg
+	url = https://github.com/zevv/npeg.git

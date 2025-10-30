@@ -1,6 +1,7 @@
 
 switch("path", "httpbeast_fork/src")
 switch("path", "jester_fork")
+switch("path", "npeg")
 switch("path", ".")
 
 # Diese Einstellung brauchte es zunächst noch, damit man die Npeg-Parser benutzen kann.
