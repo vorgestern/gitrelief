@@ -5,6 +5,11 @@ import npeg
 
 # import std/[strformat, strscans, times, os, locks]
 
+# https://stackoverflow.com/questions/49196841/warning-matchiter-is-not-gc-safe-as-it-accesses-x-which-is-a-global-using-g
+# Verwendung von {.threadvar.} (thread-local-storage)
+# Das läuft darauf hinaus, den Parser einmal für jeden Thread zu erzeugen (was eigentlich nicht nötig sein sollte, da er const ist.)
+# Da wir auf die Threaderzeugung keinen Einfluss haben, ist das ohnehin keine Option.
+
 type
     Entry=object
         datum, zeit, hash, parent, user, subject: string
@@ -50,11 +55,12 @@ proc process_log(): seq[Entry]=
             cl=strip(cl)
             if cl.len()>0:
                 var e: Entry
-                let r=logentryparser.match(cl, e)
-                if not r.ok:
-                    e.datum=""
-                    e.zeit=""
-                    e.subject=cl
+                {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
+                    let r=logentryparser.match(cl, e)
+                    if not r.ok:
+                        e.datum=""
+                        e.zeit=""
+                        e.subject=cl
                 result.add e
                 cl=""
         else: cl.add s[0]
