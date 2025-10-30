@@ -33,7 +33,7 @@ let logentryparser=peg("entry", e: Entry):
         e.user= $5
         e.subject= $6
 
-let logentryparser1234=peg("entry", e: Entry):
+let logentryparser1234{.used.}=peg("entry", e: Entry):
     # datum <- {'0'..'9','-'}[10]
     datum <- 10
     zeit <- {'0'..'9', ':'}[8]
@@ -77,7 +77,7 @@ proc git_log*(A: Table[string,string]): string=
 
 # import unicode, npeg/lib/utf8
 
-const demooutput="""
+const demooutput{.used.}="""
 > 2025-10-30 01:18:26 +0100 cb955c3 pe849cbf "vorgestern" "alias"
 > 2025-10-30 01:18:13 +0100 e849cbf pb55621a "vorgestern" "gitrelief: Auswertung von query-Argumenten (Demo)"
 > 2025-10-30 00:59:09 +0100 b55621a p1bd2286 "vorgestern" "Anpassung an Submodul jester_fork"
