@@ -1,2 +1,2 @@
 
-alias rr="clear && nim c -d:release -r src/gitrelief"
+alias rr="clear && nim c -d:release -o:gitrelief src/gitrelief && ./gitrelief"
