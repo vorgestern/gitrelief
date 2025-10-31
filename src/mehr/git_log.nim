@@ -66,6 +66,7 @@ proc process_log(): seq[Entry]=
         else: cl.add s[0]
 
 proc git_log*(A: Table[string,string]): string=
+    var cmd="""git log -10 --format=> %ai %h p%p "%an" "%s""""
     result="""
 <html>
 <head>
@@ -73,12 +74,16 @@ proc git_log*(A: Table[string,string]): string=
 <link rel="stylesheet" href="/gitrelief.css">
 <title></title>
 </head>
-<body><h1>Hier ist git_log()</h1>
-<p><a href='/'>Start</a></p>
+<body>
+<table>
+<tr><th>Navigate</th><th>Command</th></tr>
+<tr><td><a href='/'>Start</a></td><td>""" & $cmd & """</td></tr>
+</table>
+<p></p>
 <table>"""
     let X=process_log()
     for e in X:
-        if e.datum!="": result.add "<tr><td>"&e.datum&"</td><td>"&e.zeit&"</td><td>"&e.user&"</td><td>"&e.subject&"</td></tr>"
+        if e.datum!="": result.add "<tr><td>"&e.datum&" "&e.zeit&"</td><td>"&e.user&"</td><td>"&e.subject&"</td></tr>"
         else:           result.add "<tr><td>fail</td><td></td><td></td><td>"&e.subject&"</td></tr>"
     result.add "</table></body></html>"
 
