@@ -16,8 +16,8 @@ type
 
 proc git_log*(Args: Table[string,string]): string=
     const gitargs=["log", "-10", """--format=> %ai %h p%p "%an" "%s""""]
-    var entries: seq[Entry]
-    block:
+    let entries=block:
+        var entries: seq[Entry]
         # Parser für das oben spezifizierte Ausgabeformat von 'git log'
         const logentryparser=peg("entry", e: Entry):
             utfchar <- utf8.any
@@ -55,6 +55,7 @@ proc git_log*(Args: Table[string,string]): string=
                     entries.add e
                     cl=""
             else: cl.add s[0]
+        entries
     # Formuliere die html-Ausgabe
     var cmd="git"
     for a in gitargs: cmd=cmd & " " & a
