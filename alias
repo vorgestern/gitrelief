@@ -1,2 +1,4 @@
 
 alias rr="clear && nim c -d:release -o:gitrelief src/gitrelief && ./gitrelief"
+
+alias tt="clear && nim c -d:release -o:ttlog src/mehr/git_log.nim && ./ttlog"
