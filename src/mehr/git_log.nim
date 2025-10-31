@@ -15,7 +15,7 @@ type
         datum, zeit, hash, parent, user, subject: string
 
 proc git_log*(Args: Table[string,string]): string=
-    const gitargs=["log", "-10", """--format=> %ai %h p%p "%an" "%s""""]
+    const gitargs=["log", "-100", """--format=> %ai %h p%p "%an" "%s""""]
     let entries=block:
         var entries: seq[Entry]
         # Parser für das oben spezifizierte Ausgabeformat von 'git log'
