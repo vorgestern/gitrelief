@@ -14,59 +14,45 @@ type
     Entry=object
         datum, zeit, hash, parent, user, subject: string
 
-# const parser=peg("entry", e: Entry):
-
-let logentryparser=peg("entry", e: Entry):
-    utfchar <- utf8.any
-    datum <- {'0'..'9','-'}[10]
-    zeit <- {'0'..'9', ':'}[8]
-    zone <- '+' * 4
-    hash <- {'0'..'9', 'a'..'f'}[7]
-    parent <- 'p' * ? {'0'..'9', 'a'..'f'}[7]
-    noquote <- {1..33, 35..255} # Der ASCII-Code von " ist 34.
-    wp <- +noquote
-    entry <- '>' * @>datum * @>zeit * @zone * @>hash * @ >parent * @ '"' * >wp * '"' * @ '"' * >wp * '"':
-        e.datum= $1
-        e.zeit= $2
-        e.hash= $3
-        e.parent=substr($4, 1)
-        e.user= $5
-        e.subject= $6
-
-let logentryparser1234{.used.}=peg("entry", e: Entry):
-    # datum <- {'0'..'9','-'}[10]
-    datum <- 10
-    zeit <- {'0'..'9', ':'}[8]
-    zone <- '+' * 4
-    hash <- {'0'..'9', 'a'..'f'}[7]
-    parent <- 'p' * ? {'0'..'9', 'a'..'f'}[7]
-    # entry <- @>datum:
-    entry <- "> " * >datum:
-        e.datum= $1
-
-proc process_log(): seq[Entry]=
-    let p=startprocess("git", args=["log", "-10", """--format=> %ai %h p%p "%an" "%s""""], options={poUsePath})
-    let pipe=outputstream(p)
-    var cl: string
-    while not atend(pipe):
-        var s=pipe.readstr(1)
-        case s[0]
-        of char 13, char 10:
-            cl=strip(cl)
-            if cl.len()>0:
-                var e: Entry
-                {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
-                    let r=logentryparser.match(cl, e)
-                    if not r.ok:
-                        e.datum=""
-                        e.zeit=""
-                        e.subject=cl
-                result.add e
-                cl=""
-        else: cl.add s[0]
-
-proc git_log*(A: Table[string,string]): string=
+proc git_log*(Args: Table[string,string]): string=
     var cmd="""git log -10 --format=> %ai %h p%p "%an" "%s""""
+    var entries: seq[Entry]
+    block:
+        const logentryparser=peg("entry", e: Entry):
+            utfchar <- utf8.any
+            datum <- {'0'..'9','-'}[10]
+            zeit <- {'0'..'9', ':'}[8]
+            zone <- '+' * 4
+            hash <- {'0'..'9', 'a'..'f'}[7]
+            parent <- 'p' * ? {'0'..'9', 'a'..'f'}[7]
+            noquote <- {1..33, 35..255} # Der ASCII-Code von " ist 34.
+            wp <- +noquote
+            entry <- '>' * @>datum * @>zeit * @zone * @>hash * @ >parent * @ '"' * >wp * '"' * @ '"' * >wp * '"':
+                e.datum= $1
+                e.zeit= $2
+                e.hash= $3
+                e.parent=substr($4, 1)
+                e.user= $5
+                e.subject= $6
+        let p=startprocess("git", args=["log", "-10", """--format=> %ai %h p%p "%an" "%s""""], options={poUsePath})
+        let pipe=outputstream(p)
+        var cl: string
+        while not atend(pipe):
+            var s=pipe.readstr(1)
+            case s[0]
+            of char 13, char 10:
+                cl=strip(cl)
+                if cl.len()>0:
+                    var e: Entry
+                    {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
+                        let r=logentryparser.match(cl, e)
+                        if not r.ok:
+                            e.datum=""
+                            e.zeit=""
+                            e.subject=cl
+                    entries.add e
+                    cl=""
+            else: cl.add s[0]
     result="""
 <html>
 <head>
@@ -81,8 +67,7 @@ proc git_log*(A: Table[string,string]): string=
 </table>
 <p></p>
 <table>"""
-    let X=process_log()
-    for e in X:
+    for e in entries:
         if e.datum!="": result.add "<tr><td>"&e.datum&" "&e.zeit&"</td><td>"&e.user&"</td><td>"&e.subject&"</td></tr>"
         else:           result.add "<tr><td>fail</td><td></td><td></td><td>"&e.subject&"</td></tr>"
     result.add "</table></body></html>"
