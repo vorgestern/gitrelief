@@ -15,9 +15,10 @@ type
         datum, zeit, hash, parent, user, subject: string
 
 proc git_log*(Args: Table[string,string]): string=
-    var cmd="""git log -10 --format=> %ai %h p%p "%an" "%s""""
+    const gitargs=["log", "-10", """--format=> %ai %h p%p "%an" "%s""""]
     var entries: seq[Entry]
     block:
+        # Parser für das oben spezifizierte Ausgabeformat von 'git log'
         const logentryparser=peg("entry", e: Entry):
             utfchar <- utf8.any
             datum <- {'0'..'9','-'}[10]
@@ -34,7 +35,8 @@ proc git_log*(Args: Table[string,string]): string=
                 e.parent=substr($4, 1)
                 e.user= $5
                 e.subject= $6
-        let p=startprocess("git", args=["log", "-10", """--format=> %ai %h p%p "%an" "%s""""], options={poUsePath})
+        # Starte git und parse die Ausgabe zeilenweise in die Sequenz entries.
+        let p=startprocess("git", args=gitargs, options={poUsePath})
         let pipe=outputstream(p)
         var cl: string
         while not atend(pipe):
@@ -53,6 +55,9 @@ proc git_log*(Args: Table[string,string]): string=
                     entries.add e
                     cl=""
             else: cl.add s[0]
+    # Formuliere die html-Ausgabe
+    var cmd="git"
+    for a in gitargs: cmd=cmd & " " & a
     result="""
 <html>
 <head>
