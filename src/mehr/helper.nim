@@ -7,7 +7,7 @@ const root_html* ="""
 <title></title>
 </head>
 <body>
-<h1>Start</h1>
+<table><tr><td><h1>Start</h1></td><td>pwd</td></tr></table>
 <p><a href="/action/git_log">Log</a></p>
 <p><a href="/action/git_diff">Diff</a></p>
 <p>localfiles</p>
@@ -20,7 +20,6 @@ body {
     font-family: Courier;
 }
 table {
-    width:100em;
     border-style: solid;
     border-width: 1px;
     border-collapse: collapse;

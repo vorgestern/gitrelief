@@ -1,7 +1,7 @@
 
 import jesterfork
 import mehr/[helper,git_log,git_diff]
-import strutils
+import std/[paths,strutils]
 
 # asyncdispatch
 
@@ -32,7 +32,10 @@ settings:
         staticdir="public"
 
 routes:
-        get "/": resp Http200, root_html
+        get "/":
+                var pwd=getcurrentdir()
+                normalizepath(pwd)
+                resp Http200, replace(root_html, "<td>pwd</td>", "<td>" & $pwd & "/</td>")
         get "/gitrelief.css": resp Http200, gitrelief_css
         get "/action/git_log":
                 let A=parseargs(request.query)
