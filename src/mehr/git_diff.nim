@@ -111,30 +111,20 @@ proc git_diff*(Args: Table[string,string]): string=
         var
             cl: string
             Entries: seq[FileEntry]
-            Section: FileSection
             na, nb: int
         while not atend(pipe):
             var s=pipe.readstr(1)
             case s[0]
             of char 13, char 10:
                 if cl.len()>0:
-                    if Entries.len==0:
-                        Section=FileSection()
                     if na>0 or nb>0:
-                        # echo ">>> ", cl
-                        let ok=Section.addline cl
-                        if not ok:
-                            Entries[^1].sections.add Section
+                        if Entries[^1].sections.len==0: Entries[^1].sections.add FileSection()
+                        let added=Entries[^1].sections[^1].addline cl
+                        if not added:
                             case cl[0]
-                            of '+':
-                                Section=FileSection(kind: B)
-                                Section.bzeilen.add cl
-                            of '-':
-                                Section=FileSection(kind: A)
-                                Section.azeilen.add cl
-                            of ' ':
-                                Section=FileSection(kind: N)
-                                Section.nzeilen.add cl
+                            of '+': Entries[^1].sections.add FileSection(kind: B, bzeilen: @[cl])
+                            of '-': Entries[^1].sections.add FileSection(kind: A, azeilen: @[cl])
+                            of ' ': Entries[^1].sections.add FileSection(kind: N, nzeilen: @[cl])
                             else:
                                 # error
                                 discard
@@ -146,7 +136,7 @@ proc git_diff*(Args: Table[string,string]): string=
                             dec na
                             dec nb
                         if na==0 and nb==0:
-                            Section=FileSection()
+                            discard
                     else:
                         cl=strip(cl)
                         {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
@@ -161,7 +151,6 @@ proc git_diff*(Args: Table[string,string]): string=
                                 discard
                     cl=""
             else: cl.add s[0]
-        if numlines(Section)>0: Entries[^1].sections.add Section
         Entries
 
     var cmd="git"
