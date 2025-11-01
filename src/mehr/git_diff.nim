@@ -6,6 +6,7 @@ import npeg
 type
     Entry=object
         zeile: string
+        na, nb: int
 
 func htmlescape(s: string): string=
     replace(s, "<", "&lt;")
@@ -27,7 +28,6 @@ proc git_diff*(Args: Table[string,string]): string=
         A
 
     let entries=block:
-        var entries: seq[Entry]
         const diffentryparser=peg("entry", e: Entry):
             path <- +{1..31, 33..255}
             hash <- +{'0'..'9', 'a'..'f'}
@@ -42,25 +42,48 @@ proc git_diff*(Args: Table[string,string]): string=
             bbb <- "+++" * @>path:
                 e.zeile="=== bpath: " & $1
             atat <- "@@" * @'-' * >num * ',' * >num * @'+' * >num * ',' * >num:
-                e.zeile="=== arange=" & $1 & ".." & $2 & " brange=" & $3 & ".." & $4
+                e.na=parseint($2)-parseint($1)+1
+                e.nb=parseint($4)-parseint($3)+1
+                e.zeile="=== arange=" & $1 & ".." & $2 & " brange=" & $3 & ".." & $4 & " ==> na=" & $e.na & ", nb=" & $e.nb
             sonst <- >(*1) * !1:
                 e.zeile= $1
             entry <- >diff | >index | >aaa | >bbb | >atat | >sonst
+        const lineparser=peg("line", e: Entry):
+            line <- >(*1) * !1:
+                e.zeile= $1
         # Starte git und parse die Ausgabe zeilenweise in die Sequenz entries.
         let p=startprocess("git", args=gitargs, options={poUsePath})
         let pipe=outputstream(p)
-        var cl: string
+        var entries: seq[Entry]
+        var
+            cl: string
+            na=0
+            nb=0
         while not atend(pipe):
             var s=pipe.readstr(1)
             case s[0]
             of char 13, char 10:
-                cl=strip(cl)
                 if cl.len()>0:
-                    var e: Entry
-                    {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
-                        let r=diffentryparser.match(cl, e)
-                        if not r.ok: e.zeile="??????"
-                    entries.add e
+                    if na>0 or nb>0:
+                        if cl[0]=='+':
+                            dec nb
+                            entries.add Entry(zeile: "_b " & strip(cl))
+                        elif cl[0]=='-':
+                            dec na
+                            entries.add Entry(zeile: "a_ " & strip(cl))
+                        else:
+                            dec na
+                            dec nb
+                            entries.add Entry(zeile: "ab " & strip(cl))
+                    else:
+                        cl=strip(cl)
+                        var e: Entry
+                        {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
+                            let r=diffentryparser.match(cl, e)
+                            if not r.ok: e.zeile="??????"
+                        entries.add e
+                        if e.na>0: na=e.na
+                        if e.nb>0: nb=e.nb
                     cl=""
             else: cl.add s[0]
         entries
