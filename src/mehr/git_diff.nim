@@ -92,6 +92,8 @@ proc git_diff*(Args: Table[string,string]): string=
         if Args.contains "path":
             A.add "--"
             A.add Args["path"]
+        if Args.contains "staged":
+            A.add "--staged"
         A
 
     let Entries=block:
@@ -196,7 +198,7 @@ proc git_diff*(Args: Table[string,string]): string=
                 for z in section.nzeilen:
                     inc a
                     inc b
-                    if z.len==0: result.add "\n<tr><td class='Ncmp'><span>" & $a & "</span>&nbsp;</td><td class='Ncmp'><span></span>" & $b & "</span>&nbsp;</td></tr>"
+                    if z.len==0: result.add "\n<tr><td class='Ncmp'><span>" & $a & "</span>&nbsp;</td><td class='Ncmp'><span>" & $b & "</span>&nbsp;</td></tr>"
                     else:
                         let z1=htmlescape(z)
                         result.add "\n<tr><td class='Ncmp'><span>" & $a & "</span>" & z1 & "</td><td class='Ncmp'><span>" & $b & "</span>" & z1 & "</tr>"
