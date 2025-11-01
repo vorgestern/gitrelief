@@ -230,49 +230,61 @@ proc git_diff*(Args: Table[string,string]): string=
         of Deleted:  result.add "\n<p>Deleted " & fileentry.apath.substr(2) & "</p>"
         of Added:    result.add "\n<p>Added " & fileentry.bpath.substr(2) & "</p>"
         of Other:    result.add "\n<p>Unknown operation " & fileentry.apath.substr(2) & "</p>"
-        result.add "<table class='diff'>"
-        result.add "\n<tr><th>" & fileentry.apath & "</th><th>" & fileentry.bpath & "</th></tr>"
-        result.add "\n<tr><th>" & fileentry.ahash & "</th><th>" & fileentry.bhash & "</th></tr>"
-        var
-            a=0
-            b=0
-        for section in fileentry.sections:
-            case section.kind
-            of N:
-                for z in section.nzeilen:
-                    inc a
-                    inc b
-                    if z.len==0: result.add "\n<tr><td class='Ncmp'><span>" & $a & "</span>&nbsp;</td><td class='Ncmp'><span>" & $b & "</span>&nbsp;</td></tr>"
-                    else:
-                        let z1=htmlescape(z)
-                        result.add "\n<tr><td class='Ncmp'><span>" & $a & "</span>" & z1 & "</td><td class='Ncmp'><span>" & $b & "</span>" & z1 & "</tr>"
-            of A:
-                result.add "\n<tr><td class='Acmp'>"
-                for z in section.azeilen:
-                    inc a
-                    result.add "<span>" & $a & "</span>" & htmlescape(z) & "\n"
-                result.add "</td><td/></tr>"
-            of B:
-                result.add "\n<tr><td/><td class='Bcmp'>"
-                for z in section.bzeilen:
-                    inc b
-                    result.add "<span>" & $b & "</span>" & htmlescape(z) & "\n"
-                result.add "</td></tr>"
-            of R:
-                let A=block:
-                    var X: string
-                    for z in section.razeilen:
+        if fileentry.op==Modified:
+            result.add "<table class='diff'>"
+            case fileentry.op:
+            of Modified:
+                result.add "\n<tr><th>" & fileentry.apath & "</th><th>" & fileentry.bpath & "</th></tr>"
+                result.add "\n<tr><th>" & fileentry.ahash & "</th><th>" & fileentry.bhash & "</th></tr>"
+            of Deleted:
+                result.add "\n<tr><th>" & fileentry.apath & "</th><th>---</th></tr>"
+                result.add "\n<tr><th>" & fileentry.ahash & "</th><th/></tr>"
+            of Added:
+                result.add "\n<tr><th/><th>" & fileentry.bpath & "</th></tr>"
+                result.add "\n<tr><th/><th>" & fileentry.bhash & "</th></tr>"
+            of Other:
+                result.add "\n<tr><th>" & fileentry.apath & "</th><th>" & fileentry.bpath & "</th></tr>"
+                result.add "\n<tr><th>" & fileentry.ahash & "</th><th>" & fileentry.bhash & "</th></tr>"
+            var
+                a=0
+                b=0
+            for section in fileentry.sections:
+                case section.kind
+                of N:
+                    for z in section.nzeilen:
                         inc a
-                        X.add "<span>" & $a & "</span>" & htmlescape(z) & "\n"
-                    X
-                let B=block:
-                    var X: string
-                    for z in section.rbzeilen:
                         inc b
-                        X.add "<span>" & $b & "</span>" & htmlescape(z) & "\n"
-                    X
-                result.add "\n<tr><td class='Acmp'>" & A & "</td><td class='Bcmp'>" & B & "</td></tr>"
-        result.add "</table>"
+                        if z.len==0: result.add "\n<tr><td class='Ncmp'><span>" & $a & "</span>&nbsp;</td><td class='Ncmp'><span>" & $b & "</span>&nbsp;</td></tr>"
+                        else:
+                            let z1=htmlescape(z)
+                            result.add "\n<tr><td class='Ncmp'><span>" & $a & "</span>" & z1 & "</td><td class='Ncmp'><span>" & $b & "</span>" & z1 & "</tr>"
+                of A:
+                    result.add "\n<tr><td class='Acmp'>"
+                    for z in section.azeilen:
+                        inc a
+                        result.add "<span>" & $a & "</span>" & htmlescape(z) & "\n"
+                    result.add "</td><td/></tr>"
+                of B:
+                    result.add "\n<tr><td/><td class='Bcmp'>"
+                    for z in section.bzeilen:
+                        inc b
+                        result.add "<span>" & $b & "</span>" & htmlescape(z) & "\n"
+                    result.add "</td></tr>"
+                of R:
+                    let A=block:
+                        var X: string
+                        for z in section.razeilen:
+                            inc a
+                            X.add "<span>" & $a & "</span>" & htmlescape(z) & "\n"
+                        X
+                    let B=block:
+                        var X: string
+                        for z in section.rbzeilen:
+                            inc b
+                            X.add "<span>" & $b & "</span>" & htmlescape(z) & "\n"
+                        X
+                    result.add "\n<tr><td class='Acmp'>" & A & "</td><td class='Bcmp'>" & B & "</td></tr>"
+            result.add "</table>"
     result.add "</body></html>"
 
 # =====================================================================
@@ -295,9 +307,19 @@ index 0000000..8b13789
 +
 """
 
+const testcase2="""
+diff --git a/public/anders.html b/public/anders.html
+new file mode 100644
+index 0000000..8b13789
+--- /dev/null
++++ b/public/anders.html
+@@ -0,0 +1 @@
++
+"""
+
 when isMainModule:
 
-    const testcase=1
+    const testcase=2
 
     case testcase
     of 0:
@@ -305,5 +327,8 @@ when isMainModule:
         echo output
     of 1:
         let output=git_diff(totable {"parse": testcase1})
+        echo output
+    of 2:
+        let output=git_diff(totable {"parse": testcase2})
         echo output
     else: discard

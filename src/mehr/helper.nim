@@ -10,6 +10,7 @@ const root_html* ="""
 <table><tr><td><h1>Start</h1></td><td>pwd</td></tr></table>
 <p><a href="/action/git_log">Log</a></p>
 <p><a href="/action/git_diff">Diff</a></p>
+<p><a href="/action/git_diff?staged=1">Diff (staged)</a></p>
 <p>localfiles</p>
 </body>
 </html>
