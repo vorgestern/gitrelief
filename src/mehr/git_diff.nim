@@ -207,7 +207,15 @@ proc git_diff*(Args: Table[string,string]): string=
             of B:
                 for z in section.bzeilen: result.add "\n<tr><td class='Bcmp'>" & htmlescape(z) & "</td></tr>"
             of R:
-                for z in section.razeilen: result.add "\n<tr><td class='Acmp'>" & htmlescape(z) & "</td></tr>"
+                let A=block:
+                    var X: string
+                    for z in section.razeilen: X.add htmlescape(z)&"\n"
+                    X
+                let B=block:
+                    var X: string
+                    for z in section.rbzeilen: X.add htmlescape(z)&"\n"
+                    X
+                result.add "\n<tr><td class='Acmp'>" & A & "</td><td class='Bcmp'>" & B & "</td></tr>"
         result.add "</table>"
     result.add "</body></html>"
 
