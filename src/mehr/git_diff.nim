@@ -4,9 +4,6 @@ import std/[osproc, strutils, streams]
 import npeg
 
 type
-    Entry=object
-        zeile: string
-        na, nb: int
     NABR=enum N, A, B, R
     FileSection=object
         case kind: NABR
@@ -23,23 +20,26 @@ type
         ahash, bhash: string
         content: seq[FileSection]
 
-proc addline(S: var FileSection, z: string): bool=
-    if z.len<1: return false
-    let num=case S.kind
+proc numlines(S: FileSection): int=
+    case S.kind
     of N: S.nzeilen.len
     of A: S.azeilen.len
     of B: S.bzeilen.len
     of R: S.razeilen.len
+
+proc addline(S: var FileSection, z: string): bool=
+    if z.len<1: return false
     let
+        neu=numlines(S)==0
         k=z[0]
         z1=substr(z,1)
     case k
     of '-':
-        if num==0: S=FileSection(kind: A, azeilen: @[])
+        if neu: S=FileSection(kind: A, azeilen: @[])
         if S.kind==A: S.azeilen.add z1
         return S.kind==A
     of '+':
-        if num==0: S=FileSection(kind: B, bzeilen: @[])
+        if neu: S=FileSection(kind: B, bzeilen: @[])
         if S.kind==B:
             S.bzeilen.add z1
             return true
@@ -52,7 +52,7 @@ proc addline(S: var FileSection, z: string): bool=
             return true
         else: return false
     of ' ':
-        if num==0: S=FileSection(kind: N, nzeilen: @[])
+        if neu: S=FileSection(kind: N, nzeilen: @[])
         if S.kind==N:
             S.nzeilen.add z1
             return true
@@ -80,46 +80,56 @@ proc git_diff*(Args: Table[string,string]): string=
             A.add Args["path"]
         A
 
-    let (entries, Entries)=block:
-        const diffentryparser=peg("entry", e: Entry):
+    let Entries=block:
+        type
+            PL=object
+                na, nb: int
+                z: string
+                ee: ptr FileEntry
+        var
+            cl: string
+            Entries: seq[FileEntry]
+            Section: FileSection
+            na, nb: int
+        const diffentryparser=peg("entry", e: PL):
             path <- +{1..31, 33..255}
             hash <- +{'0'..'9', 'a'..'f'}
             flags <- +{'0'..'9'}
             num <- +{'0'..'9'}
             diff <- "diff --git" * @>path * @>path:
-                e.zeile="=== diff " & $1 & " === " & $2
+                e.z="=== diff " & $1 & " === " & $2
             index <- "index" * @>hash * ".." * @>hash * @flags:
-                e.zeile="=== index " & $1 & "===" & $2
+                e.z="=== index " & $1 & "===" & $2
+                e.ee.ahash= $1
+                e.ee.bhash= $2
             aaa <- "---" * @>path:
-                e.zeile="=== apath: " & $1
+                e.z="=== apath: " & $1
+                e.ee.apath= $1
             bbb <- "+++" * @>path:
-                e.zeile="=== bpath: " & $1
+                e.z="=== bpath: " & $1
+                e.ee.bpath= $1
             atat <- "@@" * @'-' * >num * ',' * >num * @'+' * >num * ',' * >num:
+                # echo "Klammeraffe " & $1 & " " & $2 & " " & $3 & " " & $4
                 e.na=parseint($2)-parseint($1)+1
                 e.nb=parseint($4)-parseint($3)+1
-                e.zeile="=== arange=" & $1 & ".." & $2 & " brange=" & $3 & ".." & $4 & " ==> na=" & $e.na & ", nb=" & $e.nb
+                e.z="kjhasdkfjahsdf" # "=== arange=" & $1 & ".." & $2 & " brange=" & $3 & ".." & $4 & " ==> na=" & $na & ", nb=" & $nb
             sonst <- >(*1) * !1:
-                e.zeile= $1
+                e.z= $1
             entry <- >diff | >index | >aaa | >bbb | >atat | >sonst
         # Starte git und parse die Ausgabe zeilenweise in die Sequenz entries.
         let p=startprocess("git", args=gitargs, options={poUsePath})
         let pipe=outputstream(p)
-        var entries: seq[Entry]
-        var
-            cl: string
-            na=0
-            nb=0
-            Entries: seq[FileEntry]
-            Section: FileSection
         while not atend(pipe):
             var s=pipe.readstr(1)
             case s[0]
             of char 13, char 10:
                 if cl.len()>0:
+                    # echo "===", cl
                     if Entries.len==0:
                         Entries.add FileEntry()
                         # Section=undefined
                     if na>0 or nb>0:
+                        # echo ">>> ", cl
                         let ok=Section.addline cl
                         if not ok:
                             Entries[^1].content.add Section
@@ -136,29 +146,33 @@ proc git_diff*(Args: Table[string,string]): string=
                             else:
                                 # error
                                 discard
-
                         if cl[0]=='+':
                             dec nb
-                            entries.add Entry(zeile: "_b " & strip(cl))
                         elif cl[0]=='-':
                             dec na
-                            entries.add Entry(zeile: "a_ " & strip(cl))
                         else:
                             dec na
                             dec nb
-                            entries.add Entry(zeile: "ab " & strip(cl))
+                        if na==0 and nb==0:
+                            Entries.add FileEntry()
+                            Section=FileSection()
                     else:
                         cl=strip(cl)
-                        var e: Entry
                         {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
+                            var e=PL(ee: addr Entries[^1])
                             let r=diffentryparser.match(cl, e)
-                            if not r.ok: e.zeile="??????"
-                        entries.add e
-                        if e.na>0: na=e.na
-                        if e.nb>0: nb=e.nb
+                            # echo "match: ",r.ok
+                            if r.ok:
+                                if e.na>0 or e.nb>0:
+                                    na=e.na
+                                    nb=e.nb
+                            else:
+                                # error
+                                # e.zeile="??????"
+                                discard
                     cl=""
             else: cl.add s[0]
-        (entries, Entries)
+        Entries
 
     var cmd="git"
     for a in gitargs: cmd=cmd & " " & a
@@ -175,14 +189,31 @@ proc git_diff*(Args: Table[string,string]): string=
 <tr><th>Navigate</th><th>Command</th></tr>
 <tr><td><a href='/'>Start</a></td><td>""" & $cmd & """</td></tr>
 </table>
-<p></p>"""
+"""
+    result.add "<p>Anzahl Dateien: " & $Entries.len & "</p>"
     # for k,v in gitargs: result.add "<p>" & $k & "=" & $v & "</p>"
-    result.add "<table class='diff'>"
-    # for e in entries:
-    #     result.add "\n<tr><td>" & htmlescape(e.zeile) & "</td></tr>"
     for fileentry in Entries:
-        result.add "\n<tr><td>" & $fileentry.content.len & "</td></tr>"
+        result.add "\n<p>apath: " & fileentry.apath & "</p>"
+        result.add "<table class='diff'>"
+        result.add "\n<tr><th>" & fileentry.apath & "</th><th>" & fileentry.bpath & "</th></tr>"
+        result.add "\n<tr><th>" & fileentry.ahash & "</th><th>" & fileentry.bhash & "</th></tr>"
         for section in fileentry.content:
-            result.add "\n<tr><td>" & $section.kind & "</td></tr>"
-    result.add "</table>"
+            # result.add "\n<tr><td>" & $section.kind & "</td></tr>"
+            case section.kind
+            of N:
+                for z in section.nzeilen: result.add "\n<tr><td class='Ncmp'>" & htmlescape(z) & "</td></tr>"
+            of A:
+                for z in section.azeilen: result.add "\n<tr><td class='Acmp'>" & htmlescape(z) & "</td></tr>"
+            of B:
+                for z in section.bzeilen: result.add "\n<tr><td class='Bcmp'>" & htmlescape(z) & "</td></tr>"
+            of R:
+                for z in section.razeilen: result.add "\n<tr><td class='Acmp'>" & htmlescape(z) & "</td></tr>"
+        result.add "</table>"
     result.add "</body></html>"
+
+# =====================================================================
+
+when isMainModule:
+
+    let output=git_diff(toTable({"nix":"nix"}))
+    echo output
