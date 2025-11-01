@@ -4,6 +4,7 @@ import std/[osproc, strutils, streams]
 import npeg
 
 type
+    FileOp=enum Other, Modified, Deleted, Added
     NABR=enum N, A, B, R
     FileSection=object
         case kind: NABR
@@ -16,6 +17,7 @@ type
         of R:
             razeilen, rbzeilen: seq[string]
     FileEntry=object
+        op: FileOp
         apath, bpath: string
         ahash, bhash: string
         sections: seq[FileSection]
@@ -72,7 +74,15 @@ index 940f223..c17d6f5 100644
 @@ -1,220 +1,220 @@
 """
 
-let MerkmalA {.used.}=""" Neue Datei, hinzugefügt (A)
+let MerkmalA {.used.}=""" Daten entfernt, staged (D)
+diff --git a/public/demo.html b/public/demo.html
+deleted file mode 100644
+index a04e39c..0000000
+--- a/public/demo.html
++++ /dev/null
+"""
+
+let MerkmalB {.used.}=""" Neue Datei, hinzugefügt (A)
 diff --git a/hoppla b/hoppla
 new file mode 100644
 index 0000000..e69de29
@@ -96,6 +106,10 @@ proc git_diff*(Args: Table[string,string]): string=
             A.add "--staged"
         A
 
+    let testoptions=block:
+        if Args.contains "parse": "parse"
+        else: ""
+
     let Entries=block:
         type
             parsercontext=object
@@ -107,64 +121,90 @@ proc git_diff*(Args: Table[string,string]): string=
             flags <- +{'0'..'9'}
             num <- +{'0'..'9'}
             diff <- "diff --git" * @>path * @>path:
+                # echo "diff ", $1, $2
                 add(e.fe[], FileEntry())
             index <- "index" * @>hash * ".." * @>hash * @flags:
+                e.fe[^1].op=Modified
                 e.fe[^1].ahash= $1
                 e.fe[^1].bhash= $2
             aaa <- "---" * @>path:
                 e.fe[^1].apath= $1
             bbb <- "+++" * @>path:
                 e.fe[^1].bpath= $1
+            newfile <- "new file mode" * @>flags:
+                e.fe[^1].op=Added
+            deletedfile <- "deleted file mode" * @>flags:
+                e.fe[^1].op=Deleted
             atat <- "@@" * @'-' * >num * ',' * >num * @'+' * >num * ',' * >num:
-                e.na=parseint($2)-parseint($1)+1
-                e.nb=parseint($4)-parseint($3)+1
+                let
+                    a1=parseint $1
+                    a2=parseint($2)
+                    b1=parseint $3
+                    b2=parseint $4
+                if a1>0: e.na=a2-a1+1
+                else:    e.na=0
+                if b1>0: e.nb=b2-b1+1
+                else:    e.nb=0
             sonst <- >(*1) * !1:
                 discard
-            entry <- >diff | >index | >aaa | >bbb | >atat | >sonst
-        # Starte git und parse die Ausgabe zeilenweise in die Sequenz entries.
-        let p=startprocess("git", args=gitargs, options={poUsePath})
-        let pipe=outputstream(p)
+            entry <- >diff | >index | >newfile | >deletedfile | >aaa | >bbb | >atat | >sonst
+
         var
-            cl: string
             Entries: seq[FileEntry]
-            na, nb: int
-        while not atend(pipe):
-            var s=pipe.readstr(1)
-            case s[0]
-            of char 13, char 10:
-                if cl.len()>0:
-                    if na>0 or nb>0:
-                        if Entries[^1].sections.len==0: Entries[^1].sections.add FileSection()
-                        let added=Entries[^1].sections[^1].addline cl
-                        if not added:
-                            let z1=substr(cl, 1)
-                            case cl[0]
-                            of '+': Entries[^1].sections.add FileSection(kind: B, bzeilen: @[z1])
-                            of '-': Entries[^1].sections.add FileSection(kind: A, azeilen: @[z1])
-                            of ' ': Entries[^1].sections.add FileSection(kind: N, nzeilen: @[z1])
-                            else:
-                                # error
-                                discard
-                        case cl[0]
-                        of '+': dec nb
-                        of '-': dec na
-                        else:
-                            dec na
-                            dec nb
+            na=0
+            nb=0
+
+        proc process_line(z: string)=
+            if na>0 or nb>0:
+                if Entries[^1].sections.len==0: Entries[^1].sections.add FileSection()
+                let added=Entries[^1].sections[^1].addline z
+                if not added:
+                    let z1=substr(z, 1)
+                    case z[0]
+                    of '+': Entries[^1].sections.add FileSection(kind: B, bzeilen: @[z1])
+                    of '-': Entries[^1].sections.add FileSection(kind: A, azeilen: @[z1])
+                    of ' ': Entries[^1].sections.add FileSection(kind: N, nzeilen: @[z1])
                     else:
-                        cl=strip(cl)
-                        {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
-                            var e=parsercontext(fe: addr Entries)
-                            if diffentryparser.match(cl, e).ok:
-                                if e.na>0 or e.nb>0:
-                                    na=e.na
-                                    nb=e.nb
-                            else:
-                                # error
-                                # e.zeile="??????"
-                                discard
-                    cl=""
-            else: cl.add s[0]
+                        # error
+                        discard
+                case z[0]
+                of '+': dec nb
+                of '-': dec na
+                else:
+                    dec na
+                    dec nb
+            else:
+                {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
+                    var e=parsercontext(fe: addr Entries)
+                    if diffentryparser.match(strip z, e).ok:
+                        if e.na>0 or e.nb>0:
+                            na=e.na
+                            nb=e.nb
+                    else:
+                        # error
+                        # e.zeile="??????"
+                        discard
+
+        if testoptions=="parse":
+            # Parse die Beispieldaten Args["parse"]
+            var text: seq[string]=split(Args["parse"], "\n")
+            for z in text:
+                process_line(z)
+                echo $Entries.len & " == " & z
+        else:
+            # Starte git und parse die Ausgabe zeilenweise in die Sequenz entries.
+            let p=startprocess("git", args=gitargs, options={poUsePath})
+            let pipe=outputstream(p)
+            var cl: string
+            while not atend(pipe):
+                var s=pipe.readstr(1)
+                case s[0]
+                of char 13, char 10:
+                    if cl.len()>0:
+                        process_line(cl)
+                        cl=""
+                else: cl.add s[0]
+
         Entries
 
     var cmd="git"
@@ -185,7 +225,11 @@ proc git_diff*(Args: Table[string,string]): string=
 """
     result.add "<p>Anzahl Dateien: " & $Entries.len & "</p>"
     for fileentry in Entries:
-        result.add "\n<p>Changes to " & fileentry.apath.substr(2) & "</p>"
+        case fileentry.op:
+        of Modified: result.add "\n<p>Changes to " & fileentry.apath.substr(2) & "</p>"
+        of Deleted:  result.add "\n<p>Deleted " & fileentry.apath.substr(2) & "</p>"
+        of Added:    result.add "\n<p>Added " & fileentry.bpath.substr(2) & "</p>"
+        of Other:    result.add "\n<p>Unknown operation " & fileentry.apath.substr(2) & "</p>"
         result.add "<table class='diff'>"
         result.add "\n<tr><th>" & fileentry.apath & "</th><th>" & fileentry.bpath & "</th></tr>"
         result.add "\n<tr><th>" & fileentry.ahash & "</th><th>" & fileentry.bhash & "</th></tr>"
@@ -233,7 +277,33 @@ proc git_diff*(Args: Table[string,string]): string=
 
 # =====================================================================
 
+const testcase1="""
+diff --git a/public/demo.html b/public/demo.html
+deleted file mode 100644
+index a04e39c..0000000
+--- a/public/demo.html
++++ /dev/null
+@@ -1,2 +0,0 @@
+-
+-<h1>Hier ist demo.html</h1>
+diff --git a/public/sonst.html b/public/sonst.html
+new file mode 100644
+index 0000000..8b13789
+--- /dev/null
++++ b/public/sonst.html
+@@ -0,0 +1 @@
++
+"""
+
 when isMainModule:
 
-    let output=git_diff(toTable({"nix":"nix"}))
-    echo output
+    const testcase=1
+
+    case testcase
+    of 0:
+        let output=git_diff(toTable({"nix":"nix"}))
+        echo output
+    of 1:
+        let output=git_diff(totable {"parse": testcase1})
+        echo output
+    else: discard
