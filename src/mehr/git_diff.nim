@@ -82,10 +82,10 @@ proc git_diff*(Args: Table[string,string]): string=
 
     let Entries=block:
         type
-            PL=object
+            parsercontext=object
                 na, nb: int
                 fe: ptr seq[FileEntry]
-        const diffentryparser=peg("entry", e: PL):
+        const diffentryparser=peg("entry", e: parsercontext):
             path <- +{1..31, 33..255}
             hash <- +{'0'..'9', 'a'..'f'}
             flags <- +{'0'..'9'}
@@ -128,19 +128,16 @@ proc git_diff*(Args: Table[string,string]): string=
                             else:
                                 # error
                                 discard
-                        if cl[0]=='+':
-                            dec nb
-                        elif cl[0]=='-':
-                            dec na
+                        case cl[0]
+                        of '+': dec nb
+                        of '-': dec na
                         else:
                             dec na
                             dec nb
-                        if na==0 and nb==0:
-                            discard
                     else:
                         cl=strip(cl)
                         {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
-                            var e=PL(fe: addr Entries)
+                            var e=parsercontext(fe: addr Entries)
                             if diffentryparser.match(cl, e).ok:
                                 if e.na>0 or e.nb>0:
                                     na=e.na
@@ -170,14 +167,12 @@ proc git_diff*(Args: Table[string,string]): string=
 </table>
 """
     result.add "<p>Anzahl Dateien: " & $Entries.len & "</p>"
-    # for k,v in gitargs: result.add "<p>" & $k & "=" & $v & "</p>"
     for fileentry in Entries:
         result.add "\n<p>Changes to " & fileentry.apath.substr(2) & "</p>"
         result.add "<table class='diff'>"
         result.add "\n<tr><th>" & fileentry.apath & "</th><th>" & fileentry.bpath & "</th></tr>"
         result.add "\n<tr><th>" & fileentry.ahash & "</th><th>" & fileentry.bhash & "</th></tr>"
         for section in fileentry.sections:
-            # result.add "\n<tr><td>" & $section.kind & "</td></tr>"
             case section.kind
             of N:
                 for z in section.nzeilen:
