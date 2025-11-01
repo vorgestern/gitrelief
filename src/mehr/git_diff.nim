@@ -18,7 +18,7 @@ type
     FileEntry=object
         apath, bpath: string
         ahash, bhash: string
-        content: seq[FileSection]
+        sections: seq[FileSection]
 
 proc numlines(S: FileSection): int=
     case S.kind
@@ -124,7 +124,7 @@ proc git_diff*(Args: Table[string,string]): string=
                         # echo ">>> ", cl
                         let ok=Section.addline cl
                         if not ok:
-                            Entries[^1].content.add Section
+                            Entries[^1].sections.add Section
                             case cl[0]
                             of '+':
                                 Section=FileSection(kind: B)
@@ -161,7 +161,7 @@ proc git_diff*(Args: Table[string,string]): string=
                                 discard
                     cl=""
             else: cl.add s[0]
-        if numlines(Section)>0: Entries[^1].content.add Section
+        if numlines(Section)>0: Entries[^1].sections.add Section
         Entries
 
     var cmd="git"
@@ -187,7 +187,7 @@ proc git_diff*(Args: Table[string,string]): string=
         result.add "<table class='diff'>"
         result.add "\n<tr><th>" & fileentry.apath & "</th><th>" & fileentry.bpath & "</th></tr>"
         result.add "\n<tr><th>" & fileentry.ahash & "</th><th>" & fileentry.bhash & "</th></tr>"
-        for section in fileentry.content:
+        for section in fileentry.sections:
             # result.add "\n<tr><td>" & $section.kind & "</td></tr>"
             case section.kind
             of N:
