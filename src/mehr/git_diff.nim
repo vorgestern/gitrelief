@@ -193,7 +193,7 @@ proc git_diff*(Args: Table[string,string]): string=
     result.add "<p>Anzahl Dateien: " & $Entries.len & "</p>"
     # for k,v in gitargs: result.add "<p>" & $k & "=" & $v & "</p>"
     for fileentry in Entries:
-        result.add "\n<p>apath: " & fileentry.apath & "</p>"
+        result.add "\n<p>Changes to " & fileentry.apath.substr(2) & "</p>"
         result.add "<table class='diff'>"
         result.add "\n<tr><th>" & fileentry.apath & "</th><th>" & fileentry.bpath & "</th></tr>"
         result.add "\n<tr><th>" & fileentry.ahash & "</th><th>" & fileentry.bhash & "</th></tr>"
@@ -201,7 +201,9 @@ proc git_diff*(Args: Table[string,string]): string=
             # result.add "\n<tr><td>" & $section.kind & "</td></tr>"
             case section.kind
             of N:
-                for z in section.nzeilen: result.add "\n<tr><td class='Ncmp'>" & htmlescape(z) & "</td></tr>"
+                for z in section.nzeilen:
+                    if z.len==0: result.add "\n<tr><td class='Ncmp'>&nbsp;</td></tr>"
+                    else:        result.add "\n<tr><td class='Ncmp'>" & htmlescape(z) & "</td></tr>"
             of A:
                 for z in section.azeilen: result.add "\n<tr><td class='Acmp'>" & htmlescape(z) & "</td></tr>"
             of B:
