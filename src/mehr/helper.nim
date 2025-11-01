@@ -30,6 +30,7 @@ td, tr {
     border-color:lightgray;
     vertical-align: top;
     font-size: 80%;
+    padding:0 .5em 0;
 }
 
 td.Acmp {

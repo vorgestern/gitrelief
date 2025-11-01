@@ -80,9 +80,9 @@ proc git_log*(Args: Table[string,string]): string=
 <p></p>
 <table>"""
     for e in entries:
-        if e.datum!="": result.add "<tr><td>"&e.datum&" "&e.zeit&"</td><td>"&e.user&"</td><td>"&e.subject&"</td></tr>"
-        else:           result.add "<tr><td>fail</td><td></td><td></td><td>"&e.subject&"</td></tr>"
-    result.add "</table></body></html>"
+        if e.datum!="": result.add "\n<tr><td>"&e.datum&" "&e.zeit&"</td><td>"&e.user&"</td><td>"&e.subject&"</td></tr>"
+        else:           result.add "\n<tr><td>fail</td><td></td><td></td><td>"&e.subject&"</td></tr>"
+    result.add "\n</table></body></html>"
 
 # =====================================================================
 
