@@ -81,8 +81,8 @@ proc git_diff*(Args: Table[string,string]): string=
 <tr><td><a href='/'>Start</a></td><td>""" & $cmd & """</td></tr>
 </table>
 <p></p>"""
-    for k,v in gitargs: result.add "<p>" & $k & "=" & $v & "</p>"
-    result.add "<table>"
+    # for k,v in gitargs: result.add "<p>" & $k & "=" & $v & "</p>"
+    result.add "<table class='diff'>"
     for e in entries:
         result.add "\n<tr><td>" & htmlescape(e.zeile) & "</td></tr>"
     result.add "</table>"

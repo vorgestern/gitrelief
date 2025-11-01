@@ -32,6 +32,9 @@ td, tr {
     font-size: 80%;
     padding:0 .5em 0;
 }
+table.diff tr td {
+    white-space: pre;
+}
 
 td.Acmp {
     width:50em;
