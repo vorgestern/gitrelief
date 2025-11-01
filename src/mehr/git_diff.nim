@@ -1,14 +1,74 @@
 
 import std/tables
+import std/[osproc, strutils, streams]
+import npeg
 
-proc git_diff*(A: Table[string,string]): string=
-    result="""<html>
+type
+    Entry=object
+        zeile: string
+
+func htmlescape(s: string): string=
+    replace(s, "<", "&lt;")
+
+proc git_diff*(Args: Table[string,string]): string=
+
+    let gitargs=block:
+        var A= @["diff", "-U999999"]
+        if Args.contains "a":
+            var arg=Args["a"]
+            if Args.contains "b":
+                arg.add ".."&Args["b"]
+            A.add arg
+        elif Args.contains "b":
+            A.add ".."&Args["b"]
+        if Args.contains "path":
+            A.add "--"
+            A.add Args["path"]
+        A
+
+    let entries=block:
+        var entries: seq[Entry]
+        const diffentryparser=peg("entry", e: Entry):
+            entry <- >(*1) * !1:
+                e.zeile= $1
+        # Starte git und parse die Ausgabe zeilenweise in die Sequenz entries.
+        let p=startprocess("git", args=gitargs, options={poUsePath})
+        let pipe=outputstream(p)
+        var cl: string
+        while not atend(pipe):
+            var s=pipe.readstr(1)
+            case s[0]
+            of char 13, char 10:
+                cl=strip(cl)
+                if cl.len()>0:
+                    var e: Entry
+                    {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
+                        let r=diffentryparser.match(cl, e)
+                        if not r.ok: e.zeile="??????"
+                    entries.add e
+                    cl=""
+            else: cl.add s[0]
+        entries
+
+    var cmd="git"
+    for a in gitargs: cmd=cmd & " " & a
+
+    result="""
+<html>
 <head>
 <meta charset="utf-8">
 <link rel="stylesheet" href="/gitrelief.css">
 <title></title>
 </head>
-<body><h1>Hier ist git_diff()</h1>
-<p><a href='/'>Start</a></p>"""
-    for k,v in A: result.add "<p>"&k&"="&v&"</p>"
+<body>
+<table>
+<tr><th>Navigate</th><th>Command</th></tr>
+<tr><td><a href='/'>Start</a></td><td>""" & $cmd & """</td></tr>
+</table>
+<p></p>"""
+    for k,v in gitargs: result.add "<p>" & $k & "=" & $v & "</p>"
+    result.add "<table>"
+    for e in entries:
+        result.add "\n<tr><td>" & htmlescape(e.zeile) & "</td></tr>"
+    result.add "</table>"
     result.add "</body></html>"
