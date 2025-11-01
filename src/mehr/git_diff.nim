@@ -172,24 +172,41 @@ proc git_diff*(Args: Table[string,string]): string=
         result.add "<table class='diff'>"
         result.add "\n<tr><th>" & fileentry.apath & "</th><th>" & fileentry.bpath & "</th></tr>"
         result.add "\n<tr><th>" & fileentry.ahash & "</th><th>" & fileentry.bhash & "</th></tr>"
+        var
+            a=0
+            b=0
         for section in fileentry.sections:
             case section.kind
             of N:
                 for z in section.nzeilen:
-                    if z.len==0: result.add "\n<tr><td class='Ncmp'>&nbsp;</td></tr>"
-                    else:        result.add "\n<tr><td class='Ncmp'>" & htmlescape(z) & "</td></tr>"
+                    inc a
+                    inc b
+                    if z.len==0: result.add "\n<tr><td class='Ncmp'><span>" & $a & "</span>&nbsp;</td><td><span></span>" & $b & "</span></td></tr>"
+                    else:        result.add "\n<tr><td class='Ncmp'><span>" & $a & "</span>" & htmlescape(z) & "</td><td><span>" & $b & "</span></tr>"
             of A:
-                for z in section.azeilen: result.add "\n<tr><td class='Acmp'>" & htmlescape(z) & "</td></tr>"
+                result.add "\n<tr><td class='Acmp'>"
+                for z in section.azeilen:
+                    inc a
+                    result.add "<span>" & $a & "</span>" & htmlescape(z) & "\n"
+                result.add "</td><td/></tr>"
             of B:
-                for z in section.bzeilen: result.add "\n<tr><td class='Bcmp'>" & htmlescape(z) & "</td></tr>"
+                result.add "\n<tr><td/><td class='Bcmp'>"
+                for z in section.bzeilen:
+                    inc b
+                    result.add "<span>" & $b & "</span>" & htmlescape(z) & "\n"
+                result.add "</td></tr>"
             of R:
                 let A=block:
                     var X: string
-                    for z in section.razeilen: X.add htmlescape(z)&"\n"
+                    for z in section.razeilen:
+                        inc a
+                        X.add "<span>" & $a & "</span>" & htmlescape(z) & "\n"
                     X
                 let B=block:
                     var X: string
-                    for z in section.rbzeilen: X.add htmlescape(z)&"\n"
+                    for z in section.rbzeilen:
+                        inc b
+                        X.add "<span>" & $b & "</span>" & htmlescape(z) & "\n"
                     X
                 result.add "\n<tr><td class='Acmp'>" & A & "</td><td class='Bcmp'>" & B & "</td></tr>"
         result.add "</table>"

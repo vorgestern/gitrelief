@@ -48,6 +48,7 @@ td.Acmp {
 td.Acmp span {
         color: black;
         background-color: #f88;
+        padding: 0 0.5em 0 0;
 }
 td.Bcmp {
     color: green;
@@ -57,9 +58,15 @@ td.Bcmp {
 td.Bcmp span {
         color: black;
         background-color: #8f8;
+        padding: 0 0.5em 0 0;
 }
 td.Ncmp {
     color:black;
     white-space: pre;
+}
+td.Ncmp span {
+        color: black;
+        background-color: white;
+        padding: 0 0.5em 0 0;
 }
 """
