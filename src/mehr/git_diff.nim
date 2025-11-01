@@ -64,6 +64,20 @@ proc addline(S: var FileSection, z: string): bool=
 func htmlescape(s: string): string=
     replace(s, "<", "&lt;")
 
+let MerkmalM {.used.}=""" Geänderte Datei (M)
+diff --git a/src/mehr/git_diff.nim b/src/mehr/git_diff.nim
+index 940f223..c17d6f5 100644
+--- a/src/mehr/git_diff.nim
++++ b/src/mehr/git_diff.nim
+@@ -1,220 +1,220 @@
+"""
+
+let MerkmalA {.used.}=""" Neue Datei, hinzugefügt (A)
+diff --git a/hoppla b/hoppla
+new file mode 100644
+index 0000000..e69de29
+"""
+
 proc git_diff*(Args: Table[string,string]): string=
 
     let gitargs=block:
@@ -121,10 +135,11 @@ proc git_diff*(Args: Table[string,string]): string=
                         if Entries[^1].sections.len==0: Entries[^1].sections.add FileSection()
                         let added=Entries[^1].sections[^1].addline cl
                         if not added:
+                            let z1=substr(cl, 1)
                             case cl[0]
-                            of '+': Entries[^1].sections.add FileSection(kind: B, bzeilen: @[cl])
-                            of '-': Entries[^1].sections.add FileSection(kind: A, azeilen: @[cl])
-                            of ' ': Entries[^1].sections.add FileSection(kind: N, nzeilen: @[cl])
+                            of '+': Entries[^1].sections.add FileSection(kind: B, bzeilen: @[z1])
+                            of '-': Entries[^1].sections.add FileSection(kind: A, azeilen: @[z1])
+                            of ' ': Entries[^1].sections.add FileSection(kind: N, nzeilen: @[z1])
                             else:
                                 # error
                                 discard
@@ -181,8 +196,10 @@ proc git_diff*(Args: Table[string,string]): string=
                 for z in section.nzeilen:
                     inc a
                     inc b
-                    if z.len==0: result.add "\n<tr><td class='Ncmp'><span>" & $a & "</span>&nbsp;</td><td><span></span>" & $b & "</span></td></tr>"
-                    else:        result.add "\n<tr><td class='Ncmp'><span>" & $a & "</span>" & htmlescape(z) & "</td><td><span>" & $b & "</span></tr>"
+                    if z.len==0: result.add "\n<tr><td class='Ncmp'><span>" & $a & "</span>&nbsp;</td><td class='Ncmp'><span></span>" & $b & "</span>&nbsp;</td></tr>"
+                    else:
+                        let z1=htmlescape(z)
+                        result.add "\n<tr><td class='Ncmp'><span>" & $a & "</span>" & z1 & "</td><td class='Ncmp'><span>" & $b & "</span>" & z1 & "</tr>"
             of A:
                 result.add "\n<tr><td class='Acmp'>"
                 for z in section.azeilen:

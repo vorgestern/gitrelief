@@ -46,6 +46,9 @@ td.Acmp {
     overflow: hidden; */
 }
 td.Acmp span {
+        /*  span mit fester Breite */
+            display: inline-block;
+            width: 3em;
         color: black;
         background-color: #f88;
         padding: 0 0.5em 0 0;
@@ -56,6 +59,9 @@ td.Bcmp {
     white-space: pre;
 }
 td.Bcmp span {
+        /*  span mit fester Breite */
+            display: inline-block;
+            width: 3em;
         color: black;
         background-color: #8f8;
         padding: 0 0.5em 0 0;
@@ -65,6 +71,9 @@ td.Ncmp {
     white-space: pre;
 }
 td.Ncmp span {
+        /*  span mit fester Breite */
+            display: inline-block;
+            width: 3em;
         color: black;
         background-color: white;
         padding: 0 0.5em 0 0;
