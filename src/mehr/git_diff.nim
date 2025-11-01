@@ -84,50 +84,42 @@ proc git_diff*(Args: Table[string,string]): string=
         type
             PL=object
                 na, nb: int
-                z: string
-                fe: ptr FileEntry
-        var
-            cl: string
-            Entries: seq[FileEntry]
-            Section: FileSection
-            na, nb: int
+                fe: ptr seq[FileEntry]
         const diffentryparser=peg("entry", e: PL):
             path <- +{1..31, 33..255}
             hash <- +{'0'..'9', 'a'..'f'}
             flags <- +{'0'..'9'}
             num <- +{'0'..'9'}
             diff <- "diff --git" * @>path * @>path:
-                e.z="=== diff " & $1 & " === " & $2
+                add(e.fe[], FileEntry())
             index <- "index" * @>hash * ".." * @>hash * @flags:
-                e.z="=== index " & $1 & "===" & $2
-                e.fe.ahash= $1
-                e.fe.bhash= $2
+                e.fe[^1].ahash= $1
+                e.fe[^1].bhash= $2
             aaa <- "---" * @>path:
-                e.z="=== apath: " & $1
-                e.fe.apath= $1
+                e.fe[^1].apath= $1
             bbb <- "+++" * @>path:
-                e.z="=== bpath: " & $1
-                e.fe.bpath= $1
+                e.fe[^1].bpath= $1
             atat <- "@@" * @'-' * >num * ',' * >num * @'+' * >num * ',' * >num:
-                # echo "Klammeraffe " & $1 & " " & $2 & " " & $3 & " " & $4
                 e.na=parseint($2)-parseint($1)+1
                 e.nb=parseint($4)-parseint($3)+1
-                e.z="kjhasdkfjahsdf" # "=== arange=" & $1 & ".." & $2 & " brange=" & $3 & ".." & $4 & " ==> na=" & $na & ", nb=" & $nb
             sonst <- >(*1) * !1:
-                e.z= $1
+                discard
             entry <- >diff | >index | >aaa | >bbb | >atat | >sonst
         # Starte git und parse die Ausgabe zeilenweise in die Sequenz entries.
         let p=startprocess("git", args=gitargs, options={poUsePath})
         let pipe=outputstream(p)
+        var
+            cl: string
+            Entries: seq[FileEntry]
+            Section: FileSection
+            na, nb: int
         while not atend(pipe):
             var s=pipe.readstr(1)
             case s[0]
             of char 13, char 10:
                 if cl.len()>0:
-                    # echo "===", cl
                     if Entries.len==0:
-                        Entries.add FileEntry()
-                        # Section=undefined
+                        Section=FileSection()
                     if na>0 or nb>0:
                         # echo ">>> ", cl
                         let ok=Section.addline cl
@@ -154,15 +146,12 @@ proc git_diff*(Args: Table[string,string]): string=
                             dec na
                             dec nb
                         if na==0 and nb==0:
-                            Entries.add FileEntry()
                             Section=FileSection()
                     else:
                         cl=strip(cl)
                         {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
-                            var e=PL(fe: addr Entries[^1])
-                            let r=diffentryparser.match(cl, e)
-                            # echo "match: ",r.ok
-                            if r.ok:
+                            var e=PL(fe: addr Entries)
+                            if diffentryparser.match(cl, e).ok:
                                 if e.na>0 or e.nb>0:
                                     na=e.na
                                     nb=e.nb
@@ -172,6 +161,7 @@ proc git_diff*(Args: Table[string,string]): string=
                                 discard
                     cl=""
             else: cl.add s[0]
+        if numlines(Section)>0: Entries[^1].content.add Section
         Entries
 
     var cmd="git"
