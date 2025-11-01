@@ -85,7 +85,7 @@ proc git_diff*(Args: Table[string,string]): string=
             PL=object
                 na, nb: int
                 z: string
-                ee: ptr FileEntry
+                fe: ptr FileEntry
         var
             cl: string
             Entries: seq[FileEntry]
@@ -100,14 +100,14 @@ proc git_diff*(Args: Table[string,string]): string=
                 e.z="=== diff " & $1 & " === " & $2
             index <- "index" * @>hash * ".." * @>hash * @flags:
                 e.z="=== index " & $1 & "===" & $2
-                e.ee.ahash= $1
-                e.ee.bhash= $2
+                e.fe.ahash= $1
+                e.fe.bhash= $2
             aaa <- "---" * @>path:
                 e.z="=== apath: " & $1
-                e.ee.apath= $1
+                e.fe.apath= $1
             bbb <- "+++" * @>path:
                 e.z="=== bpath: " & $1
-                e.ee.bpath= $1
+                e.fe.bpath= $1
             atat <- "@@" * @'-' * >num * ',' * >num * @'+' * >num * ',' * >num:
                 # echo "Klammeraffe " & $1 & " " & $2 & " " & $3 & " " & $4
                 e.na=parseint($2)-parseint($1)+1
@@ -159,7 +159,7 @@ proc git_diff*(Args: Table[string,string]): string=
                     else:
                         cl=strip(cl)
                         {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
-                            var e=PL(ee: addr Entries[^1])
+                            var e=PL(fe: addr Entries[^1])
                             let r=diffentryparser.match(cl, e)
                             # echo "match: ",r.ok
                             if r.ok:
