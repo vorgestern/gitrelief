@@ -29,8 +29,23 @@ proc git_diff*(Args: Table[string,string]): string=
     let entries=block:
         var entries: seq[Entry]
         const diffentryparser=peg("entry", e: Entry):
-            entry <- >(*1) * !1:
+            path <- +{1..31, 33..255}
+            hash <- +{'0'..'9', 'a'..'f'}
+            flags <- +{'0'..'9'}
+            num <- +{'0'..'9'}
+            diff <- "diff --git" * @>path * @>path:
+                e.zeile="=== diff " & $1 & " === " & $2
+            index <- "index" * @>hash * ".." * @>hash * @flags:
+                e.zeile="=== index " & $1 & "===" & $2
+            aaa <- "---" * @>path:
+                e.zeile="=== apath: " & $1
+            bbb <- "+++" * @>path:
+                e.zeile="=== bpath: " & $1
+            atat <- "@@" * @'-' * >num * ',' * >num * @'+' * >num * ',' * >num:
+                e.zeile="=== arange=" & $1 & ".." & $2 & " brange=" & $3 & ".." & $4
+            sonst <- >(*1) * !1:
                 e.zeile= $1
+            entry <- >diff | >index | >aaa | >bbb | >atat | >sonst
         # Starte git und parse die Ausgabe zeilenweise in die Sequenz entries.
         let p=startprocess("git", args=gitargs, options={poUsePath})
         let pipe=outputstream(p)
