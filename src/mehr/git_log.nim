@@ -16,7 +16,6 @@ type
 
 proc git_log*(Args: Table[string,string]): string=
     let gitargs=block:
-        let arg_start=getordefault(Args, "start", "")
         var A= @["log", """--format=> %ai %h p%p "%an" "%s""""]
         if Args.contains "num": A.add "-" & Args["num"]
         else: A.add "-100"
