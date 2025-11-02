@@ -21,25 +21,27 @@ proc parseargs(query: string): Table[string,string]=
                         p=query.len
         for k in S:
                 let s=query[k]
-                let q=s.find('=')
+                let q=s.find '='
                 if q>0: result[s.substr(0,q-1)]=s.substr(q+1)
                 else: result[s]=""
 
 var
         port=8080
+        publicdir="public"
 
 let args=commandlineparams()
 for k in 0..<args.len:
         echo $k," ",args[k]
         if args[k]=="--port":
-                if k+1<args.len:
-                        port=parseint args[k+1]
+                if k+1<args.len: port=parseint args[k+1]
+        if args[k]=="--public":
+                if k+1<args.len: publicdir=args[k+1]
 
 settings:
         # appname="gitrelief" Dieser Name wird am Anfang von urls entfernt, er ist kein hostname.
         # bindaddr="gitrelief" Dies muss anscheinend eine numerische Adresse sein.
         port=Port(port)
-        staticdir="public"
+        staticdir=publicdir
 
 routes:
         get "/":
