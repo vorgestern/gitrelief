@@ -1,7 +1,7 @@
 
 import jesterfork
 import mehr/[helper,git_log,git_diff]
-import std/[paths,strutils]
+import std/[cmdline,paths,strutils]
 
 # asyncdispatch
 
@@ -25,10 +25,20 @@ proc parseargs(query: string): Table[string,string]=
                 if q>0: result[s.substr(0,q-1)]=s.substr(q+1)
                 else: result[s]=""
 
+var
+        port=8080
+
+let args=commandlineparams()
+for k in 0..<args.len:
+        echo $k," ",args[k]
+        if args[k]=="--port":
+                if k+1<args.len:
+                        port=parseint args[k+1]
+
 settings:
         # appname="gitrelief" Dieser Name wird am Anfang von urls entfernt, er ist kein hostname.
         # bindaddr="gitrelief" Dies muss anscheinend eine numerische Adresse sein.
-        port=Port(8080)
+        port=Port(port)
         staticdir="public"
 
 routes:
