@@ -289,7 +289,7 @@ proc git_diff*(Args: Table[string,string]): string=
 
 # =====================================================================
 
-const testcase1="""
+const testcase1{.used.}="""
 diff --git a/public/demo.html b/public/demo.html
 deleted file mode 100644
 index a04e39c..0000000
@@ -307,7 +307,7 @@ index 0000000..8b13789
 +
 """
 
-const testcase2="""
+const testcase2{.used.}="""
 diff --git a/public/anders.html b/public/anders.html
 new file mode 100644
 index 0000000..8b13789
