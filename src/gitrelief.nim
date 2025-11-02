@@ -1,9 +1,16 @@
 
 import jesterfork
 import mehr/[helper,git_log,git_diff]
-import std/[cmdline,paths,strutils]
+import std/[cmdline,paths,dirs,strutils,strformat]
 
 # asyncdispatch
+
+proc walkpublicdir(dir: Path): string=
+        var dir1=dir
+        normalizepathend(dir1, true)
+        for path in walkdirrec(dir1):
+                let p=replace(string path, string dir1, "")
+                result.add fmt"{'\n'}<tr><td></td><td><a href='{p}'>{p}</a></td></tr>"
 
 proc parsequery(query: string): Table[string,string]=
         var
@@ -47,7 +54,13 @@ routes:
         get "/":
                 var pwd=getcurrentdir()
                 normalizepath(pwd)
-                resp Http200, replace(root_html, "<td>pwd</td>", "<td>" & $pwd & "/</td>")
+                let pubdir=block:
+                        {.gcsafe.}:
+                                let a=walkpublicdir(Path publicdir)
+                                fmt"<table>{a}</table>"
+                var html=replace(root_html, "<td>pwd</td>", "<td>" & $pwd & "/</td>")
+                html=replace(html, "localfiles", pubdir)
+                resp Http200, html
         get "/gitrelief.css": resp Http200, gitrelief_css
         get "/action/git_log":
                 let A=parsequery(request.query)

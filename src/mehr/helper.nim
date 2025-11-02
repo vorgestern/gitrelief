@@ -7,10 +7,10 @@ const root_html* ="""
 <title></title>
 </head>
 <body>
-<table><tr><td><h1>Start</h1></td><td>pwd</td></tr></table>
-<p><a href="/action/git_log">Log</a></p>
-<p><a href="/action/git_diff">Diff</a></p>
-<p><a href="/action/git_diff?staged=1">Diff (staged)</a></p>
+<table class='head'>
+<tr><td><h1>Start</h1></td><td><h1>Root</h1></td><td colspan='3'><h1>git ...</h1></td></tr>
+<tr class='head'><td>&nbsp;</td><td>pwd</td><td><a href="/action/git_log">Log</a></td><td><a href="/action/git_diff">Diff</a></td><td><a href="/action/git_diff?staged=1">Diff (staged)</a></td></tr>
+</table>
 <p>localfiles</p>
 </body>
 </html>
@@ -19,6 +19,7 @@ const root_html* ="""
 const gitrelief_css* ="""
 body {
     font-family: Courier;
+    font-size: 18pt;
 }
 table {
     border-style: solid;
@@ -30,11 +31,14 @@ td, tr {
     border-width: 1px;
     border-color:lightgray;
     vertical-align: top;
-    font-size: 80%;
     padding:0 .5em 0;
 }
 table.diff tr td {
     white-space: pre;
+    font-size: 70%;
+}
+tr.head td {
+    font-size:120%;
 }
 
 td.Acmp {
