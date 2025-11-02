@@ -5,7 +5,7 @@ import std/[cmdline,paths,strutils]
 
 # asyncdispatch
 
-proc parseargs(query: string): Table[string,string]=
+proc parsequery(query: string): Table[string,string]=
         var
                 S: seq[HSlice[int,int]]
                 p=0
@@ -50,11 +50,11 @@ routes:
                 resp Http200, replace(root_html, "<td>pwd</td>", "<td>" & $pwd & "/</td>")
         get "/gitrelief.css": resp Http200, gitrelief_css
         get "/action/git_log":
-                let A=parseargs(request.query)
-                for k,v in A: echo "arg "&k&"="&v
+                let A=parsequery(request.query)
+                # for k,v in A: echo "arg "&k&"="&v
                 resp git_log(A)
         get "/action/git_diff":
-                let A=parseargs(request.query)
+                let A=parsequery(request.query)
                 resp git_diff(A)
         # error Http404: resp Http404, "Looks you took a wrong turn somewhere."
         error Exception: resp Http500, "Exception caught: "&exception.msg
