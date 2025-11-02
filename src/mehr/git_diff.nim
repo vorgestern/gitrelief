@@ -1,5 +1,5 @@
 
-import std/tables
+import std/[tables, strformat]
 import std/[osproc, strutils, streams]
 import npeg
 
@@ -224,12 +224,19 @@ proc git_diff*(Args: Table[string,string]): string=
 </table>
 """
     result.add "<p>Anzahl Dateien: " & $Entries.len & "</p>"
-    for fileentry in Entries:
+    result.add "<table>"
+    for index,entry in Entries:
+        if entry.op==Modified:
+            result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.bpath.substr(2)}</a></td></tr>"
+        else:
+            result.add fmt"<tr><td>{entry.op}</td><td>{entry.apath.substr(2)}</td></tr>"
+    result.add "</table>"
+    for index,fileentry in Entries:
         case fileentry.op:
-        of Modified: result.add "\n<p>Changes to " & fileentry.apath.substr(2) & "</p>"
-        of Deleted:  result.add "\n<p>Deleted " & fileentry.apath.substr(2) & "</p>"
-        of Added:    result.add "\n<p>Added " & fileentry.bpath.substr(2) & "</p>"
-        of Other:    result.add "\n<p>Unknown operation " & fileentry.apath.substr(2) & "</p>"
+        of Modified: result.add fmt"{'\n'}<p><a name='file{index:04}'/>Changes to {fileentry.apath.substr(2)}</p>"
+        of Deleted:  result.add fmt"{'\n'}<p><a name='file{index:04}'/>Deleted {fileentry.apath.substr(2)}</p>"
+        of Added:    result.add fmt"{'\n'}<p><a name='file{index:04}'/>Added {fileentry.bpath.substr(2)}</p>"
+        of Other:    result.add fmt"{'\n'}<p><a name='file{index:04}'/>Unknown operation {fileentry.apath.substr(2)}</p>"
         if fileentry.op==Modified:
             result.add "<table class='diff'>"
             case fileentry.op:
