@@ -1,5 +1,5 @@
 
-import std/tables
+import std/[tables, strformat]
 import std/[osproc, strutils, streams]
 import npeg
 
@@ -79,8 +79,8 @@ proc git_log*(Args: Table[string,string]): string=
 <p></p>
 <table>"""
     for e in entries:
-        if e.datum!="": result.add "\n<tr><td>"&e.datum&" "&e.zeit&"</td><td>"&e.user&"</td><td>"&e.subject&"</td></tr>"
-        else:           result.add "\n<tr><td>fail</td><td></td><td></td><td>"&e.subject&"</td></tr>"
+        if e.datum!="": result.add "\n" & fmt"<tr><td>{e.datum} {e.zeit}</td><td><a href='/action/git_diff?a={e.parent}&b={e.hash}'>{e.hash}</a></td><td>{e.user}</td><td>{e.subject}</td></tr>"
+        else:           result.add "\n" & fmt"<tr><td>fail</td><td></td><td></td><td>{e.subject}</td></tr>"
     result.add "\n</table></body></html>"
 
 # =====================================================================
