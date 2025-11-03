@@ -8,12 +8,8 @@ type
     NABR=enum N, A, B, R
     FileSection=object
         case kind: NABR
-        of N:
-            nzeilen: seq[string]
-        of A:
-            azeilen: seq[string]
-        of B:
-            bzeilen: seq[string]
+        of N, A, B:
+            zeilen: seq[string]
         of R:
             razeilen, rbzeilen: seq[string]
     FileEntry=object
@@ -31,9 +27,7 @@ proc `$`(X: FileEntry): string=
 
 proc numlines(S: FileSection): int=
     case S.kind
-    of N: S.nzeilen.len
-    of A: S.azeilen.len
-    of B: S.bzeilen.len
+    of N, A, B: S.zeilen.len
     of R: S.razeilen.len
 
 proc addline(S: var FileSection, z: string): bool=
@@ -44,16 +38,16 @@ proc addline(S: var FileSection, z: string): bool=
         z1=substr(z,1)
     case k
     of '-':
-        if neu: S=FileSection(kind: A, azeilen: @[])
-        if S.kind==A: S.azeilen.add z1
+        if neu: S=FileSection(kind: A, zeilen: @[])
+        if S.kind==A: S.zeilen.add z1
         return S.kind==A
     of '+':
-        if neu: S=FileSection(kind: B, bzeilen: @[])
+        if neu: S=FileSection(kind: B, zeilen: @[])
         if S.kind==B:
-            S.bzeilen.add z1
+            S.zeilen.add z1
             return true
         elif S.kind==A:
-            let temp=S.azeilen
+            let temp=S.zeilen
             S=FileSection(kind: R, razeilen: temp, rbzeilen: @[z1])
             return true
         elif S.kind==R:
@@ -61,17 +55,16 @@ proc addline(S: var FileSection, z: string): bool=
             return true
         else: return false
     of ' ':
-        if neu: S=FileSection(kind: N, nzeilen: @[])
+        if neu: S=FileSection(kind: N, zeilen: @[])
         if S.kind==N:
-            S.nzeilen.add z1
+            S.zeilen.add z1
             return true
         else: return false
     else:
         # error
         return false
 
-func htmlescape(s: string): string=
-    replace(s, "<", "&lt;")
+func htmlescape(s: string): string=replace(s, "<", "&lt;")
 
 let MerkmalM {.used.}=""" Geänderte Datei (M)
 diff --git a/src/mehr/git_diff.nim b/src/mehr/git_diff.nim
@@ -181,9 +174,9 @@ proc parse_patch(patch: seq[string]): seq[FileEntry]=
             if not added:
                 let z1=substr(z, 1)
                 case z[0]
-                of '+': result[^1].sections.add FileSection(kind: B, bzeilen: @[z1])
-                of '-': result[^1].sections.add FileSection(kind: A, azeilen: @[z1])
-                of ' ': result[^1].sections.add FileSection(kind: N, nzeilen: @[z1])
+                of '+': result[^1].sections.add FileSection(kind: B, zeilen: @[z1])
+                of '-': result[^1].sections.add FileSection(kind: A, zeilen: @[z1])
+                of ' ': result[^1].sections.add FileSection(kind: N, zeilen: @[z1])
                 else:
                     # error
                     discard
@@ -242,7 +235,7 @@ proc format_html(Patches: seq[FileEntry]): string=
             for section in fileentry.sections:
                 case section.kind
                 of N:
-                    for z in section.nzeilen:
+                    for z in section.zeilen:
                         inc a
                         inc b
                         if z.len==0: result.add "\n<tr><td class='Ncmp'><span>" & $a & "</span>&nbsp;</td><td class='Ncmp'><span>" & $b & "</span>&nbsp;</td></tr>"
@@ -251,13 +244,13 @@ proc format_html(Patches: seq[FileEntry]): string=
                             result.add "\n<tr><td class='Ncmp'><span>" & $a & "</span>" & z1 & "</td><td class='Ncmp'><span>" & $b & "</span>" & z1 & "</tr>"
                 of A:
                     result.add "\n<tr><td class='Acmp'>"
-                    for z in section.azeilen:
+                    for z in section.zeilen:
                         inc a
                         result.add "<span>" & $a & "</span>" & htmlescape(z) & "\n"
                     result.add "</td><td/></tr>"
                 of B:
                     result.add "\n<tr><td/><td class='Bcmp'>"
-                    for z in section.bzeilen:
+                    for z in section.zeilen:
                         inc b
                         result.add "<span>" & $b & "</span>" & htmlescape(z) & "\n"
                     result.add "</td></tr>"
