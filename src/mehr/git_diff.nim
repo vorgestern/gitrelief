@@ -308,7 +308,7 @@ when isMainModule:
                 content=format_html(Patches, "ahash", "bhash")
                 cmd="patchfile"
                 title="diff"
-                cssurl="/public/gitrelief.css"
+                cssurl="public/gitrelief.css"
             echo fmt html_template
         else:
             for f in Patches: echo $f
