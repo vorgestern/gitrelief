@@ -168,7 +168,7 @@ proc parse_patch(patch: seq[string]): seq[FileEntry]=
             e.nb=1
         sonst <- >(*1) * !1:
             discard
-        entry <- >diff | >index | >newfile | >deletedfile | >aaa | >bbb | >atat | >sonst
+        entry <- >diff | >index | >newfile | >deletedfile | >aaa | >bbb | >atat | >atat1 | >atat2 | >sonst
 
     var
         na=0
@@ -277,6 +277,22 @@ proc format_html(Patches: seq[FileEntry]): string=
                     result.add "\n<tr><td class='Acmp'>" & A & "</td><td class='Bcmp'>" & B & "</td></tr>"
             result.add "</table>"
 
+const html_template="""
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="{cssurl}">
+<title>{title}</title>
+</head>
+<body>
+<table>
+<tr><th>Navigate</th><th>Command</th></tr>
+<tr><td><a href='/'>Start</a></td><td>{cmd}<td></td></tr>
+</table>
+{content}
+</body></html>
+"""
+
 proc git_diff*(Args: Table[string,string]): string=
 
     let gitargs=block:
@@ -303,26 +319,16 @@ proc git_diff*(Args: Table[string,string]): string=
         patchline:  string
     while readline(pipe, patchline): patchlines.add patchline
 
-    let cmd=block:
-        var cmd="git"
-        for a in gitargs: cmd=cmd & " " & a
-        cmd
-
-    let Entries=parse_patch(patchlines)
-    let htmlcontent=format_html(Entries)
-    return """
-<html>
-<head>
-<meta charset="utf-8">
-<link rel="stylesheet" href="/gitrelief.css">
-<title></title>
-</head>
-<body>
-<table>
-<tr><th>Navigate</th><th>Command</th></tr>
-<tr><td><a href='/'>Start</a></td><td>""" & $cmd & """</td></tr>
-</table>
-""" & htmlcontent & "</body></html>"
+    # Bilde cmd und content für die Auswertung der Schablone.
+    let
+        cmd=block:
+            var cmd="git"
+            for a in gitargs: cmd=cmd & " " & a
+            cmd
+        content=format_html(parse_patch(patchlines))
+        title="diff"
+        cssurl="/gitrelief.css"
+    return fmt html_template
 
 # =====================================================================
 
@@ -332,28 +338,26 @@ when isMainModule:
     var
         patchfile=""
         output_html=false
+        skip=false
     let args=commandlineparams()
     for k in 0..<args.len:
-            if args[k]=="--patch":
-                    if k+1<args.len: patchfile=args[k+1]
-            if args[k]=="--html": output_html=true
+            if skip:
+                skip=false
+            elif args[k]=="--patch":
+                if k+1<args.len:
+                    patchfile=args[k+1]
+                    skip=true
+            elif args[k]=="--html":
+                output_html=true
+                skip=true
     if patchfile!="":
-        let text=readfile(patchfile)
-        let Patches=parse_patch(split(text, "\n"))
+        let Patches=parse_patch(split(readfile(patchfile), "\n"))
         if output_html:
-            let start="""
-<html>
-<head>
-<meta charset="utf-8">
-<link rel="stylesheet" href="/gitrelief.css">
-<title></title>
-</head>
-<body>
-<table>
-<tr><th>Navigate</th><th>Command</th></tr>
-<tr><td><a href='/'>Start</a></td><td></td></tr>
-</table>
-"""
-            echo start, format_html(Patches), "</body></html>"
+            let
+                content=format_html Patches
+                cmd="patchfile"
+                title="diff"
+                cssurl="gitrelief.css"
+            echo fmt html_template
         else:
             for f in Patches: echo $f
