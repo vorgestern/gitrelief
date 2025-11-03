@@ -3,6 +3,24 @@ import std/[tables, strformat]
 import std/[osproc, strutils, streams]
 import npeg
 
+func htmlescape(s: string): string=replace(s, "<", "&lt;")
+
+const html_template="""
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="{cssurl}">
+<title>{htmlescape title}</title>
+</head>
+<body>
+<table>
+<tr><th>Navigate</th><th>Command</th></tr>
+<tr><td><a href='/'>Start</a></td><td>{htmlescape cmd}<td></td></tr>
+</table>
+{content}
+</body></html>
+"""
+
 type
     FileOp=enum Other, Modified, Deleted, Added
     NABR=enum N, A, B, R
@@ -18,14 +36,14 @@ type
         ahash, bhash: string
         sections: seq[FileSection]
 
-proc `$`(X: FileEntry): string=
+func `$`(X: FileEntry): string=
     case X.op
     of Modified: fmt"Modified{'\t'}{X.apath} {X.sections.len} Abschnitte"
     of Deleted:  fmt"Deleted {'\t'}{X.apath} {X.sections.len} Abschnitte"
     of Added:    fmt"Added   {'\t'}{X.bpath} {X.sections.len} Abschnitte"
     of Other:    fmt"Other   {'\t'}'{X.apath}' '{X.bpath}' {X.sections.len} Abschnitte"
 
-proc numlines(S: FileSection): int=
+func numlines(S: FileSection): int=
     case S.kind
     of N, A, B: S.zeilen.len
     of R: S.razeilen.len
@@ -63,65 +81,6 @@ proc addline(S: var FileSection, z: string): bool=
     else:
         # error
         return false
-
-func htmlescape(s: string): string=replace(s, "<", "&lt;")
-
-let MerkmalM {.used.}=""" Geänderte Datei (M)
-diff --git a/src/mehr/git_diff.nim b/src/mehr/git_diff.nim
-index 940f223..c17d6f5 100644
---- a/src/mehr/git_diff.nim
-+++ b/src/mehr/git_diff.nim
-@@ -1,220 +1,220 @@
-"""
-
-let MerkmalA {.used.}=""" Daten entfernt, staged (D)
-diff --git a/public/demo.html b/public/demo.html
-deleted file mode 100644
-index a04e39c..0000000
---- a/public/demo.html
-+++ /dev/null
-"""
-
-let MerkmalB {.used.}=""" Neue Datei, hinzugefügt (A)
-diff --git a/hoppla b/hoppla
-new file mode 100644
-index 0000000..e69de29
-@@ -0,0 +1,1002 @@
-"""
-
-let MerkmalC {.used.}="""
-diff --git a/mbtask/task_tcp_server.c b/mbtask/modbus_tcp_server.c
-similarity index 54%
-rename from mbtask/task_tcp_server.c
-rename to mbtask/modbus_tcp_server.c
-index 0ba0c4976..9d11c3067 100644
---- a/mbtask/task_tcp_server.c
-+++ b/mbtask/modbus_tcp_server.c
-@@ -9,0 +10 @@
-"""
-
-let MerkmalD {.used.}="""
-diff --git a/src/Bilder/1BPP/LeaPro_opt.bmp b/src/Bilder/1BPP/LeaPro_opt.bmp
-new file mode 100644
-index 000000000..6474b11ea
-Binary files /dev/null and b/src/Bilder/1BPP/LeaPro_opt.bmp differ
-"""
-
-let MerkmalE {.used.}="""
-diff --git a/src/Bilder/1BPP/LeaVerdi_off.bmp b/src/Bilder/1BPP_TRANSPARENT/LeaVerdi_off.bmp
-similarity index 100%
-rename from src/Bilder/1BPP/LeaVerdi_off.bmp
-rename to src/Bilder/1BPP_TRANSPARENT/LeaVerdi_off.bmp
-"""
-
-let MerkmalF {.used.}="""
-diff --git a/src/Bilder/LeaWP.c b/src/Bilder/LeaWP.c
-deleted file mode 100644
-index 736519998..000000000
---- a/src/Bilder/LeaWP.c
-+++ /dev/null
-@@ -1,432 +0,0 @@
-"""
 
 proc parse_patch(patch: seq[string]): seq[FileEntry]=
     type
@@ -238,53 +197,35 @@ proc format_html(Patches: seq[FileEntry]): string=
                     for z in section.zeilen:
                         inc a
                         inc b
-                        if z.len==0: result.add "\n<tr><td class='Ncmp'><span>" & $a & "</span>&nbsp;</td><td class='Ncmp'><span>" & $b & "</span>&nbsp;</td></tr>"
-                        else:
-                            let z1=htmlescape(z)
-                            result.add "\n<tr><td class='Ncmp'><span>" & $a & "</span>" & z1 & "</td><td class='Ncmp'><span>" & $b & "</span>" & z1 & "</tr>"
+                        if z.len==0: result.add fmt"{'\n'}<tr><td class='Ncmp'><span>{a}</span>&nbsp;</td><td class='Ncmp'><span>{b}</span>&nbsp;</td></tr>"
+                        else:        result.add fmt"{'\n'}<tr><td class='Ncmp'><span>{a}</span>{htmlescape z}</td><td class='Ncmp'><span>{b}</span>{htmlescape z}</tr>"
                 of A:
                     result.add "\n<tr><td class='Acmp'>"
                     for z in section.zeilen:
                         inc a
-                        result.add "<span>" & $a & "</span>" & htmlescape(z) & "\n"
+                        result.add fmt"<span>{a}</span>{htmlescape z}{'\n'}"
                     result.add "</td><td/></tr>"
                 of B:
                     result.add "\n<tr><td/><td class='Bcmp'>"
                     for z in section.zeilen:
                         inc b
-                        result.add "<span>" & $b & "</span>" & htmlescape(z) & "\n"
+                        result.add fmt"<span>{b}</span>{htmlescape z}{'\n'}"
                     result.add "</td></tr>"
                 of R:
                     let A=block:
                         var X: string
                         for z in section.razeilen:
                             inc a
-                            X.add "<span>" & $a & "</span>" & htmlescape(z) & "\n"
+                            X.add fmt"<span>{a}</span>{htmlescape z}{'\n'}"
                         X
                     let B=block:
                         var X: string
                         for z in section.rbzeilen:
                             inc b
-                            X.add "<span>" & $b & "</span>" & htmlescape(z) & "\n"
+                            X.add fmt"<span>{b}</span>{htmlescape z}{'\n'}"
                         X
-                    result.add "\n<tr><td class='Acmp'>" & A & "</td><td class='Bcmp'>" & B & "</td></tr>"
+                    result.add fmt"{'\n'}<tr><td class='Acmp'>{A}</td><td class='Bcmp'>{B}</td></tr>"
             result.add "</table>"
-
-const html_template="""
-<html>
-<head>
-<meta charset="utf-8">
-<link rel="stylesheet" href="{cssurl}">
-<title>{title}</title>
-</head>
-<body>
-<table>
-<tr><th>Navigate</th><th>Command</th></tr>
-<tr><td><a href='/'>Start</a></td><td>{cmd}<td></td></tr>
-</table>
-{content}
-</body></html>
-"""
 
 proc git_diff*(Args: Table[string,string]): string=
 
