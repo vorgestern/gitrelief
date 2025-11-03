@@ -158,11 +158,10 @@ proc format_html_toc(Patches: seq[FileEntry], ahash, bhash: string): string=
     result.add "<p>Anzahl Dateien: " & $Patches.len & "</p>"
     result.add "<table>"
     for index,entry in Patches:
-        case entry.op:
-        of Modified: result.add fmt"<tr><td>{entry.op}</td><td><a href='/action/git_diff?a={ahash}&b={bhash}&path={entry.bpath.substr(2)}'>{entry.bpath.substr(2)}</a></td></tr>"
-        of Added:    result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.bpath.substr(2)}</a></td></tr>"
-        of Deleted:  result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.apath.substr(2)}</a></td></tr>"
-        of Other:    result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.apath.substr(2)}</a></td></tr>"
+        let (url,tag)=case entry.op
+        of Modified,Added: (fmt"/action/git_diff?a={ahash}&b={bhash}&path={entry.bpath.substr(2)}", entry.bpath.substr(2))
+        of Deleted,Other:  (fmt"/action/git_diff?a={ahash}&b={bhash}&path={entry.apath.substr(2)}", entry.apath.substr(2))
+        result.add fmt"<tr><td>{entry.op}</td><td><a href='{url}'>{tag}</a></td></tr>"
     result.add "</table>"
 
 proc format_html(Patches: seq[FileEntry], ahash, bhash: string): string=
@@ -177,7 +176,7 @@ proc format_html(Patches: seq[FileEntry], ahash, bhash: string): string=
     result.add "</table>"
     for index,fileentry in Patches:
         case fileentry.op:
-        of Modified: result.add fmt"{'\n'}<p><a name='file{index:04}'/>Changes to {fileentry.apath.substr(2)}</p>"
+        of Modified: result.add fmt"{'\n'}<p><a name='file{index:04}'/>Modified {fileentry.apath.substr(2)}</p>"
         of Deleted:  result.add fmt"{'\n'}<p><a name='file{index:04}'/>Deleted {fileentry.apath.substr(2)}</p>"
         of Added:    result.add fmt"{'\n'}<p><a name='file{index:04}'/>Added {fileentry.bpath.substr(2)}</p>"
         of Other:    result.add fmt"{'\n'}<p><a name='file{index:04}'/>Unknown operation {fileentry.apath.substr(2)}</p>"
@@ -241,7 +240,9 @@ proc git_diff*(Args: Table[string,string]): string=
         var
             A= @["diff"]
             toc=false
-        if Args.contains "toc": A.add "-U0"
+        if Args.contains "toc":
+            A.add "-U0"
+            toc=true
         else: A.add "-U999999"
         if Args.contains "a":
             var arg=Args["a"]
