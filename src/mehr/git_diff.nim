@@ -237,14 +237,15 @@ proc format_html(Patches: seq[FileEntry], ahash, bhash: string): string=
 
 proc git_diff*(Args: Table[string,string]): string=
 
-    let gitargs=block:
-        var A= @["diff"]
+    let (gitargs,toc)=block:
+        var
+            A= @["diff"]
+            toc=false
         if Args.contains "toc": A.add "-U0"
         else: A.add "-U999999"
         if Args.contains "a":
             var arg=Args["a"]
-            if Args.contains "b":
-                arg.add ".."&Args["b"]
+            if Args.contains "b": arg.add ".."&Args["b"]
             A.add arg
         elif Args.contains "b":
             A.add ".."&Args["b"]
@@ -253,9 +254,7 @@ proc git_diff*(Args: Table[string,string]): string=
             A.add Args["path"]
         if Args.contains "staged":
             A.add "--staged"
-        A
-
-    let toc=Args.contains "toc"
+        (A, toc)
 
     # Starte git und sammele Ausgabezeilen ein.
     let p=startprocess("git", args=gitargs, options={poUsePath})
