@@ -33,7 +33,6 @@ type
     FileEntry=object
         op: FileOp
         apath, bpath: string
-        ahash, bhash: string
         sections: seq[FileSection]
 
 func `$`(X: FileEntry): string=
@@ -99,8 +98,6 @@ proc parse_patch(patch: seq[string]): seq[FileEntry]=
             e.fe[^1].bpath= $2
         index <- "index" * @>hash * ".." * @>hash * @flags:
             e.fe[^1].op=Modified
-            e.fe[^1].ahash= $1
-            e.fe[^1].bhash= $2
         aaa <- "---" * @>path:
             e.fe[^1].apath= $1
         bbb <- "+++" * @>path:
@@ -157,7 +154,18 @@ proc parse_patch(patch: seq[string]): seq[FileEntry]=
                     # e.zeile="??????"
                     discard
 
-proc format_html(Patches: seq[FileEntry]): string=
+proc format_html_toc(Patches: seq[FileEntry], ahash="ahash", bhash="bhash"): string=
+    result.add "<p>Anzahl Dateien: " & $Patches.len & "</p>"
+    result.add "<table>"
+    for index,entry in Patches:
+        case entry.op:
+        of Modified: result.add fmt"<tr><td>{entry.op}</td><td><a href='/action/git_diff?a={ahash}&b={bhash}&path={entry.bpath.substr(2)}'>{entry.bpath.substr(2)}</a></td></tr>"
+        of Added:    result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.bpath.substr(2)}</a></td></tr>"
+        of Deleted:  result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.apath.substr(2)}</a></td></tr>"
+        of Other:    result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.apath.substr(2)}</a></td></tr>"
+    result.add "</table>"
+
+proc format_html(Patches: seq[FileEntry], ahash="ahash", bhash="bhash"): string=
     result.add "<p>Anzahl Dateien: " & $Patches.len & "</p>"
     result.add "<table>"
     for index,entry in Patches:
@@ -178,16 +186,16 @@ proc format_html(Patches: seq[FileEntry]): string=
             case fileentry.op:
             of Modified:
                 result.add "\n<tr><th>" & fileentry.apath & "</th><th>" & fileentry.bpath & "</th></tr>"
-                result.add "\n<tr><th>" & fileentry.ahash & "</th><th>" & fileentry.bhash & "</th></tr>"
+                result.add "\n<tr><th>" & ahash & "</th><th>" & bhash & "</th></tr>"
             of Deleted:
                 result.add "\n<tr><th>" & fileentry.apath & "</th><th>---</th></tr>"
-                result.add "\n<tr><th>" & fileentry.ahash & "</th><th/></tr>"
+                result.add "\n<tr><th>" & ahash & "</th><th/></tr>"
             of Added:
                 result.add "\n<tr><th/><th>" & fileentry.bpath & "</th></tr>"
-                result.add "\n<tr><th/><th>" & fileentry.bhash & "</th></tr>"
+                result.add "\n<tr><th/><th>" & bhash & "</th></tr>"
             of Other:
                 result.add "\n<tr><th>" & fileentry.apath & "</th><th>" & fileentry.bpath & "</th></tr>"
-                result.add "\n<tr><th>" & fileentry.ahash & "</th><th>" & fileentry.bhash & "</th></tr>"
+                result.add "\n<tr><th>" & ahash & "</th><th>" & bhash & "</th></tr>"
             var
                 a=0
                 b=0
@@ -230,7 +238,9 @@ proc format_html(Patches: seq[FileEntry]): string=
 proc git_diff*(Args: Table[string,string]): string=
 
     let gitargs=block:
-        var A= @["diff", "-U999999"]
+        var A= @["diff"]
+        if Args.contains "toc": A.add "-U0"
+        else: A.add "-U999999"
         if Args.contains "a":
             var arg=Args["a"]
             if Args.contains "b":
@@ -245,6 +255,8 @@ proc git_diff*(Args: Table[string,string]): string=
             A.add "--staged"
         A
 
+    let toc=Args.contains "toc"
+
     # Starte git und sammele Ausgabezeilen ein.
     let p=startprocess("git", args=gitargs, options={poUsePath})
     let pipe=outputstream(p)
@@ -253,16 +265,27 @@ proc git_diff*(Args: Table[string,string]): string=
         patchline:  string
     while readline(pipe, patchline): patchlines.add patchline
 
-    # Bilde cmd und content für die Auswertung der Schablone.
-    let
-        cmd=block:
-            var cmd="git"
-            for a in gitargs: cmd=cmd & " " & a
-            cmd
-        content=format_html(parse_patch(patchlines))
-        title="diff"
-        cssurl="/gitrelief.css"
-    return fmt html_template
+    if toc:
+        let
+            cmd=block:
+                var cmd="git"
+                for a in gitargs: cmd=cmd & " " & a
+                cmd
+            content=format_html_toc(parse_patch(patchlines), Args.getordefault("a", ""), Args.getordefault("b", ""))
+            title="diff"
+            cssurl="/gitrelief.css"
+        return fmt html_template
+    else:
+        # Bilde cmd und content für die Auswertung der Schablone.
+        let
+            cmd=block:
+                var cmd="git"
+                for a in gitargs: cmd=cmd & " " & a
+                cmd
+            content=format_html(parse_patch(patchlines), Args.getordefault("a", ""), Args.getordefault("b", ""))
+            title="diff"
+            cssurl="/gitrelief.css"
+        return fmt html_template
 
 # =====================================================================
 
