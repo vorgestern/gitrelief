@@ -22,6 +22,13 @@ type
         ahash, bhash: string
         sections: seq[FileSection]
 
+proc `$`(X: FileEntry): string=
+    case X.op
+    of Modified: fmt"Modified{'\t'}{X.apath} {X.sections.len} Abschnitte"
+    of Deleted:  fmt"Deleted {'\t'}{X.apath} {X.sections.len} Abschnitte"
+    of Added:    fmt"Added   {'\t'}{X.bpath} {X.sections.len} Abschnitte"
+    of Other:    fmt"Other   {'\t'}'{X.apath}' '{X.bpath}' {X.sections.len} Abschnitte"
+
 proc numlines(S: FileSection): int=
     case S.kind
     of N: S.nzeilen.len
@@ -86,158 +93,135 @@ let MerkmalB {.used.}=""" Neue Datei, hinzugefügt (A)
 diff --git a/hoppla b/hoppla
 new file mode 100644
 index 0000000..e69de29
+@@ -0,0 +1,1002 @@
 """
 
-proc git_diff*(Args: Table[string,string]): string=
+let MerkmalC {.used.}="""
+diff --git a/mbtask/task_tcp_server.c b/mbtask/modbus_tcp_server.c
+similarity index 54%
+rename from mbtask/task_tcp_server.c
+rename to mbtask/modbus_tcp_server.c
+index 0ba0c4976..9d11c3067 100644
+--- a/mbtask/task_tcp_server.c
++++ b/mbtask/modbus_tcp_server.c
+@@ -9,0 +10 @@
+"""
 
-    let gitargs=block:
-        var A= @["diff", "-U999999"]
-        if Args.contains "a":
-            var arg=Args["a"]
-            if Args.contains "b":
-                arg.add ".."&Args["b"]
-            A.add arg
-        elif Args.contains "b":
-            A.add ".."&Args["b"]
-        if Args.contains "path":
-            A.add "--"
-            A.add Args["path"]
-        if Args.contains "staged":
-            A.add "--staged"
-        A
+let MerkmalD {.used.}="""
+diff --git a/src/Bilder/1BPP/LeaPro_opt.bmp b/src/Bilder/1BPP/LeaPro_opt.bmp
+new file mode 100644
+index 000000000..6474b11ea
+Binary files /dev/null and b/src/Bilder/1BPP/LeaPro_opt.bmp differ
+"""
 
-    let testoptions=block:
-        if Args.contains "parse": "parse"
-        else: ""
+let MerkmalE {.used.}="""
+diff --git a/src/Bilder/1BPP/LeaVerdi_off.bmp b/src/Bilder/1BPP_TRANSPARENT/LeaVerdi_off.bmp
+similarity index 100%
+rename from src/Bilder/1BPP/LeaVerdi_off.bmp
+rename to src/Bilder/1BPP_TRANSPARENT/LeaVerdi_off.bmp
+"""
 
-    let Entries=block:
-        type
-            parsercontext=object
-                na, nb: int
-                fe: ptr seq[FileEntry]
-        const diffentryparser=peg("entry", e: parsercontext):
-            path <- +{1..31, 33..255}
-            hash <- +{'0'..'9', 'a'..'f'}
-            flags <- +{'0'..'9'}
-            num <- +{'0'..'9'}
-            diff <- "diff --git" * @>path * @>path:
-                # echo "diff ", $1, $2
-                add(e.fe[], FileEntry())
-            index <- "index" * @>hash * ".." * @>hash * @flags:
-                e.fe[^1].op=Modified
-                e.fe[^1].ahash= $1
-                e.fe[^1].bhash= $2
-            aaa <- "---" * @>path:
-                e.fe[^1].apath= $1
-            bbb <- "+++" * @>path:
-                e.fe[^1].bpath= $1
-            newfile <- "new file mode" * @>flags:
-                e.fe[^1].op=Added
-            deletedfile <- "deleted file mode" * @>flags:
-                e.fe[^1].op=Deleted
-            atat <- "@@" * @'-' * >num * ',' * >num * @'+' * >num * ',' * >num:
-                let
-                    a1=parseint $1
-                    a2=parseint($2)
-                    b1=parseint $3
-                    b2=parseint $4
-                if a1>0: e.na=a2-a1+1
-                else:    e.na=0
-                if b1>0: e.nb=b2-b1+1
-                else:    e.nb=0
-            sonst <- >(*1) * !1:
-                discard
-            entry <- >diff | >index | >newfile | >deletedfile | >aaa | >bbb | >atat | >sonst
+let MerkmalF {.used.}="""
+diff --git a/src/Bilder/LeaWP.c b/src/Bilder/LeaWP.c
+deleted file mode 100644
+index 736519998..000000000
+--- a/src/Bilder/LeaWP.c
++++ /dev/null
+@@ -1,432 +0,0 @@
+"""
 
-        var
-            Entries: seq[FileEntry]
-            na=0
-            nb=0
+proc parse_patch(patch: seq[string]): seq[FileEntry]=
+    type
+        parsercontext=object
+            na, nb: int
+            fe: ptr seq[FileEntry]
+    const diffentryparser=peg("entry", e: parsercontext):
+        path <- +{1..31, 33..255}
+        hash <- +{'0'..'9', 'a'..'f'}
+        flags <- +{'0'..'9'}
+        num <- +{'0'..'9'}
+        diff <- "diff --git" * @>path * @>path:
+            # echo "diff ", $1, $2
+            add(e.fe[], FileEntry())
+            e.fe[^1].apath= $1
+            e.fe[^1].bpath= $2
+        index <- "index" * @>hash * ".." * @>hash * @flags:
+            e.fe[^1].op=Modified
+            e.fe[^1].ahash= $1
+            e.fe[^1].bhash= $2
+        aaa <- "---" * @>path:
+            e.fe[^1].apath= $1
+        bbb <- "+++" * @>path:
+            e.fe[^1].bpath= $1
+        newfile <- "new file mode" * @>flags:
+            e.fe[^1].op=Added
+        deletedfile <- "deleted file mode" * @>flags:
+            e.fe[^1].op=Deleted
+        atat <- "@@" * @'-' * >num * ',' * >num * @'+' * >num * ',' * >num * @"@@":
+            e.na=parseint $2
+            e.nb=parseint $4
+        atat1 <- "@@" * @'-' * >num * ',' * >num * @'+' * >num * @"@@":
+            e.na=parseint($2)
+            e.nb=1
+        atat2 <- "@@" * @'-' * >num * @'+' * >num * @"@@":
+            e.na=1
+            e.nb=1
+        sonst <- >(*1) * !1:
+            discard
+        entry <- >diff | >index | >newfile | >deletedfile | >aaa | >bbb | >atat | >sonst
 
-        proc process_line(z: string)=
-            if na>0 or nb>0:
-                if Entries[^1].sections.len==0: Entries[^1].sections.add FileSection()
-                let added=Entries[^1].sections[^1].addline z
-                if not added:
-                    let z1=substr(z, 1)
-                    case z[0]
-                    of '+': Entries[^1].sections.add FileSection(kind: B, bzeilen: @[z1])
-                    of '-': Entries[^1].sections.add FileSection(kind: A, azeilen: @[z1])
-                    of ' ': Entries[^1].sections.add FileSection(kind: N, nzeilen: @[z1])
-                    else:
-                        # error
-                        discard
+    var
+        na=0
+        nb=0
+
+    for z in patch:
+        if na>0 or nb>0:
+            if result[^1].sections.len==0: result[^1].sections.add FileSection()
+            let added=result[^1].sections[^1].addline z
+            if not added:
+                let z1=substr(z, 1)
                 case z[0]
-                of '+': dec nb
-                of '-': dec na
+                of '+': result[^1].sections.add FileSection(kind: B, bzeilen: @[z1])
+                of '-': result[^1].sections.add FileSection(kind: A, azeilen: @[z1])
+                of ' ': result[^1].sections.add FileSection(kind: N, nzeilen: @[z1])
                 else:
-                    dec na
-                    dec nb
+                    # error
+                    discard
+            case z[0]
+            of '+': dec nb
+            of '-': dec na
             else:
-                {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
-                    var e=parsercontext(fe: addr Entries)
-                    if diffentryparser.match(strip z, e).ok:
-                        if e.na>0 or e.nb>0:
-                            na=e.na
-                            nb=e.nb
-                    else:
-                        # error
-                        # e.zeile="??????"
-                        discard
-
-        if testoptions=="parse":
-            # Parse die Beispieldaten Args["parse"]
-            var text: seq[string]=split(Args["parse"], "\n")
-            for z in text:
-                process_line(z)
-                echo $Entries.len & " == " & z
+                dec na
+                dec nb
         else:
-            # Starte git und parse die Ausgabe zeilenweise in die Sequenz entries.
-            let p=startprocess("git", args=gitargs, options={poUsePath})
-            let pipe=outputstream(p)
-            var cl: string
-            while not atend(pipe):
-                var s=pipe.readstr(1)
-                case s[0]
-                of char 13, char 10:
-                    if cl.len()>0:
-                        process_line(cl)
-                        cl=""
-                else: cl.add s[0]
+            {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
+                var e=parsercontext(fe: addr result)
+                if diffentryparser.match(strip z, e).ok:
+                    if e.na>0 or e.nb>0:
+                        na=e.na
+                        nb=e.nb
+                else:
+                    # error
+                    # e.zeile="??????"
+                    discard
 
-        Entries
-
-    var cmd="git"
-    for a in gitargs: cmd=cmd & " " & a
-
-    result="""
-<html>
-<head>
-<meta charset="utf-8">
-<link rel="stylesheet" href="/gitrelief.css">
-<title></title>
-</head>
-<body>
-<table>
-<tr><th>Navigate</th><th>Command</th></tr>
-<tr><td><a href='/'>Start</a></td><td>""" & $cmd & """</td></tr>
-</table>
-"""
-    result.add "<p>Anzahl Dateien: " & $Entries.len & "</p>"
+proc format_html(Patches: seq[FileEntry]): string=
+    result.add "<p>Anzahl Dateien: " & $Patches.len & "</p>"
     result.add "<table>"
-    for index,entry in Entries:
-        if entry.op==Modified:
-            result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.bpath.substr(2)}</a></td></tr>"
-        else:
-            result.add fmt"<tr><td>{entry.op}</td><td>{entry.apath.substr(2)}</td></tr>"
+    for index,entry in Patches:
+        case entry.op:
+        of Modified: result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.bpath.substr(2)}</a></td></tr>"
+        of Added:    result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.bpath.substr(2)}</a></td></tr>"
+        of Deleted:  result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.apath.substr(2)}</a></td></tr>"
+        of Other:    result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.apath.substr(2)}</a></td></tr>"
     result.add "</table>"
-    for index,fileentry in Entries:
+    for index,fileentry in Patches:
         case fileentry.op:
         of Modified: result.add fmt"{'\n'}<p><a name='file{index:04}'/>Changes to {fileentry.apath.substr(2)}</p>"
         of Deleted:  result.add fmt"{'\n'}<p><a name='file{index:04}'/>Deleted {fileentry.apath.substr(2)}</p>"
         of Added:    result.add fmt"{'\n'}<p><a name='file{index:04}'/>Added {fileentry.bpath.substr(2)}</p>"
         of Other:    result.add fmt"{'\n'}<p><a name='file{index:04}'/>Unknown operation {fileentry.apath.substr(2)}</p>"
-        if fileentry.op==Modified:
+        if fileentry.op!=Other:
             result.add "<table class='diff'>"
             case fileentry.op:
             of Modified:
@@ -292,50 +276,84 @@ proc git_diff*(Args: Table[string,string]): string=
                         X
                     result.add "\n<tr><td class='Acmp'>" & A & "</td><td class='Bcmp'>" & B & "</td></tr>"
             result.add "</table>"
-    result.add "</body></html>"
+
+proc git_diff*(Args: Table[string,string]): string=
+
+    let gitargs=block:
+        var A= @["diff", "-U999999"]
+        if Args.contains "a":
+            var arg=Args["a"]
+            if Args.contains "b":
+                arg.add ".."&Args["b"]
+            A.add arg
+        elif Args.contains "b":
+            A.add ".."&Args["b"]
+        if Args.contains "path":
+            A.add "--"
+            A.add Args["path"]
+        if Args.contains "staged":
+            A.add "--staged"
+        A
+
+    # Starte git und sammele Ausgabezeilen ein.
+    let p=startprocess("git", args=gitargs, options={poUsePath})
+    let pipe=outputstream(p)
+    var
+        patchlines: seq[string]
+        patchline:  string
+    while readline(pipe, patchline): patchlines.add patchline
+
+    let cmd=block:
+        var cmd="git"
+        for a in gitargs: cmd=cmd & " " & a
+        cmd
+
+    let Entries=parse_patch(patchlines)
+    let htmlcontent=format_html(Entries)
+    return """
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="/gitrelief.css">
+<title></title>
+</head>
+<body>
+<table>
+<tr><th>Navigate</th><th>Command</th></tr>
+<tr><td><a href='/'>Start</a></td><td>""" & $cmd & """</td></tr>
+</table>
+""" & htmlcontent & "</body></html>"
 
 # =====================================================================
 
-const testcase1{.used.}="""
-diff --git a/public/demo.html b/public/demo.html
-deleted file mode 100644
-index a04e39c..0000000
---- a/public/demo.html
-+++ /dev/null
-@@ -1,2 +0,0 @@
--
--<h1>Hier ist demo.html</h1>
-diff --git a/public/sonst.html b/public/sonst.html
-new file mode 100644
-index 0000000..8b13789
---- /dev/null
-+++ b/public/sonst.html
-@@ -0,0 +1 @@
-+
-"""
-
-const testcase2{.used.}="""
-diff --git a/public/anders.html b/public/anders.html
-new file mode 100644
-index 0000000..8b13789
---- /dev/null
-+++ b/public/anders.html
-@@ -0,0 +1 @@
-+
-"""
-
 when isMainModule:
 
-    const testcase=2
-
-    case testcase
-    of 0:
-        let output=git_diff(toTable({"nix":"nix"}))
-        echo output
-    of 1:
-        let output=git_diff(totable {"parse": testcase1})
-        echo output
-    of 2:
-        let output=git_diff(totable {"parse": testcase2})
-        echo output
-    else: discard
+    import std/cmdline
+    var
+        patchfile=""
+        output_html=false
+    let args=commandlineparams()
+    for k in 0..<args.len:
+            if args[k]=="--patch":
+                    if k+1<args.len: patchfile=args[k+1]
+            if args[k]=="--html": output_html=true
+    if patchfile!="":
+        let text=readfile(patchfile)
+        let Patches=parse_patch(split(text, "\n"))
+        if output_html:
+            let start="""
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="/gitrelief.css">
+<title></title>
+</head>
+<body>
+<table>
+<tr><th>Navigate</th><th>Command</th></tr>
+<tr><td><a href='/'>Start</a></td><td></td></tr>
+</table>
+"""
+            echo start, format_html(Patches), "</body></html>"
+        else:
+            for f in Patches: echo $f
