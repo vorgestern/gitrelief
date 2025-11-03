@@ -154,7 +154,7 @@ proc parse_patch(patch: seq[string]): seq[FileEntry]=
                     # e.zeile="??????"
                     discard
 
-proc format_html_toc(Patches: seq[FileEntry], ahash="ahash", bhash="bhash"): string=
+proc format_html_toc(Patches: seq[FileEntry], ahash, bhash: string): string=
     result.add "<p>Anzahl Dateien: " & $Patches.len & "</p>"
     result.add "<table>"
     for index,entry in Patches:
@@ -165,7 +165,7 @@ proc format_html_toc(Patches: seq[FileEntry], ahash="ahash", bhash="bhash"): str
         of Other:    result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.apath.substr(2)}</a></td></tr>"
     result.add "</table>"
 
-proc format_html(Patches: seq[FileEntry], ahash="ahash", bhash="bhash"): string=
+proc format_html(Patches: seq[FileEntry], ahash, bhash: string): string=
     result.add "<p>Anzahl Dateien: " & $Patches.len & "</p>"
     result.add "<table>"
     for index,entry in Patches:
@@ -265,27 +265,21 @@ proc git_diff*(Args: Table[string,string]): string=
         patchline:  string
     while readline(pipe, patchline): patchlines.add patchline
 
-    if toc:
-        let
-            cmd=block:
-                var cmd="git"
-                for a in gitargs: cmd=cmd & " " & a
-                cmd
-            content=format_html_toc(parse_patch(patchlines), Args.getordefault("a", ""), Args.getordefault("b", ""))
-            title="diff"
-            cssurl="/gitrelief.css"
-        return fmt html_template
-    else:
-        # Bilde cmd und content für die Auswertung der Schablone.
-        let
-            cmd=block:
-                var cmd="git"
-                for a in gitargs: cmd=cmd & " " & a
-                cmd
-            content=format_html(parse_patch(patchlines), Args.getordefault("a", ""), Args.getordefault("b", ""))
-            title="diff"
-            cssurl="/gitrelief.css"
-        return fmt html_template
+    # Bilde die Werte title, cmd, content und cssurl für die Auswertung der Schablone.
+    let
+        title="diff"
+        cmd=block:
+            var cmd="git"
+            for a in gitargs: cmd=cmd & " " & a
+            cmd
+        cssurl="/gitrelief.css"
+        content=block:
+            let
+                ahash=Args.getordefault("a", "")
+                bhash=Args.getordefault("b", "")
+            if toc: format_html_toc(parse_patch(patchlines), ahash, bhash)
+            else:   format_html(    parse_patch(patchlines), ahash, bhash)
+    return fmt html_template
 
 # =====================================================================
 
@@ -311,7 +305,7 @@ when isMainModule:
         let Patches=parse_patch(split(readfile(patchfile), "\n"))
         if output_html:
             let
-                content=format_html Patches
+                content=format_html(Patches, "ahash", "bhash")
                 cmd="patchfile"
                 title="diff"
                 cssurl="gitrelief.css"
