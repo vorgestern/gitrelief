@@ -158,21 +158,31 @@ proc format_html_toc(Patches: seq[FileEntry], ahash, bhash: string): string=
     result.add "<p>Anzahl Dateien: " & $Patches.len & "</p>"
     result.add "<table>"
     for index,entry in Patches:
+        let path=case entry.op
+        of Modified,Added: entry.bpath.substr(2)
+        of Deleted,Other:  entry.apath.substr(2)
         let (url,tag)=case entry.op
         of Modified,Added: (fmt"/action/git_diff?a={ahash}&b={bhash}&path={entry.bpath.substr(2)}", entry.bpath.substr(2))
         of Deleted,Other:  (fmt"/action/git_diff?a={ahash}&b={bhash}&path={entry.apath.substr(2)}", entry.apath.substr(2))
-        result.add fmt"<tr><td>{entry.op}</td><td><a href='{url}'>{tag}</a></td></tr>"
+        result.add fmt"<tr><td>{entry.op}</td><td><a href='{url}'>{tag}</a></td><td><a href='/action/git_log_follow?a={ahash}&path={path}'>Follow</a></td></tr>"
+        # Follow soll z.B. 'git log --follow d0f3ff175 -- src/mehr/git_log.nim' auslösen.
     result.add "</table>"
 
 proc format_html(Patches: seq[FileEntry], ahash, bhash: string): string=
     result.add "<p>Anzahl Dateien: " & $Patches.len & "</p>"
     result.add "<table>"
     for index,entry in Patches:
+        let path=case entry.op
+        of Modified,Added: entry.bpath.substr(2)
+        of Deleted,Other:  entry.apath.substr(2)
+        let followurl=case entry.op
+        of Modified,Added: fmt"/action/git_log_follow?a={ahash}&path={path}"
+        of Deleted,Other:  fmt"/action/git_log_follow?a={ahash}&path={path}"
         case entry.op:
-        of Modified: result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.bpath.substr(2)}</a></td></tr>"
-        of Added:    result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.bpath.substr(2)}</a></td></tr>"
-        of Deleted:  result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.apath.substr(2)}</a></td></tr>"
-        of Other:    result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.apath.substr(2)}</a></td></tr>"
+        of Modified: result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.bpath.substr(2)}</a></td><td><a href='{followurl}'>Follow</a></td></tr>"
+        of Added:    result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.bpath.substr(2)}</a></td><td><a href='{followurl}'>Follow</a></td></tr>"
+        of Deleted:  result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.apath.substr(2)}</a></td><td><a href='{followurl}'>Follow</a></td></tr>"
+        of Other:    result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.apath.substr(2)}</a></td><td><a href='{followurl}'>Follow</a></td></tr>"
     result.add "</table>"
     for index,fileentry in Patches:
         case fileentry.op:
