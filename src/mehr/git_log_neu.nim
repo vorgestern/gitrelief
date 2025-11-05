@@ -50,11 +50,11 @@ proc parse_log(L: seq[string]): seq[Commit]=
         hash <- +{'0'..'9', 'a'..'f'}
         commit <- "commit " * >hash * ?@>hash * ?@>hash:
             let parents=case capture.len
-            of 4: @[$2, $3]
-            of 3: @[$2]
-            else: @["0000000"]
-            echo "commits hash=",$1,", capture.len=",capture.len,", parents=",parents
-            e.was[].add Commit(hash: $1, parents: parents)
+            of 4: @[substr($2, 0, 8), substr($3, 0, 8)]
+            of 3: @[substr($2, 0, 8)]
+            else: @["000000000"]
+            # echo "commits hash=",$1,", capture.len=",capture.len,", parents=",parents
+            e.was[].add Commit(hash: substr($1, 0, 8), parents: parents)
             e.st=Header
         authorname <- {33..128} * +{33..128}
         author <- "Author:" * @>authorname * @'<':
