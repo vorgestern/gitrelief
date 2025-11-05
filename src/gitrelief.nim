@@ -1,6 +1,6 @@
 
 import jesterfork
-import mehr/[helper,git_log,git_diff]
+import mehr/[helper,git_log,git_diff,git_log_neu]
 import std/[cmdline,paths,dirs,strutils,strformat]
 
 # asyncdispatch
@@ -66,6 +66,7 @@ routes:
                 let A=parsequery(request.query)
                 # for k,v in A: echo "arg "&k&"="&v
                 resp git_log(A)
+        get "/action/git_log_neu": resp git_log_neu(parsequery request.query)
         get "/action/git_diff":
                 let A=parsequery(request.query)
                 resp git_diff(A)

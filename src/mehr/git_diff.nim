@@ -35,7 +35,7 @@ type
         apath, bpath: string
         sections: seq[FileSection]
 
-func `$`(X: FileEntry): string=
+func `$`(X: FileEntry): string {.used.}=
     case X.op
     of Modified: fmt"Modified{'\t'}{X.apath} {X.sections.len} Abschnitte"
     of Deleted:  fmt"Deleted {'\t'}{X.apath} {X.sections.len} Abschnitte"
