@@ -48,12 +48,12 @@ proc parse_log(L: seq[string]): seq[Commit]=
             was: ptr seq[Commit]
     const loglineparser=peg("line", e: parsercontext):
         hash <- +{'0'..'9', 'a'..'f'}
-        commit <- "commit " * >hash * >@hash[1..2]:
+        commit <- "commit " * >hash * ?@>hash * ?@>hash:
             let parents=case capture.len
-            of 4: @[strip $2, strip $3]
-            of 3: @[strip $2]
+            of 4: @[$2, $3]
+            of 3: @[$2]
             else: @["0000000"]
-            # echo "commits hash=",$1,", capture.len=",capture.len,", parents=",parents
+            echo "commits hash=",$1,", capture.len=",capture.len,", parents=",parents
             e.was[].add Commit(hash: $1, parents: parents)
             e.st=Header
         authorname <- {33..128} * +{33..128}
@@ -100,7 +100,8 @@ proc format_html(L: seq[Commit]): string=
     for commit in L:
         var comments=htmlescape(commit.subject)
         for d in commit.details: comments.add "<br/>"&htmlescape(d)
-        let parent=commit.parents[0]
+        let parent=if commit.parents.len>0: commit.parents[0]
+        else: "0000000"
         var files=""
         for index,(s,p) in commit.files:
             if index>0: files.add "<br/>"
