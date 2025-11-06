@@ -2,5 +2,5 @@
 alias rr="clear && nim c -d:release -o:$ROBINSON/userbin/ src/gitrelief && gitrelief"
 alias bb="clear && nim c -d:release -o:$ROBINSON/userbin/ src/gitrelief"
 
-alias tt="clear && nim c -d:release -o:ttlog src/mehr/git_log.nim && ./ttlog"
+# alias tt="clear && nim c -d:release -o:ttlog src/mehr/git_log.nim && ./ttlog"
 alias dd="clear && nim c -d:release -o:ttdiff src/mehr/git_diff.nim && ./ttdiff"
