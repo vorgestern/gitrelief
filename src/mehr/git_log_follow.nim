@@ -18,7 +18,7 @@ const html_template="""
 <body>
 <table>
 <tr><th>Navigate</th><th>Command</th></tr>
-<tr><td><a href='/'>Start</a></td><td>{htmlescape cmd}<td></td></tr>
+<tr><td><a href='/'>Start</a></td><td>{htmlescape cmd}</td></tr>
 </table>
 <p>Following &nbsp;&nbsp;&nbsp;&nbsp;<b>{pathtofollow}</b></p>
 {content}
