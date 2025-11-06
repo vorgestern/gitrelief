@@ -96,7 +96,7 @@ proc parse_log(L: seq[string]): seq[Commit]=
                 discard
 
 proc format_html(L: seq[Commit]): string=
-    result="<table class='diff'>"
+    result="<table class='diff'>\n<tr><th>commit</th><th>who</th><th>when</th><th>affected</th><th>subject/details</th></tr>"
     var chash="000000000"
     for commit in L:
         var comments=htmlescape(commit.subject)
