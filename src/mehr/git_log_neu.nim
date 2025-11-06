@@ -97,6 +97,7 @@ proc parse_log(L: seq[string]): seq[Commit]=
 
 proc format_html(L: seq[Commit]): string=
     result="<table class='diff'>"
+    var chash="000000000"
     for commit in L:
         var comments=htmlescape(commit.subject)
         for d in commit.details: comments.add "<br/>"&htmlescape(d)
@@ -105,9 +106,10 @@ proc format_html(L: seq[Commit]): string=
         var files=""
         for index,(s,p) in commit.files:
             if index>0: files.add "<br/>"
-            files.add fmt"{s} <a href='/action/git_diff?a={parent}&b={commit.hash}&path={p}'>{p}</a>"
+            files.add fmt"{s} <a href='/action/git_diff?a={parent}&b={commit.hash}&c={chash}&path={p}'>{p}</a>"
         result.add "<tr><td>" & substr(commit.hash,0,7) & "</td><td>" & commit.author &
             "</td><td>" & commit.date & "</td><td>" & files & "</td><td>" & comments & "</td></tr>"
+        chash=commit.hash
     result.add "</table>"
 
 proc git_log_neu*(Args: Table[string,string]): string=

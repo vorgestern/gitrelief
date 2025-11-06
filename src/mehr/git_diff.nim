@@ -154,7 +154,7 @@ proc parse_patch(patch: seq[string]): seq[FileEntry]=
                     # e.zeile="??????"
                     discard
 
-proc format_html_toc(Patches: seq[FileEntry], ahash, bhash: string): string=
+proc format_html_toc(Patches: seq[FileEntry], ahash, bhash, chash: string): string=
     result.add "<p>Anzahl Dateien: " & $Patches.len & "</p>"
     result.add "<table>"
     for index,entry in Patches:
@@ -164,11 +164,11 @@ proc format_html_toc(Patches: seq[FileEntry], ahash, bhash: string): string=
         let (url,tag)=case entry.op
         of Modified,Added: (fmt"/action/git_diff?a={ahash}&b={bhash}&path={entry.bpath.substr(2)}", entry.bpath.substr(2))
         of Deleted,Other:  (fmt"/action/git_diff?a={ahash}&b={bhash}&path={entry.apath.substr(2)}", entry.apath.substr(2))
-        result.add fmt"<tr><td>{entry.op}</td><td><a href='{url}'>{tag}</a></td><td><a href='/action/git_log_follow?a={ahash}&path={path}'>Follow</a></td></tr>"
+        result.add fmt"<tr><td>{entry.op}</td><td><a href='{url}'>{tag}</a></td><td><a href='/action/git_log_follow?a={chash}&path={path}'>Follow</a></td></tr>"
         # Follow soll z.B. 'git log --follow d0f3ff175 -- src/mehr/git_log.nim' auslösen.
     result.add "</table>"
 
-proc format_html(Patches: seq[FileEntry], ahash, bhash: string): string=
+proc format_html(Patches: seq[FileEntry], ahash, bhash, chash: string): string=
     result.add "<p>Anzahl Dateien: " & $Patches.len & "</p>"
     result.add "<table>"
     for index,entry in Patches:
@@ -176,8 +176,8 @@ proc format_html(Patches: seq[FileEntry], ahash, bhash: string): string=
         of Modified,Added: entry.bpath.substr(2)
         of Deleted,Other:  entry.apath.substr(2)
         let followurl=case entry.op
-        of Modified,Added: fmt"/action/git_log_follow?a={ahash}&path={path}"
-        of Deleted,Other:  fmt"/action/git_log_follow?a={ahash}&path={path}"
+        of Modified,Added: fmt"/action/git_log_follow?a={chash}&path={path}"
+        of Deleted,Other:  fmt"/action/git_log_follow?a={chash}&path={path}"
         case entry.op:
         of Modified: result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.bpath.substr(2)}</a></td><td><a href='{followurl}'>Follow</a></td></tr>"
         of Added:    result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.bpath.substr(2)}</a></td><td><a href='{followurl}'>Follow</a></td></tr>"
@@ -287,8 +287,9 @@ proc git_diff*(Args: Table[string,string]): string=
             let
                 ahash=Args.getordefault("a", "")
                 bhash=Args.getordefault("b", "")
-            if toc: format_html_toc(parse_patch(patchlines), ahash, bhash)
-            else:   format_html(    parse_patch(patchlines), ahash, bhash)
+                chash=Args.getordefault("c", "")
+            if toc: format_html_toc(parse_patch(patchlines), ahash, bhash, chash)
+            else:   format_html(    parse_patch(patchlines), ahash, bhash, chash)
     return fmt html_template
 
 # =====================================================================
@@ -315,7 +316,7 @@ when isMainModule:
         let Patches=parse_patch(split(readfile(patchfile), "\n"))
         if output_html:
             let
-                content=format_html(Patches, "ahash", "bhash")
+                content=format_html(Patches, "ahash", "bhash", "chash")
                 cmd="patchfile"
                 title="diff"
                 cssurl="public/gitrelief.css"
