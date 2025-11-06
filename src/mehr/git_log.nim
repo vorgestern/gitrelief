@@ -116,7 +116,8 @@ proc git_log*(Args: Table[string,string]): string=
 
     let gitargs=block:
         var
-            A= @["log", "--name-status", "--parents", "--date=iso-local", "-100"]
+            A= @["log", "--name-status", "--parents", "--date=iso-local"]
+        A.add "-"&Args.getordefault("num", "100")
         A
 
     # Starte git und sammele Ausgabezeilen ein.
