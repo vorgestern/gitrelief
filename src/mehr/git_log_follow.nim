@@ -117,7 +117,7 @@ proc git_log_follow*(Args: Table[string,string]): string=
             A= @["log", "--follow", "--name-status", "--date=iso-local"]
         if Args.contains "path":
             if Args.contains "a":
-                var arg=Args["a"]&"^"
+                var arg=Args["a"]   # &"^"
                 if Args.contains "b": arg.add ".."&Args["b"]
                 A.add arg
             elif Args.contains "b":
