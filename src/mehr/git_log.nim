@@ -17,11 +17,17 @@ const html_template="""
 </head>
 <body>
 <table>
-<tr><th>Navigate</th><th>Command</th></tr>
-<tr><td><a href='/'>Start</a></td><td>{htmlescape cmd}</td></tr>
+<a id='top'/>
+<tr><th>Navigate</th><th>Command</th><th>Modify</th></tr>
+<tr><td><a href='/'>Start</a></td><td>{htmlescape cmd}</td><td><a href='{url_plus100}'>100 more</a></th></tr>
 </table>
 <p/>
 {content}
+<p>
+<table>
+<tr><th>Navigate</th><th>Command</th><th>Modify</th></tr>
+<tr><td><a href='#top'>Top</a></td><td>{htmlescape cmd}</td><td><a href='{url_plus100a}'>100 more</a></th></tr>
+</table>
 </body>
 </html>
 """
@@ -98,7 +104,10 @@ proc parse_log(L: seq[string]): seq[Commit]=
 proc format_html(L: seq[Commit]): string=
     result="<table class='diff'>\n<tr><th>commit</th><th>who</th><th>when</th><th>affected</th><th>subject/details</th></tr>"
     var chash="000000000"
-    for commit in L:
+    for index,commit in L:
+        if index>0 and index mod 100==0:
+            result.add "\n" & fmt"<tr><td><a id='top{index}'>{index}</a></td></tr>"
+            # Vielfache von 100 erhalten eine Hinweiszeile, die auch als Sprungziel dient.
         var comments=htmlescape(commit.subject)
         for d in commit.details: comments.add "<br/>"&htmlescape(d)
         let parent=if commit.parents.len>0: commit.parents[0]
@@ -107,9 +116,10 @@ proc format_html(L: seq[Commit]): string=
         for index,(s,p) in commit.files:
             if index>0: files.add "<br/>"
             files.add fmt"{s} <a href='/action/git_diff?a={parent}&b={commit.hash}&c={chash}&path={p}'>{p}</a>"
-        result.add "<tr><td>" & substr(commit.hash,0,7) & "</td><td>" & commit.author &
+        result.add "\n<tr><td>" & substr(commit.hash,0,7) & "</td><td>" & commit.author &
             "</td><td>" & commit.date & "</td><td>" & files & "</td><td>" & comments & "</td></tr>"
         chash=commit.hash
+    result.add "\n" & fmt"<tr><td><a id='top{L.len}'>{L.len}</a></td></tr>"
     result.add "</table>"
 
 proc git_log*(Args: Table[string,string]): string=
@@ -135,6 +145,11 @@ proc git_log*(Args: Table[string,string]): string=
             var cmd="git"
             for a in gitargs: cmd=cmd & " " & a
             cmd
+        (url_plus100,url_plus100a)=block:
+            let numstr=Args.getordefault("num", "100")
+            let num=parseint numstr
+            let url=fmt"/action/git_log?num={num+100}"
+            (url, url&fmt"#top{num}")
         cssurl="/gitrelief.css"
         content=block:
             format_html(parse_log Loglines)
