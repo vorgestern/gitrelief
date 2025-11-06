@@ -14,7 +14,7 @@ type
     Entry=object
         datum, zeit, hash, parent, user, subject: string
 
-proc git_log*(Args: Table[string,string]): string=
+proc git_log_obsolet*(Args: Table[string,string]): string=
     let gitargs=block:
         var A= @["log", """--format=> %ai %h p%p "%an" "%s""""]
         if Args.contains "num": A.add "-" & Args["num"]

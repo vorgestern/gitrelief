@@ -112,7 +112,7 @@ proc format_html(L: seq[Commit]): string=
         chash=commit.hash
     result.add "</table>"
 
-proc git_log_neu*(Args: Table[string,string]): string=
+proc git_log*(Args: Table[string,string]): string=
 
     let gitargs=block:
         var
