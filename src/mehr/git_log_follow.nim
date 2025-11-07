@@ -78,6 +78,7 @@ proc parse_log(L: seq[string]): seq[Commit]=
             case e.st
             of Subject:
                 e.was[^1].subject= $1
+                e.st=Details
             of Details: e.was[^1].details.add $1
             else: discard
         filestatus <- >{'A'..'Z'} * +{' ','\t'} * >+1:
