@@ -1,5 +1,5 @@
 
-import std/[tables, strformat]
+import std/[tables, strformat, parseutils]
 import std/[osproc, strutils, streams]
 import std/strtabs
 import npeg
@@ -26,7 +26,7 @@ const html_template="""
 <p>
 <table>
 <tr><th>Navigate</th><th>Command</th><th>Modify</th></tr>
-<tr><td><a href='#top'>Top</a></td><td>{htmlescape cmd}</td><td><a href='{url_plus100a}'>100 more</a></th></tr>
+<tr><td><a href='#top'>Top</a></td><td>{htmlescape cmd}</td><td><a href='{url_plus100_rest}'>100 more</a></th></tr>
 </table>
 </body>
 </html>
@@ -124,11 +124,15 @@ proc format_html(L: seq[Commit]): string=
 
 proc git_log*(Args: Table[string,string]): string=
 
-    let gitargs=block:
-        var
-            A= @["log", "--name-status", "--parents", "--date=iso-local"]
-        A.add "-"&Args.getordefault("num", "100")
-        A
+    let (gitargs,num)=block:
+        var A= @["log", "--name-status", "--parents", "--date=iso-local"]
+        let num=block:
+            var num=0
+            let str=Args.getordefault("num", "100")
+            if parseint(str, num)<str.len: num=100
+            num
+        A.add fmt"-{num}"
+        (A, num)
 
     # Starte git und sammele Ausgabezeilen ein.
     let p=startprocess("git", args=gitargs, options={poUsePath})
@@ -145,11 +149,8 @@ proc git_log*(Args: Table[string,string]): string=
             var cmd="git"
             for a in gitargs: cmd=cmd & " " & a
             cmd
-        (url_plus100,url_plus100a)=block:
-            let numstr=Args.getordefault("num", "100")
-            let num=parseint numstr
-            let url=fmt"/action/git_log?num={num+100}"
-            (url, url&fmt"#top{num}")
+        url_plus100=fmt"/action/git_log?num={num+100}"
+        url_plus100_rest=url_plus100&fmt"#top{num}"
         cssurl="/gitrelief.css"
         content=block:
             format_html(parse_log Loglines)
