@@ -127,10 +127,10 @@ proc git_log*(Args: Table[string,string]): string=
     let (gitargs,num)=block:
         var A= @["log", "--name-status", "--parents", "--date=iso-local"]
         let num=block:
-            var num=0
+            var X=0
             let str=Args.getordefault("num", "100")
-            if parseint(str, num)<str.len: num=100
-            num
+            if parseint(str, X)<str.len: X=100
+            X
         A.add fmt"-{num}"
         (A, num)
 
@@ -146,12 +146,11 @@ proc git_log*(Args: Table[string,string]): string=
     let
         title="log_neu"
         cmd=block:
-            var cmd="git"
-            for a in gitargs: cmd=cmd & " " & a
-            cmd
+            var X="git"
+            for a in gitargs: X=X & " " & a
+            X
         url_plus100=fmt"/action/git_log?num={num+100}"
         url_plus100_rest=url_plus100&fmt"#top{num}"
         cssurl="/gitrelief.css"
-        content=block:
-            format_html(parse_log Loglines)
+        content=format_html(parse_log Loglines)
     return fmt html_template
