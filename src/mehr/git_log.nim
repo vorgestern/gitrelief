@@ -19,14 +19,14 @@ const html_template="""
 <table>
 <a id='top'/>
 <tr><th>Navigate</th><th>Command</th><th>Modify</th></tr>
-<tr><td><a href='/'>Start</a></td><td>{htmlescape cmd}</td><td><a href='{url_plus100}'>100 more</a></th></tr>
+<tr><td><a href='/'>Start</a></td><td>{htmlescape cmd}</td>{add100_top}</tr>
 </table>
 <p/>
 {content}
 <p>
 <table>
 <tr><th>Navigate</th><th>Command</th><th>Modify</th></tr>
-<tr><td><a href='#top'>Top</a></td><td>{htmlescape cmd}</td><td><a href='{url_plus100_rest}'>100 more</a></th></tr>
+<tr><td><a href='#top'>Top</a></td><td>{htmlescape cmd}</td>{add100_bottom}</tr>
 </table>
 </body>
 </html>
@@ -142,6 +142,8 @@ proc git_log*(Args: Table[string,string]): string=
         line:  string
     while readline(pipe, line): Loglines.add line
 
+    let L=parse_log Loglines
+
     # Bilde die Werte title, cmd, content und cssurl für die Auswertung der Schablone.
     let
         title="log_neu"
@@ -149,8 +151,10 @@ proc git_log*(Args: Table[string,string]): string=
             var X="git"
             for a in gitargs: X=X & " " & a
             X
-        url_plus100=fmt"/action/git_log?num={num+100}"
-        url_plus100_rest=url_plus100&fmt"#top{num}"
+        add100_top=if L.len>=num: fmt"<td><a href='/action/git_log?num={num+100}'>100 more</a></td>"
+        else: ""
+        add100_bottom=if L.len>=num: fmt"<td><a href='/action/git_log?num={num+100}#top{num}'>100 more</a></td>"
+        else: ""
         cssurl="/gitrelief.css"
-        content=format_html(parse_log Loglines)
+        content=format_html(L)
     return fmt html_template
