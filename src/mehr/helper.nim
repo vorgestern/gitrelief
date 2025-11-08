@@ -1,4 +1,6 @@
 
+import std/strformat
+
 const root_html* ="""
 <html>
 <head>
@@ -95,3 +97,7 @@ td.Ncmp span {
 func url_log*(num: int, top: int= -1): string=
     if top<0: "/git/log?num=" & $num
     else:     "/git/log?num=" & $num & "#top" & $top
+
+func url_diff*(parent,commit: string, path:string, oldpath:string = ""): string=
+    if oldpath=="": fmt"/git/diff?a={parent}&b={commit}&path={path}"
+    else:           fmt"/git/diff?a={parent}&b={commit}&path={path}&oldpath={oldpath}"

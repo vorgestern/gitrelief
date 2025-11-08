@@ -120,8 +120,8 @@ proc format_html(L: seq[Commit]): string=
         var files=""
         for index,(s,p,old) in commit.files:
             if index>0: files.add "<br/>"
-            if old=="": files.add fmt"{s} <a href='/git/diff?a={parent}&b={commit.hash}&c={chash}&path={p}'>{p}</a>"
-            else:       files.add fmt"{s} <a href='/git/diff?a={parent}&b={commit.hash}&c={chash}&path={p}&oldpath={old}'>{p}<br/>&nbsp;&nbsp;from {old}</a>"
+            if old=="": files.add fmt"{s} <a href='{url_diff parent, commit.hash, p, old}'>{p}</a>"
+            else:       files.add fmt"{s} <a href='{url_diff parent, commit.hash, p, old}'>{p}<br/>&nbsp;&nbsp;from {old}</a>"
         result.add "\n<tr><td>" & substr(commit.hash,0,7) & "</td><td>" & commit.author &
             "</td><td>" & commit.date & "</td><td>" & files & "</td><td>" & comments & "</td></tr>"
         chash=commit.hash
