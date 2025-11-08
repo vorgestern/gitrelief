@@ -174,7 +174,7 @@ proc format_html_toc(Patches: seq[FileEntry], ahash, bhash, chash: string): stri
         of Modified,Added: (fmt"/action/git_diff?a={ahash}&b={bhash}&path={path}", path)
         of Deleted,Other:  (fmt"/action/git_diff?a={ahash}&b={bhash}&path={path}", path)
         of Renamed:        (fmt"/action/git_diff?a={ahash}&b={bhash}&path={path}&frompath={entry.bpath.substr(2)}", path)
-        result.add fmt"<tr><td>{entry.op}</td><td><a href='{url}'>{tag}</a></td><td><a href='/action/git_log_follow?a={chash}&path={path}'>Follow</a></td></tr>"
+        result.add fmt"<tr><td>{entry.op}</td><td><a href='{url}'>{tag}</a></td><td><a href='/git/follow?a={chash}&path={path}'>Follow</a></td></tr>"
         # Follow soll z.B. 'git log --follow d0f3ff175 -- src/mehr/git_log.nim' auslösen.
     result.add "</table>"
 
@@ -185,24 +185,24 @@ proc format_html(Patches: seq[FileEntry], ahash, bhash, chash: string): string=
         case entry.op
         of Modified:
             let path=entry.bpath.substr(2)
-            let followurl=fmt"/action/git_log_follow?a={chash}&path={path}"
+            let followurl=fmt"/git/follow?a={chash}&path={path}"
             result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{path}</a></td><td><a href='{followurl}'>Follow</a></td></tr>"
         of Added:
             let path=entry.bpath.substr(2)
-            let followurl=fmt"/action/git_log_follow?a={chash}&path={path}"
+            let followurl=fmt"/git/follow?a={chash}&path={path}"
             result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{path}</a></td><td><a href='{followurl}'>Follow</a></td></tr>"
         of Deleted:
             let path=entry.apath.substr(2)
-            let followurl=fmt"/action/git_log_follow?a={chash}&path={path}"
+            let followurl=fmt"/git/follow?a={chash}&path={path}"
             result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{path}</a></td><td><a href='{followurl}'>Follow</a></td></tr>"
         of Renamed:
             let apath=entry.apath.substr(2)
             let bpath=entry.bpath.substr(2)
-            let followurl=fmt"/action/git_log_follow?a={chash}&path={apath}"
+            let followurl=fmt"/git/follow?a={chash}&path={apath}"
             result.add fmt"<tr><td>{entry.op}<br/>to</td><td><a href='#file{index:04}'>{apath}<br/>{bpath}</a></td><td><a href='{followurl}'>Follow</a></td></tr>"
         of Other:
             let path=entry.apath.substr(2)
-            let followurl=fmt"/action/git_log_follow?a={chash}&path={path}"
+            let followurl=fmt"/git/follow?a={chash}&path={path}"
             result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{path}</a></td><td><a href='{followurl}'>Follow</a></td></tr>"
     result.add "</table>"
     for index,fileentry in Patches:
