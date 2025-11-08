@@ -5,6 +5,13 @@ import std/[cmdline,paths,dirs,strutils,strformat]
 
 # asyncdispatch
 
+# Maßnahmen
+# 1. Wirf eine Ausnahme, wenn z.B. git_log_follow ohne path aufgerufen wird.
+# 2. Erzeuge für Ausnahmen sinnvolle Htmlseiten.
+# 3. Nenne git_log_follow um in git/follow, weitere sinngemäß.
+# 4. Stelle in git_log_follow immer die vollständige Entwicklung bis zum letzten commit dar.
+#    Hebe den in a=hash übergebenen commit einfach durch Fettdruck hervor.
+
 proc walkpublicdir(dir: Path): string=
         var dir1=dir
         normalizepathend(dir1, true)
