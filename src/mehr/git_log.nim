@@ -36,7 +36,7 @@ let TMonat={"01": "Jan", "02": "Feb", "03": "Mär", "04": "Apr", "05": "Mai", "0
             "07": "Jul", "08": "Aug", "09": "Sep", "10": "Okt", "11": "Nov", "12": "Dez"}.newstringtable
 
 type
-    filestatus=tuple[status: string, path: string]
+    filestatus=tuple[status: string, path: string, oldpath: string]
     Commit=object
         hash: string
         parents: seq[string]
@@ -54,6 +54,7 @@ proc parse_log(L: seq[string]): seq[Commit]=
             was: ptr seq[Commit]
     const loglineparser=peg("line", e: parsercontext):
         hash <- +{'0'..'9', 'a'..'f'}
+        path <- +{33..255}
         commit <- "commit " * >hash * ?@>hash * ?@>hash:
             let parents=case capture.len
             of 4: @[substr($2, 0, 8), substr($3, 0, 8)]
@@ -88,10 +89,14 @@ proc parse_log(L: seq[string]): seq[Commit]=
             of Details: e.was[^1].details.add $1
             else: discard
         filestatus <- >{'A'..'Z'} * +{' ','\t'} * >+1:
-            e.was[^1].files.add ($1, $2)
+            e.was[^1].files.add ($1, $2, "")
+        filestatus_rename <- 'R' * >{'0'..'9'}[3] * @>path * @>path:
+            e.was[^1].files.add ("R", $3, $2)
+        filestatus_rename99 <- 'R' * >{'0'..'9'}[3] * >+1:
+            e.was[^1].files.add ("R", $2, $2)
         sonst <- >(*1) * !1:
             echo "Nicht erwartet: ", $1
-        line <- >commit | >author | >date | empty | >comment | >filestatus | >sonst
+        line <- >commit | >author | >date | empty | >comment | >filestatus | >filestatus_rename | >sonst
     var e=parsercontext(st: None, was: addr result)
     for z in L:
         {.gcsafe.}:
@@ -114,9 +119,10 @@ proc format_html(L: seq[Commit]): string=
         let parent=if commit.parents.len>0: commit.parents[0]
         else: "0000000"
         var files=""
-        for index,(s,p) in commit.files:
+        for index,(s,p,old) in commit.files:
             if index>0: files.add "<br/>"
-            files.add fmt"{s} <a href='/action/git_diff?a={parent}&b={commit.hash}&c={chash}&path={p}'>{p}</a>"
+            if old=="": files.add fmt"{s} <a href='/action/git_diff?a={parent}&b={commit.hash}&c={chash}&path={p}'>{p}</a>"
+            else:       files.add fmt"{s} <a href='/action/git_diff?a={parent}&b={commit.hash}&c={chash}&path={p}'>{p}<br/>&nbsp;&nbsp;from {old}</a>"
         result.add "\n<tr><td>" & substr(commit.hash,0,7) & "</td><td>" & commit.author &
             "</td><td>" & commit.date & "</td><td>" & files & "</td><td>" & comments & "</td></tr>"
         chash=commit.hash
@@ -147,7 +153,7 @@ proc git_log*(Args: Table[string,string]): string=
 
     # Bilde die Werte title, cmd, content und cssurl für die Auswertung der Schablone.
     let
-        title="log_neu"
+        title="log"
         cmd=block:
             var X="git"
             for a in gitargs: X=X & " " & a
