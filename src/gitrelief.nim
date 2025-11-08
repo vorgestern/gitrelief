@@ -1,7 +1,7 @@
 
 import jesterfork
-import mehr/[helper,git_diff]
-import gitrelief/[log,follow]
+import mehr/[helper]
+import gitrelief/[log,diff,follow]
 import std/[cmdline,paths,dirs,strutils,strformat]
 
 # asyncdispatch
@@ -72,7 +72,7 @@ routes:
         get "/gitrelief.css": resp Http200, gitrelief_css
         get "/git/log": resp git_log(parsequery request.query)
         get "/git/follow": resp git_log_follow(parsequery request.query)
-        get "/action/git_diff":
+        get "/git/diff":
                 let A=parsequery(request.query)
                 resp git_diff(A)
         # error Http404: resp Http404, "Looks you took a wrong turn somewhere."

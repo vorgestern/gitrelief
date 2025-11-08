@@ -79,7 +79,7 @@ proc git_log_obsolet*(Args: Table[string,string]): string=
 <p></p>
 <table>"""
     for e in entries:
-        if e.datum!="": result.add "\n" & fmt"<tr><td>{e.datum} {e.zeit}</td><td><a href='/action/git_diff?a={e.parent}&b={e.hash}&toc'>{e.hash}</a></td><td>{e.user}</td><td>{e.subject}</td></tr>"
+        if e.datum!="": result.add "\n" & fmt"<tr><td>{e.datum} {e.zeit}</td><td><a href='/git/diff?a={e.parent}&b={e.hash}&toc'>{e.hash}</a></td><td>{e.user}</td><td>{e.subject}</td></tr>"
         else:           result.add "\n" & fmt"<tr><td>fail</td><td></td><td></td><td>{e.subject}</td></tr>"
     result.add "\n</table></body></html>"
 
