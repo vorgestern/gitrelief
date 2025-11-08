@@ -15,14 +15,14 @@ const html_template="""
 <body>
 <table>
 <tr><th>Navigate</th><th>Command</th></tr>
-<tr><td><a href='/'>Start</a></td><td>{htmlescape cmd}<td></td></tr>
+<tr><td><a href='/'>Start</a></td><td>{htmlescape cmd}</td></tr>
 </table>
 {content}
 </body></html>
 """
 
 type
-    FileOp=enum Other, Modified, Deleted, Added
+    FileOp=enum Other, Modified, Deleted, Added, Renamed
     NABR=enum N, A, B, R
     FileSection=object
         case kind: NABR
@@ -40,6 +40,7 @@ func `$`(X: FileEntry): string {.used.}=
     of Modified: fmt"Modified{'\t'}{X.apath} {X.sections.len} Abschnitte"
     of Deleted:  fmt"Deleted {'\t'}{X.apath} {X.sections.len} Abschnitte"
     of Added:    fmt"Added   {'\t'}{X.bpath} {X.sections.len} Abschnitte"
+    of Renamed:  fmt"Renamed {'\t'}'{X.apath}' '{X.bpath}' {X.sections.len} Abschnitte"
     of Other:    fmt"Other   {'\t'}'{X.apath}' '{X.bpath}' {X.sections.len} Abschnitte"
 
 func numlines(S: FileSection): int=
@@ -97,15 +98,23 @@ proc parse_patch(patch: seq[string]): seq[FileEntry]=
             e.fe[^1].apath= $1
             e.fe[^1].bpath= $2
         index <- "index" * @>hash * ".." * @>hash * @flags:
-            e.fe[^1].op=Modified
+            # e.fe[^1].op=Modified
+            discard
         aaa <- "---" * @>path:
             e.fe[^1].apath= $1
         bbb <- "+++" * @>path:
             e.fe[^1].bpath= $1
+            if e.fe[^1].op==Other: e.fe[^1].op=Modified
         newfile <- "new file mode" * @>flags:
             e.fe[^1].op=Added
         deletedfile <- "deleted file mode" * @>flags:
             e.fe[^1].op=Deleted
+        similarity <- "similarity index" * @>num * '%':
+            discard
+        rename_from <- "rename from" * @>path:
+            e.fe[^1].op=Renamed
+        rename_to <- "rename to" * @>path:
+            e.fe[^1].op=Renamed
         atat <- "@@" * @'-' * >num * ',' * >num * @'+' * >num * ',' * >num * @"@@":
             e.na=parseint $2
             e.nb=parseint $4
@@ -117,7 +126,7 @@ proc parse_patch(patch: seq[string]): seq[FileEntry]=
             e.nb=1
         sonst <- >(*1) * !1:
             discard
-        entry <- >diff | >index | >newfile | >deletedfile | >aaa | >bbb | >atat | >atat1 | >atat2 | >sonst
+        entry <- >diff | >index | >newfile | >deletedfile | >aaa | >bbb | >rename_from | >rename_to | >similarity | >atat | >atat1 | >atat2 | >sonst
 
     var
         na=0
@@ -159,11 +168,12 @@ proc format_html_toc(Patches: seq[FileEntry], ahash, bhash, chash: string): stri
     result.add "<table>"
     for index,entry in Patches:
         let path=case entry.op
-        of Modified,Added: entry.bpath.substr(2)
+        of Modified,Added,Renamed: entry.bpath.substr(2)
         of Deleted,Other:  entry.apath.substr(2)
         let (url,tag)=case entry.op
-        of Modified,Added: (fmt"/action/git_diff?a={ahash}&b={bhash}&path={entry.bpath.substr(2)}", entry.bpath.substr(2))
-        of Deleted,Other:  (fmt"/action/git_diff?a={ahash}&b={bhash}&path={entry.apath.substr(2)}", entry.apath.substr(2))
+        of Modified,Added: (fmt"/action/git_diff?a={ahash}&b={bhash}&path={path}", path)
+        of Deleted,Other:  (fmt"/action/git_diff?a={ahash}&b={bhash}&path={path}", path)
+        of Renamed:        (fmt"/action/git_diff?a={ahash}&b={bhash}&path={path}&frompath={entry.bpath.substr(2)}", path)
         result.add fmt"<tr><td>{entry.op}</td><td><a href='{url}'>{tag}</a></td><td><a href='/action/git_log_follow?a={chash}&path={path}'>Follow</a></td></tr>"
         # Follow soll z.B. 'git log --follow d0f3ff175 -- src/mehr/git_log.nim' auslösen.
     result.add "</table>"
@@ -172,23 +182,35 @@ proc format_html(Patches: seq[FileEntry], ahash, bhash, chash: string): string=
     result.add "<p>Anzahl Dateien: " & $Patches.len & "</p>"
     result.add "<table>"
     for index,entry in Patches:
-        let path=case entry.op
-        of Modified,Added: entry.bpath.substr(2)
-        of Deleted,Other:  entry.apath.substr(2)
-        let followurl=case entry.op
-        of Modified,Added: fmt"/action/git_log_follow?a={chash}&path={path}"
-        of Deleted,Other:  fmt"/action/git_log_follow?a={chash}&path={path}"
-        case entry.op:
-        of Modified: result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.bpath.substr(2)}</a></td><td><a href='{followurl}'>Follow</a></td></tr>"
-        of Added:    result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.bpath.substr(2)}</a></td><td><a href='{followurl}'>Follow</a></td></tr>"
-        of Deleted:  result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.apath.substr(2)}</a></td><td><a href='{followurl}'>Follow</a></td></tr>"
-        of Other:    result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{entry.apath.substr(2)}</a></td><td><a href='{followurl}'>Follow</a></td></tr>"
+        case entry.op
+        of Modified:
+            let path=entry.bpath.substr(2)
+            let followurl=fmt"/action/git_log_follow?a={chash}&path={path}"
+            result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{path}</a></td><td><a href='{followurl}'>Follow</a></td></tr>"
+        of Added:
+            let path=entry.bpath.substr(2)
+            let followurl=fmt"/action/git_log_follow?a={chash}&path={path}"
+            result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{path}</a></td><td><a href='{followurl}'>Follow</a></td></tr>"
+        of Deleted:
+            let path=entry.apath.substr(2)
+            let followurl=fmt"/action/git_log_follow?a={chash}&path={path}"
+            result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{path}</a></td><td><a href='{followurl}'>Follow</a></td></tr>"
+        of Renamed:
+            let apath=entry.apath.substr(2)
+            let bpath=entry.bpath.substr(2)
+            let followurl=fmt"/action/git_log_follow?a={chash}&path={apath}"
+            result.add fmt"<tr><td>{entry.op}<br/>to</td><td><a href='#file{index:04}'>{apath}<br/>{bpath}</a></td><td><a href='{followurl}'>Follow</a></td></tr>"
+        of Other:
+            let path=entry.apath.substr(2)
+            let followurl=fmt"/action/git_log_follow?a={chash}&path={path}"
+            result.add fmt"<tr><td>{entry.op}</td><td><a href='#file{index:04}'>{path}</a></td><td><a href='{followurl}'>Follow</a></td></tr>"
     result.add "</table>"
     for index,fileentry in Patches:
         case fileentry.op:
         of Modified: result.add fmt"{'\n'}<p><a name='file{index:04}'/>Modified {fileentry.apath.substr(2)}</p>"
         of Deleted:  result.add fmt"{'\n'}<p><a name='file{index:04}'/>Deleted {fileentry.apath.substr(2)}</p>"
         of Added:    result.add fmt"{'\n'}<p><a name='file{index:04}'/>Added {fileentry.bpath.substr(2)}</p>"
+        of Renamed:  result.add fmt"{'\n'}<p><a name='file{index:04}'/>Renamed {fileentry.apath.substr(2)} to {fileentry.bpath.substr(2)}</p>"
         of Other:    result.add fmt"{'\n'}<p><a name='file{index:04}'/>Unknown operation {fileentry.apath.substr(2)}</p>"
         if fileentry.op!=Other:
             result.add "<table class='diff'>"
@@ -202,6 +224,9 @@ proc format_html(Patches: seq[FileEntry], ahash, bhash, chash: string): string=
             of Added:
                 result.add "\n<tr><th/><th>" & fileentry.bpath & "</th></tr>"
                 result.add "\n<tr><th/><th>" & bhash & "</th></tr>"
+            of Renamed:
+                result.add "\n<tr><th>" & fileentry.apath & "</th><th>" & fileentry.bpath & "</th></tr>"
+                result.add "\n<tr><th>" & ahash & "</th><th>" & bhash & "</th></tr>"
             of Other:
                 result.add "\n<tr><th>" & fileentry.apath & "</th><th>" & fileentry.bpath & "</th></tr>"
                 result.add "\n<tr><th>" & ahash & "</th><th>" & bhash & "</th></tr>"
@@ -254,17 +279,20 @@ proc git_diff*(Args: Table[string,string]): string=
             A.add "-U0"
             toc=true
         else: A.add "-U999999"
+        if Args.contains "staged":
+            A.add "--staged"
         if Args.contains "a":
             var arg=Args["a"]
             if Args.contains "b": arg.add ".."&Args["b"]
             A.add arg
         elif Args.contains "b":
             A.add ".."&Args["b"]
-        if Args.contains "path":
+        if Args.contains("path") or Args.contains("oldpath"):
             A.add "--"
+        if Args.contains "oldpath":
+            A.add Args["oldpath"]
+        if Args.contains "path":
             A.add Args["path"]
-        if Args.contains "staged":
-            A.add "--staged"
         (A, toc)
 
     # Starte git und sammele Ausgabezeilen ein.
