@@ -92,8 +92,6 @@ proc parse_log(L: seq[string]): seq[Commit]=
             e.was[^1].files.add ($1, $2, "")
         filestatus_rename <- 'R' * >{'0'..'9'}[3] * @>path * @>path:
             e.was[^1].files.add ("R", $3, $2)
-        filestatus_rename99 <- 'R' * >{'0'..'9'}[3] * >+1:
-            e.was[^1].files.add ("R", $2, $2)
         sonst <- >(*1) * !1:
             echo "Nicht erwartet: ", $1
         line <- >commit | >author | >date | empty | >comment | >filestatus | >filestatus_rename | >sonst
