@@ -164,7 +164,7 @@ proc parse_patch(patch: seq[string]): seq[FileEntry]=
                     # e.zeile="??????"
                     discard
 
-proc format_html_toc(Patches: seq[FileEntry], ahash, bhash, chash: string): string=
+proc format_html_toc(Patches: seq[FileEntry], ahash, bhash: string): string=
     # result.add "<p>Anzahl Dateien: " & $Patches.len & "</p>"
     result.add "<table>"
     for index,entry in Patches:
@@ -175,17 +175,17 @@ proc format_html_toc(Patches: seq[FileEntry], ahash, bhash, chash: string): stri
         of Modified,Added: (fmt"/action/git_diff?a={ahash}&b={bhash}&path={path}", path)
         of Deleted,Other:  (fmt"/action/git_diff?a={ahash}&b={bhash}&path={path}", path)
         of Renamed:        (fmt"/action/git_diff?a={ahash}&b={bhash}&path={path}&frompath={entry.bpath.substr(2)}", path)
-        result.add fmt"<tr><td>{entry.op}</td><td><a href='{url}'>{tag}</a></td><td><a href='{url_follow path, chash}'>Follow</a></td></tr>"
+        result.add fmt"<tr><td>{entry.op}</td><td><a href='{url}'>{tag}</a></td><td><a href='{url_follow path}'>Follow</a></td></tr>"
         # Follow soll z.B. 'git log --follow d0f3ff175 -- src/mehr/git_log.nim' auslösen.
     result.add "</table>"
 
-proc format_html_patch(fileentry: FileEntry, ahash, bhash, chash: string): string=
+proc format_html_patch(fileentry: FileEntry, ahash, bhash: string): string=
     let followurl=case fileentry.op
-    of Modified: fmt"{url_follow fileentry.bpath.substr(2), chash}"
-    of Added:    fmt"{url_follow fileentry.bpath.substr(2), chash}"
-    of Deleted:  fmt"{url_follow fileentry.apath.substr(2), chash}"
-    of Renamed:  fmt"{url_follow fileentry.bpath.substr(2), chash}"
-    of Other:    fmt"{url_follow fileentry.apath.substr(2), chash}"
+    of Modified: fmt"{url_follow fileentry.bpath.substr(2)}"
+    of Added:    fmt"{url_follow fileentry.bpath.substr(2)}"
+    of Deleted:  fmt"{url_follow fileentry.apath.substr(2)}"
+    of Renamed:  fmt"{url_follow fileentry.bpath.substr(2)}"
+    of Other:    fmt"{url_follow fileentry.apath.substr(2)}"
     case fileentry.op:
     of Modified: result.add fmt"{'\n'}<p>Modified {fileentry.apath.substr(2)} <span><a href='{followurl}'>Follow</a></span></p>"
     of Deleted:  result.add fmt"{'\n'}<p>Deleted {fileentry.apath.substr(2)} <span><a href='{followurl}'>Follow</a></span></p>"
@@ -292,10 +292,9 @@ proc git_diff*(Args: Table[string,string]): string=
             let
                 ahash=Args.getordefault("a", "")
                 bhash=Args.getordefault("b", "")
-                chash=Args.getordefault("c", "")
             let Patches=parse_patch(patchlines)
-            if Patches.len>1: format_html_toc(Patches, ahash, bhash, chash)
-            else:             format_html_patch(Patches[0], ahash, bhash, chash)
+            if Patches.len>1: format_html_toc(Patches, ahash, bhash)
+            else:             format_html_patch(Patches[0], ahash, bhash)
     return fmt html_template
 
 # =====================================================================

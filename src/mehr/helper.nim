@@ -102,6 +102,6 @@ func url_diff*(parent,commit: string, path:string, oldpath:string = ""): string=
     if oldpath=="": fmt"/git/diff?a={parent}&b={commit}&path={path}"
     else:           fmt"/git/diff?a={parent}&b={commit}&path={path}&oldpath={oldpath}"
 
-func url_follow*(path: string, startcommit: string): string=
+func url_follow*(path: string, startcommit: string = ""): string=
     if startcommit=="": fmt"/git/follow?path={path}"
     else:               fmt"/git/follow?path={path}&a={startcommit}"
