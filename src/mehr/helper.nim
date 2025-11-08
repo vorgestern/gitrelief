@@ -10,7 +10,7 @@ const root_html* ="""
 <table class='head'>
 <tr><td><h1>Start</h1></td><td><h1>Root</h1></td><td colspan='3'><h1>git ...</h1></td></tr>
 <tr class='head'><td>&nbsp;</td><td>pwd</td>
-    <td><a href="/action/git_log">Log</a></td>
+    <td><a href="/git/log">Log</a></td>
     <td><a href="/action/git_diff">Diff</a></td>
     <td><a href="/action/git_diff?staged=1">Diff (staged)</a></td></tr>
 </table>

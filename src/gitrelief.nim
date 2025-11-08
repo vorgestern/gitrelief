@@ -1,7 +1,7 @@
 
 import jesterfork
-import mehr/[helper,git_diff,git_log]
-import gitrelief/follow
+import mehr/[helper,git_diff]
+import gitrelief/[log,follow]
 import std/[cmdline,paths,dirs,strutils,strformat]
 
 # asyncdispatch
@@ -70,7 +70,7 @@ routes:
                 html=replace(html, "localfiles", pubdir)
                 resp Http200, html
         get "/gitrelief.css": resp Http200, gitrelief_css
-        get "/action/git_log": resp git_log(parsequery request.query)
+        get "/git/log": resp git_log(parsequery request.query)
         get "/git/follow": resp git_log_follow(parsequery request.query)
         get "/action/git_diff":
                 let A=parsequery(request.query)
