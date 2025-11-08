@@ -151,11 +151,10 @@ proc git_log_follow*(Args: Table[string,string]): string=
     let
         title="log_follow"
         cmd=block:
-            var cmd="git"
-            for a in gitargs: cmd=cmd & " " & a
-            cmd
+            var X="git"
+            for a in gitargs: X=X & " " & a
+            X
         pathtofollow=Args.getordefault("path", "???")
         cssurl="/gitrelief.css"
-        content=block:
-            format_html(parse_log Loglines)
+        content=format_html(parse_log Loglines)
     return fmt html_template
