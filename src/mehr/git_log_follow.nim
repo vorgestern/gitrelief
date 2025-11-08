@@ -41,14 +41,6 @@ type
         details: seq[string]
         files: seq[filestatus]
 
-func `$`(X: FileOp): string=
-    case X
-    of Modified: "M"
-    of Deleted: "D"
-    of Added: "A"
-    of Renamed: "R"
-    of Other: "Other"
-
 proc parse_log(L: seq[string]): seq[Commit]=
     type
         context=enum None, Header, Subject, Details, Files
@@ -115,17 +107,18 @@ proc parse_log(L: seq[string]): seq[Commit]=
 
 proc format_html(L: seq[Commit]): string=
     result="<table class='diff'>"
-    for commit in L:
+    for commitindex,commit in L:
         var comments=htmlescape(commit.subject)
         for d in commit.details: comments.add "<br/>"&htmlescape(d)
         let parent=if commit.parents.len>0: commit.parents[0]
         else: "0000000"
         var files=""
-        for index,(stat,p,old) in commit.files:
-            if index>0: files.add "<br/>"
-            case stat
-            of Renamed: files.add fmt"{stat} <a href='/action/git_diff?a={parent}&b={commit.hash}&path={p}'>{p}<br/>&nbsp;&nbsp;{old}</a>"
-            else:       files.add fmt"{stat} <a href='/action/git_diff?a={parent}&b={commit.hash}&path={p}'>{p}</a>"
+        for fileindex,(stat,p,old) in commit.files:
+            if fileindex>0: files.add "<br/>"
+            if stat==Renamed:       files.add fmt"<a href='/action/git_diff?a={parent}&b={commit.hash}&path={p}'>{stat}</a><br/>to {p}<br/>from {old}"
+            elif stat==Added:       files.add fmt"<a href='/action/git_diff?a={parent}&b={commit.hash}&path={p}'>{stat}</a><br/>{p}"
+            elif commitindex==0:    files.add fmt"<a href='/action/git_diff?a={parent}&b={commit.hash}&path={p}'>{stat}</a><br/>{p}"
+            else:                   files.add fmt"<a href='/action/git_diff?a={parent}&b={commit.hash}&path={p}'>{stat}</a>"
         result.add "<tr><td>" & substr(commit.hash,0,7) & "</td><td>" & commit.author &
             "</td><td>" & commit.date & "</td><td>" & files & "</td><td>" & comments & "</td></tr>"
     result.add "</table>"
