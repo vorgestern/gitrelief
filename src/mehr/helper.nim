@@ -33,6 +33,10 @@ td, tr {
     vertical-align: top;
     padding:0 .5em 0;
 }
+th {
+    padding:0 .5em 0;
+    text-align: left;
+}
 table.diff tr td {
     white-space: pre;
     font-size: 70%;
