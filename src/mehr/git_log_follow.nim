@@ -30,7 +30,8 @@ let TMonat={"01": "Jan", "02": "Feb", "03": "Mär", "04": "Apr", "05": "Mai", "0
             "07": "Jul", "08": "Aug", "09": "Sep", "10": "Okt", "11": "Nov", "12": "Dez"}.newstringtable
 
 type
-    filestatus=tuple[status: string, path: string]
+    FileOp=enum Other, Modified, Deleted, Added, Renamed
+    filestatus=tuple[status: FileOp, path: string, oldpath: string]
     Commit=object
         hash: string
         parents: seq[string]
@@ -40,6 +41,14 @@ type
         details: seq[string]
         files: seq[filestatus]
 
+func `$`(X: FileOp): string=
+    case X
+    of Modified: "M"
+    of Deleted: "D"
+    of Added: "A"
+    of Renamed: "R"
+    of Other: "Other"
+
 proc parse_log(L: seq[string]): seq[Commit]=
     type
         context=enum None, Header, Subject, Details, Files
@@ -48,6 +57,7 @@ proc parse_log(L: seq[string]): seq[Commit]=
             was: ptr seq[Commit]
     const loglineparser=peg("line", e: parsercontext):
         hash <- +{'0'..'9', 'a'..'f'}
+        path <- +{33..255}
         commit <- "commit " * >hash * ?@>hash * ?@>hash:
             let parents=case capture.len
             of 4: @[substr($2, 0, 8), substr($3, 0, 8)]
@@ -81,11 +91,18 @@ proc parse_log(L: seq[string]): seq[Commit]=
                 e.st=Details
             of Details: e.was[^1].details.add $1
             else: discard
-        filestatus <- >{'A'..'Z'} * +{' ','\t'} * >+1:
-            e.was[^1].files.add ($1, $2)
+        filestatus <- >{'A', 'M', 'D'} * +{' ','\t'} * >+1:
+            let stat=case $1
+            of "M": Modified
+            of "D": Deleted
+            of "A": Added
+            else: Other
+            e.was[^1].files.add (stat, $2, "")
+        filestatus_rename <- 'R' * {'0'..'9'}[3] * '\t' * >path * '\t' * >path:
+            e.was[^1].files.add (Renamed, $2, $1)
         sonst <- >(*1) * !1:
             echo "Nicht erwartet: ", $1
-        line <- >commit | >author | >date | empty | >comment | >filestatus | >sonst
+        line <- commit | author | date | empty | comment | filestatus | filestatus_rename | sonst
     var e=parsercontext(st: None, was: addr result)
     for z in L:
         {.gcsafe.}:
@@ -104,9 +121,11 @@ proc format_html(L: seq[Commit]): string=
         let parent=if commit.parents.len>0: commit.parents[0]
         else: "0000000"
         var files=""
-        for index,(s,p) in commit.files:
+        for index,(stat,p,old) in commit.files:
             if index>0: files.add "<br/>"
-            files.add fmt"{s} <a href='/action/git_diff?a={parent}&b={commit.hash}&path={p}'>{p}</a>"
+            case stat
+            of Renamed: files.add fmt"{stat} <a href='/action/git_diff?a={parent}&b={commit.hash}&path={p}'>{p}<br/>&nbsp;&nbsp;{old}</a>"
+            else:       files.add fmt"{stat} <a href='/action/git_diff?a={parent}&b={commit.hash}&path={p}'>{p}</a>"
         result.add "<tr><td>" & substr(commit.hash,0,7) & "</td><td>" & commit.author &
             "</td><td>" & commit.date & "</td><td>" & files & "</td><td>" & comments & "</td></tr>"
     result.add "</table>"
