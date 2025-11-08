@@ -91,3 +91,7 @@ td.Ncmp span {
         padding: 0 0.5em 0 0;
 }
 """
+
+func url_log*(num: int, top: int= -1): string=
+    if top<0: "/git/log?num=" & $num
+    else:     "/git/log?num=" & $num & "#top" & $top

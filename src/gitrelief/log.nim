@@ -3,6 +3,7 @@ import std/[tables, strformat, parseutils]
 import std/[osproc, strutils, streams]
 import std/strtabs
 import npeg
+import mehr/helper
 
 # import helper
 
@@ -156,9 +157,9 @@ proc git_log*(Args: Table[string,string]): string=
             var X="git"
             for a in gitargs: X=X & " " & a
             X
-        add100_top=if L.len>=num: fmt"<td><a href='/git/log?num={num+100}'>100 more</a></td>"
+        add100_top=if L.len>=num: fmt"<td><a href='{url_log num+100}'>100 more</a></td>"
         else: ""
-        add100_bottom=if L.len>=num: fmt"<td><a href='/git/log?num={num+100}#top{num}'>100 more</a></td>"
+        add100_bottom=if L.len>=num: fmt"<td><a href='{url_log num+100, num}'>100 more</a></td>"
         else: ""
         cssurl="/gitrelief.css"
         content=format_html(L)
