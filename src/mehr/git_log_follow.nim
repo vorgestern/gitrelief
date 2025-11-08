@@ -126,8 +126,7 @@ proc format_html(L: seq[Commit]): string=
 proc git_log_follow*(Args: Table[string,string]): string=
 
     let gitargs=block:
-        var
-            X= @["log", "--follow", "--name-status", "--date=iso-local"]
+        var X= @["log", "--follow", "--name-status", "--date=iso-local"]
         if Args.contains "path":
             if Args.contains "a":
                 var arg=Args["a"]   # &"^"
