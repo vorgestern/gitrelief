@@ -127,19 +127,19 @@ proc git_log_follow*(Args: Table[string,string]): string=
 
     let gitargs=block:
         var
-            A= @["log", "--follow", "--name-status", "--date=iso-local"]
+            X= @["log", "--follow", "--name-status", "--date=iso-local"]
         if Args.contains "path":
             if Args.contains "a":
                 var arg=Args["a"]   # &"^"
                 if Args.contains "b": arg.add ".."&Args["b"]
-                A.add arg
+                X.add arg
             elif Args.contains "b":
-                A.add ".."&Args["b"]
-            if Args.contains "num": A.add "-" & Args["num"]
-            else: A.add "-100"
-            A.add "--"
-            A.add Args["path"]
-        A
+                X.add ".."&Args["b"]
+            if Args.contains "num": X.add "-" & Args["num"]
+            else: X.add "-100"
+            X.add "--"
+            X.add Args["path"]
+        X
 
     # Starte git und sammele Ausgabezeilen ein.
     let p=startprocess("git", args=gitargs, options={poUsePath})
