@@ -94,7 +94,6 @@ proc parse_patch(patch: seq[string]): seq[FileEntry]=
         flags <- +{'0'..'9'}
         num <- +{'0'..'9'}
         diff <- "diff --git" * @>path * @>path:
-            # echo "diff ", $1, $2
             add(e.fe[], FileEntry())
             e.fe[^1].apath= $1
             e.fe[^1].bpath= $2
@@ -127,7 +126,7 @@ proc parse_patch(patch: seq[string]): seq[FileEntry]=
             e.nb=1
         sonst <- >(*1) * !1:
             discard
-        entry <- >diff | >index | >newfile | >deletedfile | >aaa | >bbb | >rename_from | >rename_to | >similarity | >atat | >atat1 | >atat2 | >sonst
+        entry <- diff | index | newfile | deletedfile | aaa | bbb | rename_from | rename_to | similarity | atat | atat1 | atat2 | sonst
 
     var
         na=0
