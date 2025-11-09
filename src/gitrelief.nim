@@ -12,6 +12,7 @@ import std/[cmdline,paths,dirs,strutils,strformat]
 # 3. ok Nenne git_log_follow um in git/follow, weitere sinngemäß.
 # 4. ok Stelle in git_log_follow immer die vollständige Entwicklung bis zum letzten commit dar.
 #       Hebe den in a=hash übergebenen commit einfach durch Fettdruck hervor.
+# 5.    Follow braucht ebenfalls 'next 100' Links.
 
 proc walkpublicdir(dir: Path): string=
         var dir1=dir
@@ -46,11 +47,8 @@ var
 
 let args=commandlineparams()
 for k in 0..<args.len:
-        echo $k," ",args[k]
-        if args[k]=="--port":
-                if k+1<args.len: port=parseint args[k+1]
-        if args[k]=="--public":
-                if k+1<args.len: publicdir=args[k+1]
+        if args[k]=="--port"and k+1<args.len: port=parseint args[k+1]
+        if args[k]=="--public" and k+1<args.len: publicdir=args[k+1]
 
 settings:
         # appname="gitrelief" Dieser Name wird am Anfang von urls entfernt, er ist kein hostname.
@@ -72,8 +70,6 @@ routes:
         get "/gitrelief.css": resp Http200, gitrelief_css
         get "/git/log": resp git_log(parsequery request.query)
         get "/git/follow": resp git_log_follow(parsequery request.query)
-        get "/git/diff":
-                let A=parsequery(request.query)
-                resp git_diff(A)
+        get "/git/diff": resp git_diff(parsequery request.query)
         # error Http404: resp Http404, "Looks you took a wrong turn somewhere."
         error Exception: resp Http500, "Exception caught: "&exception.msg
