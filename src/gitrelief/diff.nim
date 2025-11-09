@@ -1,8 +1,7 @@
 
-import std/[tables, strformat]
-import std/[osproc, strutils, streams]
-import npeg
+import std/[tables, strformat, strutils]
 import mehr/helper
+import git/processes
 
 func htmlescape(s: string): string=replace(s, "<", "&lt;")
 
@@ -22,148 +21,7 @@ const html_template="""
 </body></html>
 """
 
-type
-    FileOp=enum Other, Modified, Deleted, Added, Renamed
-    NABR=enum N, A, B, R
-    FileSection=object
-        case kind: NABR
-        of N, A, B:
-            zeilen: seq[string]
-        of R:
-            razeilen, rbzeilen: seq[string]
-    FileEntry=object
-        op: FileOp
-        apath, bpath: string
-        sections: seq[FileSection]
-
-func `$`(X: FileEntry): string {.used.}=
-    case X.op
-    of Modified: fmt"Modified{'\t'}{X.apath} {X.sections.len} Abschnitte"
-    of Deleted:  fmt"Deleted {'\t'}{X.apath} {X.sections.len} Abschnitte"
-    of Added:    fmt"Added   {'\t'}{X.bpath} {X.sections.len} Abschnitte"
-    of Renamed:  fmt"Renamed {'\t'}'{X.apath}' '{X.bpath}' {X.sections.len} Abschnitte"
-    of Other:    fmt"Other   {'\t'}'{X.apath}' '{X.bpath}' {X.sections.len} Abschnitte"
-
-func numlines(S: FileSection): int=
-    case S.kind
-    of N, A, B: S.zeilen.len
-    of R: S.razeilen.len
-
-proc addline(S: var FileSection, z: string): bool=
-    if z.len<1: return false
-    let
-        neu=numlines(S)==0
-        k=z[0]
-        z1=substr(z,1)
-    case k
-    of '-':
-        if neu: S=FileSection(kind: A, zeilen: @[])
-        if S.kind==A: S.zeilen.add z1
-        return S.kind==A
-    of '+':
-        if neu: S=FileSection(kind: B, zeilen: @[])
-        if S.kind==B:
-            S.zeilen.add z1
-            return true
-        elif S.kind==A:
-            let temp=S.zeilen
-            S=FileSection(kind: R, razeilen: temp, rbzeilen: @[z1])
-            return true
-        elif S.kind==R:
-            S.rbzeilen.add z1
-            return true
-        else: return false
-    of ' ':
-        if neu: S=FileSection(kind: N, zeilen: @[])
-        if S.kind==N:
-            S.zeilen.add z1
-            return true
-        else: return false
-    else:
-        # error
-        return false
-
-proc parse_patch(patch: seq[string]): seq[FileEntry]=
-    type
-        parsercontext=object
-            na, nb: int
-            fe: ptr seq[FileEntry]
-    const diffentryparser=peg("entry", e: parsercontext):
-        path <- +{1..31, 33..255}
-        hash <- +{'0'..'9', 'a'..'f'}
-        flags <- +{'0'..'9'}
-        num <- +{'0'..'9'}
-        diff <- "diff --git" * @>path * @>path:
-            add(e.fe[], FileEntry())
-            e.fe[^1].apath= $1
-            e.fe[^1].bpath= $2
-        index <- "index" * @>hash * ".." * @>hash * @flags:
-            # e.fe[^1].op=Modified
-            discard
-        aaa <- "---" * @>path:
-            e.fe[^1].apath= $1
-        bbb <- "+++" * @>path:
-            e.fe[^1].bpath= $1
-            if e.fe[^1].op==Other: e.fe[^1].op=Modified
-        newfile <- "new file mode" * @>flags:
-            e.fe[^1].op=Added
-        deletedfile <- "deleted file mode" * @>flags:
-            e.fe[^1].op=Deleted
-        similarity <- "similarity index" * @>num * '%':
-            discard
-        rename_from <- "rename from" * @>path:
-            e.fe[^1].op=Renamed
-        rename_to <- "rename to" * @>path:
-            e.fe[^1].op=Renamed
-        atat <- "@@" * @'-' * >num * ',' * >num * @'+' * >num * ',' * >num * @"@@":
-            e.na=parseint $2
-            e.nb=parseint $4
-        atat1 <- "@@" * @'-' * >num * ',' * >num * @'+' * >num * @"@@":
-            e.na=parseint($2)
-            e.nb=1
-        atat2 <- "@@" * @'-' * >num * @'+' * >num * @"@@":
-            e.na=1
-            e.nb=1
-        sonst <- >(*1) * !1:
-            discard
-        entry <- diff | index | newfile | deletedfile | aaa | bbb | rename_from | rename_to | similarity | atat | atat1 | atat2 | sonst
-
-    var
-        na=0
-        nb=0
-
-    for z in patch:
-        if na>0 or nb>0:
-            if result[^1].sections.len==0: result[^1].sections.add FileSection()
-            let added=result[^1].sections[^1].addline z
-            if not added:
-                let z1=substr(z, 1)
-                case z[0]
-                of '+': result[^1].sections.add FileSection(kind: B, zeilen: @[z1])
-                of '-': result[^1].sections.add FileSection(kind: A, zeilen: @[z1])
-                of ' ': result[^1].sections.add FileSection(kind: N, zeilen: @[z1])
-                else:
-                    # error
-                    discard
-            case z[0]
-            of '+': dec nb
-            of '-': dec na
-            else:
-                dec na
-                dec nb
-        else:
-            {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
-                var e=parsercontext(fe: addr result)
-                if diffentryparser.match(strip z, e).ok:
-                    if e.na>0 or e.nb>0:
-                        na=e.na
-                        nb=e.nb
-                else:
-                    # error
-                    # e.zeile="??????"
-                    discard
-
-proc format_html_toc(Patches: seq[FileEntry], ahash, bhash: string): string=
+proc format_html_toc(Patches: seq[FileDiff], staged: bool, ahash, bhash: string): string=
     # result.add "<p>Anzahl Dateien: " & $Patches.len & "</p>"
     result.add "<table>"
     for index,entry in Patches:
@@ -171,14 +29,13 @@ proc format_html_toc(Patches: seq[FileEntry], ahash, bhash: string): string=
         of Modified,Added,Renamed: entry.bpath.substr(2)
         of Deleted,Other:  entry.apath.substr(2)
         let (url,tag)=case entry.op
-        of Modified,Added: (fmt"/action/git_diff?a={ahash}&b={bhash}&path={path}", path)
-        of Deleted,Other:  (fmt"/action/git_diff?a={ahash}&b={bhash}&path={path}", path)
-        of Renamed:        (fmt"/action/git_diff?a={ahash}&b={bhash}&path={path}&frompath={entry.bpath.substr(2)}", path)
+        of Modified,Added: (url_diff(ahash, bhash, staged, path), path)
+        of Deleted,Other:  (url_diff(ahash, bhash, staged, path), path)
+        of Renamed:        (url_diff(ahash, bhash, staged, path, entry.bpath.substr(2)), path)
         result.add fmt"<tr><td>{entry.op}</td><td><a href='{url}'>{tag}</a></td><td><a href='{url_follow path}'>Follow</a></td></tr>"
-        # Follow soll z.B. 'git log --follow d0f3ff175 -- src/mehr/git_log.nim' auslösen.
     result.add "</table>"
 
-proc format_html_patch(fileentry: FileEntry, ahash, bhash: string): string=
+proc format_html_patch(fileentry: FileDiff, staged: bool, ahash, bhash: string): string=
     let followurl=case fileentry.op
     of Modified: fmt"{url_follow fileentry.bpath.substr(2), bhash}"
     of Added:    fmt"{url_follow fileentry.bpath.substr(2), bhash}"
@@ -249,51 +106,23 @@ proc format_html_patch(fileentry: FileEntry, ahash, bhash: string): string=
         result.add "</table>"
 
 proc git_diff*(Args: Table[string,string]): string=
-
-    let gitargs=block:
-        var A= @["diff"]
-        if Args.contains "toc":
-            A.add "-U0"
-        else: A.add "-U999999"
-        if Args.contains "staged":
-            A.add "--staged"
-        if Args.contains "a":
-            var arg=Args["a"]
-            if Args.contains "b": arg.add ".."&Args["b"]
-            A.add arg
-        elif Args.contains "b":
-            A.add ".."&Args["b"]
-        if Args.contains("path") or Args.contains("oldpath"):
-            A.add "--"
-        if Args.contains "oldpath":
-            A.add Args["oldpath"]
-        if Args.contains "path":
-            A.add Args["path"]
-        A
-
-    # Starte git und sammele Ausgabezeilen ein.
-    let p=startprocess("git", args=gitargs, options={poUsePath})
-    let pipe=outputstream(p)
-    var
-        patchlines: seq[string]
-        patchline:  string
-    while readline(pipe, patchline): patchlines.add patchline
-
-    # Bilde die Werte für die Auswertung der Schablone.
+    let paths=block:
+        var X: seq[string]
+        if Args.contains "path": X.add Args["path"]
+        if Args.contains "oldpath": X.add Args["oldpath"]
+        X
+    let staged=Args.contains "staged"
+    let (Diffs,cmd)=if staged: gitdiff_staged(Args.getordefault("a", ""), Args.getordefault("b", ""), paths)
+    else:                      gitdiff(       Args.getordefault("a", ""), Args.getordefault("b", ""), paths)
     let
         title="diff"
-        cmd=block:
-            var X="git"
-            for a in gitargs: X=X & " " & a
-            X
         cssurl="/gitrelief.css"
         content=block:
             let
                 ahash=Args.getordefault("a", "")
                 bhash=Args.getordefault("b", "")
-            let Patches=parse_patch(patchlines)
-            if Patches.len>1:    format_html_toc(Patches, ahash, bhash)
-            elif Patches.len==1: format_html_patch(Patches[0], ahash, bhash)
+            if Diffs.len>1:    format_html_toc(Diffs, staged, ahash, bhash)
+            elif Diffs.len==1: format_html_patch(Diffs[0], staged, ahash, bhash)
             else: "<p>No Modifications</p>"
     return fmt html_template
 

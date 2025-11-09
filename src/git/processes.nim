@@ -1,0 +1,174 @@
+
+import std/[osproc, strutils, streams]
+import npeg
+
+type
+    FileStatus* =enum Other, Modified, Deleted, Added, Renamed
+    NABR* =enum N, A, B, R
+    DiffSection* =object
+        case kind*: NABR
+        of N, A, B:
+            zeilen*: seq[string]
+        of R:
+            razeilen*, rbzeilen*: seq[string]
+    FileDiff* =object
+        op*: FileStatus
+        apath*, bpath*: string
+        sections*: seq[DiffSection]
+
+func numlines(S: DiffSection): int=
+    case S.kind
+    of N, A, B: S.zeilen.len
+    of R: S.razeilen.len
+
+proc addline(S: var DiffSection, z: string): bool=
+    if z.len<1: return false
+    let
+        neu=numlines(S)==0
+        k=z[0]
+        z1=substr(z,1)
+    case k
+    of '-':
+        if neu: S=DiffSection(kind: A, zeilen: @[])
+        if S.kind==A: S.zeilen.add z1
+        return S.kind==A
+    of '+':
+        if neu: S=DiffSection(kind: B, zeilen: @[])
+        if S.kind==B:
+            S.zeilen.add z1
+            return true
+        elif S.kind==A:
+            let temp=S.zeilen
+            S=DiffSection(kind: R, razeilen: temp, rbzeilen: @[z1])
+            return true
+        elif S.kind==R:
+            S.rbzeilen.add z1
+            return true
+        else: return false
+    of ' ':
+        if neu: S=DiffSection(kind: N, zeilen: @[])
+        if S.kind==N:
+            S.zeilen.add z1
+            return true
+        else: return false
+    else:
+        # error
+        return false
+
+proc parse_diff(patch: seq[string]): seq[FileDiff]=
+    type
+        parsercontext=object
+            na, nb: int
+            fe: ptr seq[FileDiff]
+    const diffentryparser=peg("entry", e: parsercontext):
+        path <- +{1..31, 33..255}
+        hash <- +{'0'..'9', 'a'..'f'}
+        flags <- +{'0'..'9'}
+        num <- +{'0'..'9'}
+        diff <- "diff --git" * @>path * @>path:
+            add(e.fe[], FileDiff())
+            e.fe[^1].apath= $1
+            e.fe[^1].bpath= $2
+        index <- "index" * @>hash * ".." * @>hash * @flags:
+            # e.fe[^1].op=Modified
+            discard
+        aaa <- "---" * @>path:
+            e.fe[^1].apath= $1
+        bbb <- "+++" * @>path:
+            e.fe[^1].bpath= $1
+            if e.fe[^1].op==Other: e.fe[^1].op=Modified
+        newfile <- "new file mode" * @>flags:
+            e.fe[^1].op=Added
+        deletedfile <- "deleted file mode" * @>flags:
+            e.fe[^1].op=Deleted
+        similarity <- "similarity index" * @>num * '%':
+            discard
+        rename_from <- "rename from" * @>path:
+            e.fe[^1].op=Renamed
+        rename_to <- "rename to" * @>path:
+            e.fe[^1].op=Renamed
+        atat <- "@@" * @'-' * >num * ',' * >num * @'+' * >num * ',' * >num * @"@@":
+            e.na=parseint $2
+            e.nb=parseint $4
+        atat1 <- "@@" * @'-' * >num * ',' * >num * @'+' * >num * @"@@":
+            e.na=parseint($2)
+            e.nb=1
+        atat2 <- "@@" * @'-' * >num * @'+' * >num * @"@@":
+            e.na=1
+            e.nb=1
+        sonst <- >(*1) * !1:
+            discard
+        entry <- diff | index | newfile | deletedfile | aaa | bbb | rename_from | rename_to | similarity | atat | atat1 | atat2 | sonst
+
+    var
+        na=0
+        nb=0
+
+    for z in patch:
+        if na>0 or nb>0:
+            if result[^1].sections.len==0: result[^1].sections.add DiffSection()
+            let added=result[^1].sections[^1].addline z
+            if not added:
+                let z1=substr(z, 1)
+                case z[0]
+                of '+': result[^1].sections.add DiffSection(kind: B, zeilen: @[z1])
+                of '-': result[^1].sections.add DiffSection(kind: A, zeilen: @[z1])
+                of ' ': result[^1].sections.add DiffSection(kind: N, zeilen: @[z1])
+                else:
+                    # error
+                    discard
+            case z[0]
+            of '+': dec nb
+            of '-': dec na
+            else:
+                dec na
+                dec nb
+        else:
+            {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
+                var e=parsercontext(fe: addr result)
+                if diffentryparser.match(strip z, e).ok:
+                    if e.na>0 or e.nb>0:
+                        na=e.na
+                        nb=e.nb
+                else:
+                    # error
+                    # e.zeile="??????"
+                    discard
+
+proc gitdiff*(a, b: string, paths: openarray[string]): tuple[diffs: seq[FileDiff], cmd: string] =
+    var args= @["diff", "-U999999"]
+    if a!="" and b!="": args.add a&".."&b
+    elif a!="": args.add a
+    if paths.len>0:
+        args.add "--"
+        for p in paths: args.add p
+    let p=startprocess("git", args=args, options={poUsePath})
+    let pipe=outputstream(p)
+    var
+        Lines: seq[string]
+        line:  string
+    while readline(pipe, line): Lines.add line
+    let cmd=block:
+        var X="git"
+        for a in args: X=X & " " & a
+        X
+    (parse_diff(Lines), cmd)
+
+proc gitdiff_staged*(a, b: string, paths: openarray[string]): tuple[diffs: seq[FileDiff], cmd: string] =
+    var args= @["diff", "-U999999", "--staged"]
+    if a!="" and b!="": args.add a&".."&b
+    elif a!="": args.add a
+    if paths.len>0:
+        args.add "--"
+        for p in paths: args.add p
+    let p=startprocess("git", args=args, options={poUsePath})
+    let pipe=outputstream(p)
+    var
+        Lines: seq[string]
+        line:  string
+    while readline(pipe, line): Lines.add line
+    let cmd=block:
+        var X="git"
+        for a in args: X=X & " " & a
+        X
+    (parse_diff(Lines), cmd)
