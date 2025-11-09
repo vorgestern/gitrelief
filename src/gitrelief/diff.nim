@@ -293,8 +293,9 @@ proc git_diff*(Args: Table[string,string]): string=
                 ahash=Args.getordefault("a", "")
                 bhash=Args.getordefault("b", "")
             let Patches=parse_patch(patchlines)
-            if Patches.len>1: format_html_toc(Patches, ahash, bhash)
-            else:             format_html_patch(Patches[0], ahash, bhash)
+            if Patches.len>1:    format_html_toc(Patches, ahash, bhash)
+            elif Patches.len==1: format_html_patch(Patches[0], ahash, bhash)
+            else: "<p>No Modifications</p>"
     return fmt html_template
 
 # =====================================================================
