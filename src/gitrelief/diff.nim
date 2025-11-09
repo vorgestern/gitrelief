@@ -113,7 +113,7 @@ proc git_diff*(Args: Table[string,string]): string=
         X
     let staged=Args.contains "staged"
     let (Diffs,cmd)=if staged: gitdiff_staged(Args.getordefault("a", ""), Args.getordefault("b", ""), paths)
-    else:                      gitdiff(       Args.getordefault("a", ""), Args.getordefault("b", ""), paths)
+                    else:      gitdiff(       Args.getordefault("a", ""), Args.getordefault("b", ""), paths)
     let
         title="diff"
         cssurl="/gitrelief.css"
