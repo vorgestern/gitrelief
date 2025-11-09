@@ -181,10 +181,10 @@ proc format_html_toc(Patches: seq[FileEntry], ahash, bhash: string): string=
 
 proc format_html_patch(fileentry: FileEntry, ahash, bhash: string): string=
     let followurl=case fileentry.op
-    of Modified: fmt"{url_follow fileentry.bpath.substr(2)}"
-    of Added:    fmt"{url_follow fileentry.bpath.substr(2)}"
-    of Deleted:  fmt"{url_follow fileentry.apath.substr(2)}"
-    of Renamed:  fmt"{url_follow fileentry.bpath.substr(2)}"
+    of Modified: fmt"{url_follow fileentry.bpath.substr(2), bhash}"
+    of Added:    fmt"{url_follow fileentry.bpath.substr(2), bhash}"
+    of Deleted:  fmt"{url_follow fileentry.apath.substr(2), bhash}"
+    of Renamed:  fmt"{url_follow fileentry.bpath.substr(2), bhash}"
     of Other:    fmt"{url_follow fileentry.apath.substr(2)}"
     case fileentry.op:
     of Modified: result.add fmt"{'\n'}<p>Modified {fileentry.apath.substr(2)} <span><a href='{followurl}'>Follow</a></span></p>"

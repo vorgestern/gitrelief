@@ -105,7 +105,7 @@ proc parse_log(L: seq[string]): seq[Commit]=
                 # e.zeile="??????"
                 discard
 
-proc format_html(L: seq[Commit]): string=
+proc format_html(L: seq[Commit], highlight=""): string=
     result="<table class='diff'>"
     for commitindex,commit in L:
         var comments=htmlescape(commit.subject)
@@ -119,7 +119,9 @@ proc format_html(L: seq[Commit]): string=
             elif stat==Added:       files.add fmt"<a href='/action/git_diff?a={parent}&b={commit.hash}&path={p}'>{stat}</a><br/>{p}"
             elif commitindex==0:    files.add fmt"<a href='/action/git_diff?a={parent}&b={commit.hash}&path={p}'>{stat}</a><br/>{p}"
             else:                   files.add fmt"<a href='/action/git_diff?a={parent}&b={commit.hash}&path={p}'>{stat}</a>"
-        result.add "<tr><td>" & substr(commit.hash,0,7) & "</td><td>" & commit.author &
+        let bb=if commit.hash==highlight: " class='highlight'"
+        else: ""
+        result.add "<tr" & bb & "><td>" & substr(commit.hash,0,7) & "</td><td>" & commit.author &
             "</td><td>" & commit.date & "</td><td>" & files & "</td><td>" & comments & "</td></tr>"
     result.add "</table>"
 
@@ -155,5 +157,5 @@ proc git_log_follow*(Args: Table[string,string]): string=
             X
         pathtofollow=Args.getordefault("path", "???")
         cssurl="/gitrelief.css"
-        content=format_html(parse_log Loglines)
+        content=format_html(parse_log Loglines, Args.getordefault("highlight", ""))
     return fmt html_template
