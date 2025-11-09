@@ -23,7 +23,7 @@ const html_template="""
 
 proc format_html_toc(Patches: seq[FileDiff], staged: bool, ahash, bhash: string): string=
     # result.add "<p>Anzahl Dateien: " & $Patches.len & "</p>"
-    result.add "<table>"
+    result.add "<p><table>"
     for index,entry in Patches:
         let path=case entry.op
         of Modified,Added,Renamed: entry.bpath.substr(2)
@@ -33,7 +33,7 @@ proc format_html_toc(Patches: seq[FileDiff], staged: bool, ahash, bhash: string)
         of Deleted,Other:  (url_diff(ahash, bhash, staged, path), path)
         of Renamed:        (url_diff(ahash, bhash, staged, path, entry.bpath.substr(2)), path)
         result.add fmt"<tr><td>{entry.op}</td><td><a href='{url}'>{tag}</a></td><td><a href='{url_follow path}'>Follow</a></td></tr>"
-    result.add "</table>"
+    result.add "</table></p>"
 
 proc format_html_patch(fileentry: FileDiff, staged: bool, ahash, bhash: string): string=
     let followurl=case fileentry.op
@@ -49,7 +49,7 @@ proc format_html_patch(fileentry: FileDiff, staged: bool, ahash, bhash: string):
     of Renamed:  result.add fmt"{'\n'}<p>Renamed {fileentry.apath.substr(2)} to {fileentry.bpath.substr(2)} <span><a href='{followurl}'>Follow</a></span></p>"
     of Other:    result.add fmt"{'\n'}<p>Unknown operation {fileentry.apath.substr(2)} <span><a href='{followurl}'>Follow</a></span></p>"
     if fileentry.op!=Other:
-        result.add "<table class='diff'>"
+        result.add "<p><table class='diff'>"
         case fileentry.op:
         of Modified:
             result.add "\n<tr><th>" & fileentry.apath & "</th><th>" & fileentry.bpath & "</th></tr>"
@@ -103,7 +103,7 @@ proc format_html_patch(fileentry: FileDiff, staged: bool, ahash, bhash: string):
                         X.add fmt"<span>{b}</span>{htmlescape z}{'\n'}"
                     X
                 result.add fmt"{'\n'}<tr><td class='Acmp'>{A}</td><td class='Bcmp'>{B}</td></tr>"
-        result.add "</table>"
+        result.add "</table></p>"
 
 proc git_diff*(Args: Table[string,string]): string=
     let paths=block:
