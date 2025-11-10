@@ -2,26 +2,6 @@
 import std/[strformat, strutils]
 import checksums/sha1
 
-const root_html* ="""
-<html>
-<head>
-<meta charset="utf-8">
-<link rel="stylesheet" href="gitrelief.css">
-<title></title>
-</head>
-<body>
-<table class='head'>
-<tr><td><h1>Start</h1></td><td><h1>Root</h1></td><td colspan='3'><h1>git ...</h1></td></tr>
-<tr class='head'><td>&nbsp;</td><td>pwd</td>
-    <td><a href="/git/log">Log</a></td>
-    <td><a href="/git/diff">Diff</a></td>
-    <td><a href="/git/diff?staged">Diff (staged)</a></td></tr>
-</table>
-<p>localfiles</p>
-</body>
-</html>
-"""
-
 const gitrelief_css* ="""
 body {
     font-family: Courier;
