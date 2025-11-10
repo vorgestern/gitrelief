@@ -1,5 +1,6 @@
 
-import std/strformat
+import std/[strformat, strutils]
+import checksums/sha1
 
 const root_html* ="""
 <html>
@@ -137,3 +138,13 @@ func url_diff*(parent,commit: string, staged: bool, path:string, oldpath:string 
 func url_follow*(path: string, highlightcommit: string = ""): string=
     if highlightcommit=="": fmt"/git/follow?path={path}"
     else:                   fmt"/git/follow?path={path}&highlight={highlightcommit}#tr_{highlightcommit.substr(0,7)}"
+
+func shamatch*(sha: SecureHash, h: string): bool=h.len>0 and h.len<=40 and cmpignorecase(substr($sha, 0, h.len-1), h)==0
+func shaform*(sha: SecureHash): string=substr($sha, 0, 9)
+
+when ismainmodule:
+    let shademo="934e2293ead91cad3ce2ac665e8673ce8d30a3d9"
+    let hash1: SecureHash=parsesecurehash(shademo)
+    assert(shamatch(hash1, shademo))
+    for j in 0..40:
+        assert(shamatch(hash1, shademo.substr(0,j)))

@@ -39,13 +39,14 @@ proc format_html(L: seq[Commit], highlight=""): string=
         var files=""
         for fileindex,(stat,p,old) in commit.files:
             if fileindex>0: files.add "<br/>"
-            if stat==Renamed:       files.add fmt"<a href='{url_diff(parent, commit.hash, false, p)}'>{stat}</a><br/>to {p}<br/>from {old}"
-            elif stat==Added:       files.add fmt"<a href='{url_diff(parent, commit.hash, false, p)}'>{stat}</a><br/>{p}"
-            elif commitindex==0:    files.add fmt"<a href='{url_diff(parent, commit.hash, false, p)}'>{stat}</a><br/>{p}"
-            else:                   files.add fmt"<a href='{url_diff(parent, commit.hash, false, p)}'>{stat}</a>"
+            if stat==Renamed:       files.add fmt"<a href='{url_diff(parent, $commit.hash, false, p)}'>{stat}</a><br/>to {p}<br/>from {old}"
+            elif stat==Added:       files.add fmt"<a href='{url_diff(parent, $commit.hash, false, p)}'>{stat}</a><br/>{p}"
+            elif commitindex==0:    files.add fmt"<a href='{url_diff(parent, $commit.hash, false, p)}'>{stat}</a><br/>{p}"
+            else:                   files.add fmt"<a href='{url_diff(parent, $commit.hash, false, p)}'>{stat}</a>"
+        let hx=shaform commit.hash
         let
-            tr=if commit.hash==highlight: "\n<tr class='highlight'>" else: "\n<tr>"
-            tdanchor=fmt"<td><a id='tr_{substr(commit.hash,0,7)}'/>{substr(commit.hash,0,7)}</a></td>"
+            tr=if shamatch(commit.hash, highlight): "\n<tr class='highlight'>" else: "\n<tr>"
+            tdanchor=fmt"<td><a id='tr_{hx}'/>{hx}</a></td>"
             tdauthor="<td>"&commit.author&"</td>"
             tddate="<td>" & commit.date.format("d. MMM HH:mm") & "</td>"
             tdaffected="<td>"&files&"</td>"

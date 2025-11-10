@@ -1,6 +1,9 @@
 
 import std/[osproc, strutils, streams, times]
+import checksums/sha1
 import npeg
+
+export sha1
 
 type
     FileStatus* =enum Other, Modified, Deleted, Added, Renamed
@@ -187,7 +190,6 @@ proc parse_status(Lines: seq[string]): RepoStatus=
             res: ptr RepoStatus
     const statuslineparser=peg("entry", e: parsercontext):
         path <- +{1..31, 33..255}
-        hash <- +{'0'..'9', 'a'..'f'}
         flags <- +{'0'..'9'}
         num <- +{'0'..'9'}
         XM <- " M " * >path:
@@ -232,7 +234,7 @@ proc gitstatus*(): tuple[status: RepoStatus, cmd: string] =
 type
     filestatus=tuple[status: FileStatus, path: string, oldpath: string]
     Commit* =object
-        hash*: string
+        hash*: SecureHash
         parents*: seq[string]
         author*: string
         date*: DateTime
@@ -250,13 +252,13 @@ proc parse_log(L: seq[string]): seq[Commit]=
         hash <- +{'0'..'9', 'a'..'f'}
         path <- +{33..255}
         commit_pp <- "commit " * >hash * @>hash * @>hash:
-            e.was[].add Commit(hash: substr($1, 0, 8), parents: @[substr($2, 0, 8), substr($3, 0, 8)])
+            e.was[].add Commit(hash: parsesecurehash($1), parents: @[substr($2, 0, 8), substr($3, 0, 8)])
             e.st=Header
         commit_p <- "commit " * >hash * @>hash:
-            e.was[].add Commit(hash: substr($1, 0, 8), parents: @[substr($2, 0, 8)])
+            e.was[].add Commit(hash: parsesecurehash($1), parents: @[substr($2, 0, 8)])
             e.st=Header
         commit <- "commit " * >hash * !1:
-            e.was[].add Commit(hash: substr($1, 0, 8), parents: @["00000000"])
+            e.was[].add Commit(hash: parsesecurehash($1), parents: @["00000000"])
             e.st=Header
         authorname <- {33..128} * +{33..128}
         author <- "Author:" * @>authorname * @'<':
