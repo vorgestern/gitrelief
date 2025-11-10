@@ -1,7 +1,7 @@
 
 import jesterfork
 import mehr/[helper]
-import gitrelief/[log,diff,follow]
+import page/[log,diff,follow]
 import std/[cmdline,paths,dirs,strutils,strformat]
 
 # asyncdispatch
