@@ -111,8 +111,7 @@ proc format_html(L: seq[Commit], highlight=""): string=
     for commitindex,commit in L:
         var comments=htmlescape(commit.subject)
         for d in commit.details: comments.add "<br/>"&htmlescape(d)
-        let parent=if commit.parents.len>0: commit.parents[0]
-        else: "0000000"
+        let parent=if commit.parents.len>0: commit.parents[0] else: "0000000"
         var files=""
         for fileindex,(stat,p,old) in commit.files:
             if fileindex>0: files.add "<br/>"
@@ -120,11 +119,14 @@ proc format_html(L: seq[Commit], highlight=""): string=
             elif stat==Added:       files.add fmt"<a href='{url_diff(parent, commit.hash, false, p)}'>{stat}</a><br/>{p}"
             elif commitindex==0:    files.add fmt"<a href='{url_diff(parent, commit.hash, false, p)}'>{stat}</a><br/>{p}"
             else:                   files.add fmt"<a href='{url_diff(parent, commit.hash, false, p)}'>{stat}</a>"
-        let tr=if commit.hash==highlight: "\n<tr class='highlight'>"
-        else: "\n<tr>"
-        let tdanchor=fmt"<td><a id='tr_{substr(commit.hash,0,7)}'/>{substr(commit.hash,0,7)}</a></td>"
-        result.add tr & "<td>" & tdanchor & "</td><td>" & commit.author &
-            "</td><td>" & commit.date & "</td><td>" & files & "</td><td>" & comments & "</td></tr>"
+        let
+            tr=if commit.hash==highlight: "\n<tr class='highlight'>" else: "\n<tr>"
+            tdanchor=fmt"<td><a id='tr_{substr(commit.hash,0,7)}'/>{substr(commit.hash,0,7)}</a></td>"
+            tdauthor="<td>"&commit.author&"</td>"
+            tddate="<td>"&commit.date&"</td>"
+            tdaffected="<td>"&files&"</td>"
+            tdcomments="<td>"&comments&"</td>"
+        result.add tr & tdanchor & tdauthor & tddate & tdaffected & tdcomments & "</tr>"
     result.add "</table>"
 
 proc git_log_follow*(Args: Table[string,string]): string=
