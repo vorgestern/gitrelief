@@ -29,6 +29,15 @@ body {
 h1, h2, h3 {
     margin: 0
 }
+table.nolines {
+    border-style: none;
+}
+table.nolines tr {
+    border-style: none;
+}
+table.nolines tr td {
+    border-style: none;
+}
 table {
     border-style: solid;
     border-width: 1px;

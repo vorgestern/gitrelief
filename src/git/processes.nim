@@ -197,12 +197,14 @@ proc parse_status(Lines: seq[string]): RepoStatus=
         AM <- "AM " * >path:
             e.res.staged.add (status: Added, path: strip $1)
         DX <- "D  " * >path:
+            e.res.unstaged.add (status: Deleted, path: strip $1)
+        XD <- " D " * >path:
             e.res.staged.add (status: Deleted, path: strip $1)
         uncontrolled <- "?? " * >path:
             e.res.notcontrolled.add (strip $1)
         sonst <- >(*1) * !1:
             e.res.unparsed.add $1
-        entry <- XM | AX | AM | DX | uncontrolled | sonst
+        entry <- XM | AX | AM | DX | XD | uncontrolled | sonst
 
     var e=parsercontext(res: addr result)
     for z in Lines:

@@ -2,7 +2,7 @@
 import jesterfork
 import mehr/[helper]
 import page/[log,diff,follow,status]
-import std/[cmdline,paths,dirs,strutils,strformat]
+import std/[cmdline,strutils]
 
 # asyncdispatch
 
@@ -13,13 +13,6 @@ import std/[cmdline,paths,dirs,strutils,strformat]
 # 4. ok Stelle in git_log_follow immer die vollständige Entwicklung bis zum letzten commit dar.
 #       Hebe den in a=hash übergebenen commit einfach durch Fettdruck hervor.
 # 5.    Follow braucht ebenfalls 'next 100' Links.
-
-proc walkpublicdir(dir: Path): string=
-        var dir1=dir
-        normalizepathend(dir1, true)
-        for path in walkdirrec(dir1):
-                let p=replace(string path, string dir1, "")
-                result.add fmt"{'\n'}<tr><td></td><td><a href='{p}'>{p}</a></td></tr>"
 
 proc parsequery(query: string): Table[string,string]=
         var
@@ -57,17 +50,7 @@ settings:
         staticdir=publicdir
 
 routes:
-        get "/":
-                var pwd=getcurrentdir()
-                normalizepath(pwd)
-                let pubdir=block:
-                        {.gcsafe.}:
-                                let a=walkpublicdir(Path publicdir)
-                                fmt"<table>{a}</table>"
-                var html=replace(root_html, "<td>pwd</td>", "<td>" & $pwd & "/</td>")
-                html=replace(html, "localfiles", pubdir)
-                resp Http200, html
-        get "/git/status": resp git_status(parsequery request.query)
+        get "/": resp git_status(parsequery request.query, "public")
         get "/gitrelief.css": resp Http200, gitrelief_css
         get "/git/log": resp git_log(parsequery request.query)
         get "/git/follow": resp git_log_follow(parsequery request.query)
