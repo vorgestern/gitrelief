@@ -1,8 +1,8 @@
 
 import std/[tables, strformat, strutils]
-import git/processes
-
 import std/[paths,dirs]
+import git/processes
+import mehr/helper
 
 func htmlescape(s: string): string=replace(s, "<", "&lt;")
 
@@ -40,11 +40,11 @@ proc walkpublicdir(dir: Path): string=
 proc format_html(Status: RepoStatus): string=
     result="<p><h2>Staged</h2><table>"
     for index,entry in Status.staged:
-        result.add fmt"<tr><td>{entry.status}</td><td><a href=''>diff</a> <a href=''>follow</a></td><td>{entry.path}</td></tr>"
+        result.add fmt"<tr><td>{entry.status}</td><td><a href='{url_diff shanull, shanull, true, entry.path}'>diff</a> <a href='{url_follow entry.path}'>follow</a></td><td>{entry.path}</td></tr>"
     result.add "</table></p>"
     result.add "<p><h2>Not staged</h2><table>"
     for index,entry in Status.unstaged:
-        result.add fmt"<tr><td>{entry.status}</td><td><a href=''>diff</a> <a href=''>follow</a></td><td>{entry.path}</td></tr>"
+        result.add fmt"<tr><td>{entry.status}</td><td><a href='{url_diff shanull, shanull, false, entry.path}'>diff</a> <a href='{url_follow entry.path}'>follow</a></td><td>{entry.path}</td></tr>"
     result.add "</table></p>"
     result.add "<p><h2>Not controlled</h2><table>"
     for index,entry in Status.notcontrolled:
