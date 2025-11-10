@@ -127,7 +127,7 @@ proc format_html(L: seq[Commit]): string=
     result.add "\n" & fmt"<tr><td><a id='top{L.len}'>{L.len}</a></td></tr>"
     result.add "</table>"
 
-proc git_log*(Args: Table[string,string]): string=
+proc page_log*(Args: Table[string,string]): string=
 
     let (gitargs,num)=block:
         var A= @["log", "--name-status", "--parents", "--date=iso-local"]

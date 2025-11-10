@@ -54,7 +54,7 @@ proc format_html(L: seq[Commit], highlight=""): string=
         result.add tr & tdanchor & tdauthor & tddate & tdaffected & tdcomments & "</tr>"
     result.add "</table>"
 
-proc git_follow*(Args: Table[string,string]): string=
+proc page_follow*(Args: Table[string,string]): string=
     let
         pathtofollow=Args.getordefault("path", "???")
         num=parseint Args.getordefault("num", "100")

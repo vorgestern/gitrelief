@@ -51,10 +51,10 @@ settings:
         staticdir=publicdir
 
 routes:
-        get "/": resp git_status(parsequery request.query, "public")
+        get "/":           resp page_status(parsequery request.query, "public")
+        get "/git/log":    resp page_log(parsequery request.query)
+        get "/git/follow": resp page_follow(parsequery request.query)
+        get "/git/diff":   resp page_diff(parsequery request.query)
         get "/gitrelief.css": resp Http200, gitrelief_css
-        get "/git/log": resp git_log(parsequery request.query)
-        get "/git/follow": resp git_follow(parsequery request.query)
-        get "/git/diff": resp git_diff(parsequery request.query)
         # error Http404: resp Http404, "Looks you took a wrong turn somewhere."
         error Exception: resp Http500, "Exception caught: "&exception.msg

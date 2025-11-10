@@ -105,7 +105,7 @@ proc format_html_patch(fileentry: FileDiff, staged: bool, ahash, bhash: string):
                 result.add fmt"{'\n'}<tr><td class='Acmp'>{A}</td><td class='Bcmp'>{B}</td></tr>"
         result.add "</table></p>"
 
-proc git_diff*(Args: Table[string,string]): string=
+proc page_diff*(Args: Table[string,string]): string=
     let paths=block:
         var X: seq[string]
         if Args.contains "path": X.add Args["path"]

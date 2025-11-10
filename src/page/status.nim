@@ -55,7 +55,7 @@ proc format_html(Status: RepoStatus): string=
         result.add fmt"<tr><td>{entry}</td></tr>"
     result.add "</table></p>"
 
-proc git_status*(Args: Table[string,string], publicdir: string): string=
+proc page_status*(Args: Table[string,string], publicdir: string): string=
     let
         (Status,cmd)=gitstatus()
         title="status"
