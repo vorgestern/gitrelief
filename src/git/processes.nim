@@ -67,15 +67,15 @@ proc parse_diff(patch: seq[string]): seq[FileDiff]=
         num <- +{'0'..'9'}
         diff <- "diff --git" * @>path * @>path:
             add(e.fe[], FileDiff())
-            e.fe[^1].apath= $1
-            e.fe[^1].bpath= $2
+            e.fe[^1].apath= substr($1, 2)
+            e.fe[^1].bpath= substr($2, 2)
         index <- "index" * @>hash * ".." * @>hash * @flags:
             # e.fe[^1].op=Modified
             discard
         aaa <- "---" * @>path:
-            e.fe[^1].apath= $1
+            e.fe[^1].apath= substr($1, 2)
         bbb <- "+++" * @>path:
-            e.fe[^1].bpath= $1
+            e.fe[^1].bpath= substr($1, 2)
             if e.fe[^1].op==Other: e.fe[^1].op=Modified
         newfile <- "new file mode" * @>flags:
             e.fe[^1].op=Added

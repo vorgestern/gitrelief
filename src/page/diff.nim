@@ -26,28 +26,28 @@ proc format_html_toc(Patches: seq[FileDiff], staged: bool, ahash, bhash: string)
     result.add "<p><table>"
     for index,entry in Patches:
         let path=case entry.op
-        of Modified,Added,Renamed: entry.bpath.substr(2)
-        of Deleted,Other:  entry.apath.substr(2)
+        of Modified,Added,Renamed: entry.bpath
+        of Deleted,Other:  entry.apath
         let (url,tag)=case entry.op
         of Modified,Added: (url_diff(ahash, bhash, staged, path), path)
         of Deleted,Other:  (url_diff(ahash, bhash, staged, path), path)
-        of Renamed:        (url_diff(ahash, bhash, staged, path, entry.bpath.substr(2)), path)
+        of Renamed:        (url_diff(ahash, bhash, staged, path, entry.bpath), path)
         result.add fmt"<tr><td>{entry.op}</td><td><a href='{url}'>{tag}</a></td><td><a href='{url_follow path}'>Follow</a></td></tr>"
     result.add "</table></p>"
 
 proc format_html_patch(fileentry: FileDiff, staged: bool, ahash, bhash: string): string=
     let followurl=case fileentry.op
-    of Modified: fmt"{url_follow fileentry.bpath.substr(2), bhash}"
-    of Added:    fmt"{url_follow fileentry.bpath.substr(2), bhash}"
-    of Deleted:  fmt"{url_follow fileentry.apath.substr(2), bhash}"
-    of Renamed:  fmt"{url_follow fileentry.bpath.substr(2), bhash}"
-    of Other:    fmt"{url_follow fileentry.apath.substr(2)}"
+    of Modified: fmt"{url_follow fileentry.bpath, bhash}"
+    of Added:    fmt"{url_follow fileentry.bpath, bhash}"
+    of Deleted:  fmt"{url_follow fileentry.apath, bhash}"
+    of Renamed:  fmt"{url_follow fileentry.bpath, bhash}"
+    of Other:    fmt"{url_follow fileentry.apath}"
     case fileentry.op:
-    of Modified: result.add fmt"{'\n'}<p>Modified {fileentry.apath.substr(2)} <span><a href='{followurl}'>Follow</a></span></p>"
-    of Deleted:  result.add fmt"{'\n'}<p>Deleted {fileentry.apath.substr(2)} <span><a href='{followurl}'>Follow</a></span></p>"
-    of Added:    result.add fmt"{'\n'}<p>Added {fileentry.bpath.substr(2)} <span><a href='{followurl}'>Follow</a></span></p>"
-    of Renamed:  result.add fmt"{'\n'}<p>Renamed {fileentry.apath.substr(2)} to {fileentry.bpath.substr(2)} <span><a href='{followurl}'>Follow</a></span></p>"
-    of Other:    result.add fmt"{'\n'}<p>Unknown operation {fileentry.apath.substr(2)} <span><a href='{followurl}'>Follow</a></span></p>"
+    of Modified: result.add fmt"{'\n'}<p>Modified {fileentry.apath} <span><a href='{followurl}'>Follow</a></span></p>"
+    of Deleted:  result.add fmt"{'\n'}<p>Deleted {fileentry.apath} <span><a href='{followurl}'>Follow</a></span></p>"
+    of Added:    result.add fmt"{'\n'}<p>Added {fileentry.bpath} <span><a href='{followurl}'>Follow</a></span></p>"
+    of Renamed:  result.add fmt"{'\n'}<p>Renamed {fileentry.apath} to {fileentry.bpath} <span><a href='{followurl}'>Follow</a></span></p>"
+    of Other:    result.add fmt"{'\n'}<p>Unknown operation {fileentry.apath} <span><a href='{followurl}'>Follow</a></span></p>"
     if fileentry.op!=Other:
         result.add "<p><table class='diff'>"
         case fileentry.op:
