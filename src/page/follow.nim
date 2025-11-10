@@ -35,14 +35,14 @@ proc format_html(L: seq[Commit], highlight=""): string=
     for commitindex,commit in L:
         var comments=htmlescape(commit.subject)
         for d in commit.details: comments.add "<br/>"&htmlescape(d)
-        let parent=if commit.parents.len>0: commit.parents[0] else: "0000000"
+        let parent=if commit.parents.len>0: commit.parents[0] else: shanull
         var files=""
         for fileindex,(stat,p,old) in commit.files:
             if fileindex>0: files.add "<br/>"
-            if stat==Renamed:       files.add fmt"<a href='{url_diff(parent, $commit.hash, false, p)}'>{stat}</a><br/>to {p}<br/>from {old}"
-            elif stat==Added:       files.add fmt"<a href='{url_diff(parent, $commit.hash, false, p)}'>{stat}</a><br/>{p}"
-            elif commitindex==0:    files.add fmt"<a href='{url_diff(parent, $commit.hash, false, p)}'>{stat}</a><br/>{p}"
-            else:                   files.add fmt"<a href='{url_diff(parent, $commit.hash, false, p)}'>{stat}</a>"
+            if stat==Renamed:       files.add fmt"<a href='{url_diff(parent, commit.hash, false, p)}'>{stat}</a><br/>to {p}<br/>from {old}"
+            elif stat==Added:       files.add fmt"<a href='{url_diff(parent, commit.hash, false, p)}'>{stat}</a><br/>{p}"
+            elif commitindex==0:    files.add fmt"<a href='{url_diff(parent, commit.hash, false, p)}'>{stat}</a><br/>{p}"
+            else:                   files.add fmt"<a href='{url_diff(parent, commit.hash, false, p)}'>{stat}</a>"
         let hx=shaform commit.hash
         let
             tr=if shamatch(commit.hash, highlight): "\n<tr class='highlight'>" else: "\n<tr>"

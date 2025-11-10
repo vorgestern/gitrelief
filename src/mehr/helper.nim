@@ -111,6 +111,10 @@ td.Ncmp span {
 }
 """
 
+func shamatch*(sha: SecureHash, h: string): bool=h.len>0 and h.len<=40 and cmpignorecase(substr($sha, 0, h.len-1), h)==0
+func shaform*(sha: SecureHash): string=substr($sha, 0, 9)
+const shanull* =parsesecurehash "0000000000000000000000000000000000000000"
+
 func url_log*(num: int, top: int= -1): string=
     if top<0: "/git/log?num=" & $num
     else:     "/git/log?num=" & $num & "#top" & $top
@@ -135,12 +139,29 @@ func url_diff*(parent,commit: string, staged: bool, path:string, oldpath:string 
         url.add q
     url
 
+func url_diff*(parent, commit: SecureHash, staged: bool, path:string, oldpath:string = ""): string=
+    var X: seq[string]
+    if parent!=shanull and commit!=shanull:
+        X.add "a="&shaform parent
+        X.add "b="&shaform commit
+    elif parent!=shanull:
+        X.add "a="&shaform parent
+    if staged:
+        X.add "staged=1"
+    if oldpath!="" and path!="":
+        X.add "path="&path
+        X.add "oldpath="&oldpath
+    elif oldpath=="":
+        X.add "path="&path
+    var url="/git/diff"
+    for j,q in X:
+        url.add if j==0: "?" else: "&"
+        url.add q
+    url
+
 func url_follow*(path: string, highlightcommit: string = ""): string=
     if highlightcommit=="": fmt"/git/follow?path={path}"
-    else:                   fmt"/git/follow?path={path}&highlight={highlightcommit}#tr_{highlightcommit.substr(0,7)}"
-
-func shamatch*(sha: SecureHash, h: string): bool=h.len>0 and h.len<=40 and cmpignorecase(substr($sha, 0, h.len-1), h)==0
-func shaform*(sha: SecureHash): string=substr($sha, 0, 9)
+    else:                   fmt"/git/follow?path={path}&highlight={highlightcommit}#tr_{highlightcommit.substr(0,9)}"
 
 when ismainmodule:
     let shademo="934e2293ead91cad3ce2ac665e8673ce8d30a3d9"

@@ -235,7 +235,7 @@ type
     filestatus=tuple[status: FileStatus, path: string, oldpath: string]
     Commit* =object
         hash*: SecureHash
-        parents*: seq[string]
+        parents*: seq[SecureHash]
         author*: string
         date*: DateTime
         subject*: string
@@ -252,13 +252,13 @@ proc parse_log(L: seq[string]): seq[Commit]=
         hash <- +{'0'..'9', 'a'..'f'}
         path <- +{33..255}
         commit_pp <- "commit " * >hash * @>hash * @>hash:
-            e.was[].add Commit(hash: parsesecurehash($1), parents: @[substr($2, 0, 8), substr($3, 0, 8)])
+            e.was[].add Commit(hash: parsesecurehash $1, parents: @[parsesecurehash $2, parsesecurehash $3])
             e.st=Header
         commit_p <- "commit " * >hash * @>hash:
-            e.was[].add Commit(hash: parsesecurehash($1), parents: @[substr($2, 0, 8)])
+            e.was[].add Commit(hash: parsesecurehash $1, parents: @[parsesecurehash $2])
             e.st=Header
         commit <- "commit " * >hash * !1:
-            e.was[].add Commit(hash: parsesecurehash($1), parents: @["00000000"])
+            e.was[].add Commit(hash: parsesecurehash $1, parents: @[])
             e.st=Header
         authorname <- {33..128} * +{33..128}
         author <- "Author:" * @>authorname * @'<':
