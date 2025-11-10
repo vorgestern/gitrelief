@@ -186,7 +186,7 @@ proc parse_status(Lines: seq[string]): RepoStatus=
         path <- +{1..31, 33..255}
         flags <- +{'0'..'9'}
         num <- +{'0'..'9'}
-        XM <- " M " * >path: e.res.staged.add (status: Modified, path: strip $1)
+        XM <- " M " * >path: e.res.unstaged.add (status: Modified, path: strip $1)
         AX <- "A  " * >path: e.res.staged.add (status: Added, path: strip $1)
         AM <- "AM " * >path: e.res.staged.add (status: Added, path: strip $1)
         DX <- "D  " * >path: e.res.unstaged.add (status: Deleted, path: strip $1)
