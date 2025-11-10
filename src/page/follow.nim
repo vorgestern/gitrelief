@@ -59,7 +59,6 @@ proc page_follow*(Args: Table[string,string]): string=
         pathtofollow=Args.getordefault("path", "???")
         num=parseint Args.getordefault("num", "100")
         commithash=Args.getordefault("highlight", "")
-    echo "commithash=",commithash
     let (L,cmd)=gitfollow(pathtofollow, num)
     let
         title="log_follow"

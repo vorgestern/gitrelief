@@ -22,7 +22,6 @@ const html_template="""
 """
 
 proc format_html_toc(Patches: seq[FileDiff], staged: bool, ahash, bhash: string): string=
-    # result.add "<p>Anzahl Dateien: " & $Patches.len & "</p>"
     result.add "<p><table>"
     for index,entry in Patches:
         let path=case entry.op
