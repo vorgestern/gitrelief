@@ -250,13 +250,13 @@ proc parse_follow(L: seq[string]): seq[Commit]=
     const loglineparser=peg("line", e: parsercontext):
         hash <- +{'0'..'9', 'a'..'f'}
         path <- +{33..255}
-        commit_pp <- "commit " * >hash * @>hash * @>hash:
+        commit_hpp <- "commit " * >hash * @>hash * @>hash:
             e.was[].add Commit(hash: parsesecurehash $1, parents: @[parsesecurehash $2, parsesecurehash $3])
             e.st=Header
-        commit_p <- "commit " * >hash * @>hash:
+        commit_hp <- "commit " * >hash * @>hash:
             e.was[].add Commit(hash: parsesecurehash $1, parents: @[parsesecurehash $2])
             e.st=Header
-        commit <- "commit " * >hash * !1:
+        commit_h <- "commit " * >hash * !1:
             e.was[].add Commit(hash: parsesecurehash $1, parents: @[])
             e.st=Header
         authorname <- {33..128} * +{33..128}
@@ -290,7 +290,7 @@ proc parse_follow(L: seq[string]): seq[Commit]=
             e.was[^1].files.add (Renamed, $2, $1)
         sonst <- >(*1) * !1:
             echo "Nicht erwartet: ", $1
-        line <- commit_pp | commit_p | commit | author | date | empty | comment | filestatus | filestatus_rename | sonst
+        line <- commit_hpp | commit_hp | commit_h | author | date | empty | comment | filestatus | filestatus_rename | sonst
     var e=parsercontext(st: None, was: addr result)
     for z in L:
         {.gcsafe.}:
