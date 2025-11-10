@@ -120,9 +120,10 @@ proc format_html(L: seq[Commit], highlight=""): string=
             elif stat==Added:       files.add fmt"<a href='{url_diff(parent, commit.hash, false, p)}'>{stat}</a><br/>{p}"
             elif commitindex==0:    files.add fmt"<a href='{url_diff(parent, commit.hash, false, p)}'>{stat}</a><br/>{p}"
             else:                   files.add fmt"<a href='{url_diff(parent, commit.hash, false, p)}'>{stat}</a>"
-        let bb=if commit.hash==highlight: " class='highlight'"
-        else: ""
-        result.add "<tr" & bb & "><td>" & substr(commit.hash,0,7) & "</td><td>" & commit.author &
+        let tr=if commit.hash==highlight: "\n<tr class='highlight'>"
+        else: "\n<tr>"
+        let tdanchor=fmt"<td><a id='tr_{substr(commit.hash,0,7)}'/>{substr(commit.hash,0,7)}</a></td>"
+        result.add tr & "<td>" & tdanchor & "</td><td>" & commit.author &
             "</td><td>" & commit.date & "</td><td>" & files & "</td><td>" & comments & "</td></tr>"
     result.add "</table>"
 

@@ -136,4 +136,4 @@ func url_diff*(parent,commit: string, staged: bool, path:string, oldpath:string 
 
 func url_follow*(path: string, highlightcommit: string = ""): string=
     if highlightcommit=="": fmt"/git/follow?path={path}"
-    else:                   fmt"/git/follow?path={path}&highlight={highlightcommit}"
+    else:                   fmt"/git/follow?path={path}&highlight={highlightcommit}#tr_{highlightcommit.substr(0,7)}"
