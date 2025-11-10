@@ -73,7 +73,6 @@ proc parse_diff(patch: seq[string]): seq[FileDiff]=
             e.fe[^1].apath= substr($1, 2)
             e.fe[^1].bpath= substr($2, 2)
         index <- "index" * @>hash * ".." * @>hash * @flags:
-            # e.fe[^1].op=Modified
             discard
         aaa <- "---" * @>path:
             e.fe[^1].apath= substr($1, 2)
@@ -242,7 +241,7 @@ type
         details*: seq[string]
         files*: seq[filestatus]
 
-proc parse_log(L: seq[string]): seq[Commit]=
+proc parse_follow(L: seq[string]): seq[Commit]=
     type
         context=enum None, Header, Subject, Details, Files
         parsercontext=object
@@ -319,4 +318,4 @@ proc gitfollow*(path: string, num: int): tuple[result: seq[Commit], cmd: string]
         Lines: seq[string]
         line:  string
     while readline(pipe, line): Lines.add line
-    (parse_log Lines, cmd)
+    (parse_follow Lines, cmd)
