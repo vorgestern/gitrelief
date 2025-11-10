@@ -4,7 +4,7 @@ import std/[osproc, strutils, streams]
 import std/strtabs
 import npeg
 
-# import helper
+import mehr/helper
 
 func htmlescape(s: string): string=replace(s, "<", "&lt;")
 
@@ -50,11 +50,18 @@ proc parse_log(L: seq[string]): seq[Commit]=
     const loglineparser=peg("line", e: parsercontext):
         hash <- +{'0'..'9', 'a'..'f'}
         path <- +{33..255}
-        commit <- "commit " * >hash * ?@>hash * ?@>hash:
-            let parents=case capture.len
-            of 4: @[substr($2, 0, 8), substr($3, 0, 8)]
-            of 3: @[substr($2, 0, 8)]
-            else: @["000000000"]
+        commit_pp <- "commit " * >hash * @>hash * @>hash:
+            let parents= @[substr($2, 0, 8), substr($3, 0, 8)]
+            # echo "commits hash=",$1,", capture.len=",capture.len,", parents=",parents
+            e.was[].add Commit(hash: substr($1, 0, 8), parents: parents)
+            e.st=Header
+        commit_p <- "commit " * >hash * @>hash:
+            let parents= @[substr($2, 0, 8)]
+            # echo "commits hash=",$1,", capture.len=",capture.len,", parents=",parents
+            e.was[].add Commit(hash: substr($1, 0, 8), parents: parents)
+            e.st=Header
+        commit <- "commit " * >hash * !1:
+            let parents= @["00000000"]
             # echo "commits hash=",$1,", capture.len=",capture.len,", parents=",parents
             e.was[].add Commit(hash: substr($1, 0, 8), parents: parents)
             e.st=Header
@@ -94,7 +101,7 @@ proc parse_log(L: seq[string]): seq[Commit]=
             e.was[^1].files.add (Renamed, $2, $1)
         sonst <- >(*1) * !1:
             echo "Nicht erwartet: ", $1
-        line <- commit | author | date | empty | comment | filestatus | filestatus_rename | sonst
+        line <- commit_pp | commit_p | commit | author | date | empty | comment | filestatus | filestatus_rename | sonst
     var e=parsercontext(st: None, was: addr result)
     for z in L:
         {.gcsafe.}:
@@ -115,10 +122,10 @@ proc format_html(L: seq[Commit], highlight=""): string=
         var files=""
         for fileindex,(stat,p,old) in commit.files:
             if fileindex>0: files.add "<br/>"
-            if stat==Renamed:       files.add fmt"<a href='/action/git_diff?a={parent}&b={commit.hash}&path={p}'>{stat}</a><br/>to {p}<br/>from {old}"
-            elif stat==Added:       files.add fmt"<a href='/action/git_diff?a={parent}&b={commit.hash}&path={p}'>{stat}</a><br/>{p}"
-            elif commitindex==0:    files.add fmt"<a href='/action/git_diff?a={parent}&b={commit.hash}&path={p}'>{stat}</a><br/>{p}"
-            else:                   files.add fmt"<a href='/action/git_diff?a={parent}&b={commit.hash}&path={p}'>{stat}</a>"
+            if stat==Renamed:       files.add fmt"<a href='{url_diff(parent, commit.hash, false, p)}'>{stat}</a><br/>to {p}<br/>from {old}"
+            elif stat==Added:       files.add fmt"<a href='{url_diff(parent, commit.hash, false, p)}'>{stat}</a><br/>{p}"
+            elif commitindex==0:    files.add fmt"<a href='{url_diff(parent, commit.hash, false, p)}'>{stat}</a><br/>{p}"
+            else:                   files.add fmt"<a href='{url_diff(parent, commit.hash, false, p)}'>{stat}</a>"
         let bb=if commit.hash==highlight: " class='highlight'"
         else: ""
         result.add "<tr" & bb & "><td>" & substr(commit.hash,0,7) & "</td><td>" & commit.author &
@@ -128,7 +135,7 @@ proc format_html(L: seq[Commit], highlight=""): string=
 proc git_log_follow*(Args: Table[string,string]): string=
 
     let gitargs=block:
-        var X= @["log", "--follow", "--name-status", "--date=iso-local"]
+        var X= @["log", "--follow", "--name-status", "--parents", "--date=iso-local"]
         if Args.contains "path":
             if Args.contains "a":
                 var arg=Args["a"]   # &"^"
