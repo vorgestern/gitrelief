@@ -15,6 +15,7 @@ import std/[cmdline,strutils]
 # 5.    Follow braucht ebenfalls 'next 100' Links.
 # 6.    Gib in Logs die Jahreszahl sparsam aus.
 # 7.    Fasse die Commit-Typen Commit und LogCommit zusammen.
+# 8.    Biete bei Commits mit mehr als einem Elternknoten die Alternative an.
 
 proc parsequery(query: string): Table[string,string]=
         var
