@@ -1,6 +1,6 @@
 
 import std/[tables, strformat]
-import std/[osproc, strutils, streams]
+import std/[osproc, strutils, streams, times]
 import std/strtabs
 import npeg
 
@@ -36,7 +36,7 @@ type
         hash: string
         parents: seq[string]
         author: string
-        date: string
+        date: DateTime
         subject: string
         details: seq[string]
         files: seq[filestatus]
@@ -64,13 +64,8 @@ proc parse_log(L: seq[string]): seq[Commit]=
             e.was[^1].author= $1
         datestring <- {'0'..'9', '-'}[10] * @{'0'..'9', ':'}[8] * @ {'0'..'9', '-', '+'}[5]
         date <- "Date: " * @>datestring * !1:
-            let
-                # y=substr($1, 0, 3)
-                m=substr($1, 5, 6)
-                d=substr($1, 8, 9)
-                H=substr($1, 11, 12)
-                M=substr($1, 14, 15)
-            e.was[^1].date= fmt"{d}. {TMonat[m]} {H}:{M}"
+            let ts=substr($1, 0, 18)
+            e.was[^1].date=times.parse(ts, "yyyy-MM-dd HH:mm:ss")
         empty <- *{' ', '\t'} * !1:
             e.st=case e.st
             of Header:  Subject
@@ -123,7 +118,7 @@ proc format_html(L: seq[Commit], highlight=""): string=
             tr=if commit.hash==highlight: "\n<tr class='highlight'>" else: "\n<tr>"
             tdanchor=fmt"<td><a id='tr_{substr(commit.hash,0,7)}'/>{substr(commit.hash,0,7)}</a></td>"
             tdauthor="<td>"&commit.author&"</td>"
-            tddate="<td>"&commit.date&"</td>"
+            tddate="<td>" & commit.date.format("d. MMM HH:mm") & "</td>"
             tdaffected="<td>"&files&"</td>"
             tdcomments="<td>"&comments&"</td>"
         result.add tr & tdanchor & tdauthor & tddate & tdaffected & tdcomments & "</tr>"
@@ -163,3 +158,11 @@ proc git_log_follow*(Args: Table[string,string]): string=
         cssurl="/gitrelief.css"
         content=format_html(parse_log Loglines, Args.getordefault("highlight", ""))
     return fmt html_template
+
+# =====================================================================
+
+when ismainmodule:
+    # let ts="2025-11-10T17:39:33+01:00"
+    let ts="2025-11-10T17:39:33"
+    let dt=times.parse(ts, "yyyy-MM-dd'T'HH:mm:ss")
+    echo "dt=",$dt
