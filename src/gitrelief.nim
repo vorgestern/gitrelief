@@ -7,10 +7,10 @@ import std/[cmdline,strutils]
 # asyncdispatch
 
 # Maßnahmen
-# 1.    Wirf eine Ausnahme, wenn z.B. git_log_follow ohne path aufgerufen wird.
+# 1.    Wirf eine Ausnahme, wenn z.B. git_follow ohne path aufgerufen wird.
 # 2.    Erzeuge für Ausnahmen sinnvolle Htmlseiten.
-# 3. ok Nenne git_log_follow um in git/follow, weitere sinngemäß.
-# 4. ok Stelle in git_log_follow immer die vollständige Entwicklung bis zum letzten commit dar.
+# 3. ok Nenne git_follow um in git/follow, weitere sinngemäß.
+# 4. ok Stelle in git_follow immer die vollständige Entwicklung bis zum letzten commit dar.
 #       Hebe den in a=hash übergebenen commit einfach durch Fettdruck hervor.
 # 5.    Follow braucht ebenfalls 'next 100' Links.
 # 6.    Gib in Logs die Jahreszahl sparsam aus.
@@ -54,7 +54,7 @@ routes:
         get "/": resp git_status(parsequery request.query, "public")
         get "/gitrelief.css": resp Http200, gitrelief_css
         get "/git/log": resp git_log(parsequery request.query)
-        get "/git/follow": resp git_log_follow(parsequery request.query)
+        get "/git/follow": resp git_follow(parsequery request.query)
         get "/git/diff": resp git_diff(parsequery request.query)
         # error Http404: resp Http404, "Looks you took a wrong turn somewhere."
         error Exception: resp Http500, "Exception caught: "&exception.msg
