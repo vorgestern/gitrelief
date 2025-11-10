@@ -73,6 +73,7 @@ proc parse_diff(patch: seq[string]): seq[FileDiff]=
             e.fe[^1].apath= substr($1, 2)
             e.fe[^1].bpath= substr($2, 2)
         index <- "index" * @>hash * ".." * @>hash * @flags:
+            # Beachte: Die Hashes sind keine Commit-Hashes, sondern bezeichnen Blobs im Index.
             discard
         aaa <- "---" * @>path:
             e.fe[^1].apath= substr($1, 2)
