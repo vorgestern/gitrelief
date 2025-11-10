@@ -247,7 +247,7 @@ proc parse_follow(L: seq[string]): seq[Commit]=
         parsercontext=object
             st: context
             was: ptr seq[Commit]
-    const loglineparser=peg("line", e: parsercontext):
+    const lineparser=peg("line", e: parsercontext):
         hash <- +{'0'..'9', 'a'..'f'}
         path <- +{33..255}
         commit_hpp <- "commit " * >hash * @>hash * @>hash:
@@ -294,7 +294,7 @@ proc parse_follow(L: seq[string]): seq[Commit]=
     var e=parsercontext(st: None, was: addr result)
     for z in L:
         {.gcsafe.}:
-            if loglineparser.match(z, e).ok:
+            if lineparser.match(z, e).ok:
                 discard
             else:
                 # error
