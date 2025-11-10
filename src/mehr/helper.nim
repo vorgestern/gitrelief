@@ -15,7 +15,7 @@ const root_html* ="""
 <tr class='head'><td>&nbsp;</td><td>pwd</td>
     <td><a href="/git/log">Log</a></td>
     <td><a href="/git/diff">Diff</a></td>
-    <td><a href="/git/diff?staged=1">Diff (staged)</a></td></tr>
+    <td><a href="/git/diff?staged">Diff (staged)</a></td></tr>
 </table>
 <p>localfiles</p>
 </body>
@@ -127,7 +127,7 @@ func url_diff*(parent,commit: string, staged: bool, path:string, oldpath:string 
     elif parent!="":
         X.add "a="&parent
     if staged:
-        X.add "staged=1"
+        X.add "staged"
     if oldpath!="" and path!="":
         X.add "path="&path
         X.add "oldpath="&oldpath
@@ -147,7 +147,7 @@ func url_diff*(parent, commit: SecureHash, staged: bool, path:string, oldpath:st
     elif parent!=shanull:
         X.add "a="&shaform parent
     if staged:
-        X.add "staged=1"
+        X.add "staged"
     if oldpath!="" and path!="":
         X.add "path="&path
         X.add "oldpath="&oldpath

@@ -20,7 +20,7 @@ const html_template="""
 <tr class='head'><td>&nbsp;</td><td>{pwd}</td>
     <td><a href="/git/log">Log</a></td>
     <td><a href="/git/diff">Diff</a></td>
-    <td><a href="/git/diff?staged=1">Diff (staged)</a></td></tr>
+    <td><a href="/git/diff?staged">Diff (staged)</a></td></tr>
 </table></p>
 
 <p><table class='nolines'>
