@@ -4,6 +4,7 @@ import std/[osproc, strutils, streams]
 import std/strtabs
 import npeg
 import mehr/helper
+import checksums/sha1
 
 # import helper
 
@@ -39,8 +40,8 @@ let TMonat={"01": "Jan", "02": "Feb", "03": "Mär", "04": "Apr", "05": "Mai", "0
 type
     filestatus=tuple[status: string, path: string, oldpath: string]
     Commit=object
-        hash: string
-        parents: seq[string]
+        hash: SecureHash
+        parents: seq[SecureHash]
         author: string
         date: string
         subject: string
@@ -56,13 +57,14 @@ proc parse_log(L: seq[string]): seq[Commit]=
     const loglineparser=peg("line", e: parsercontext):
         hash <- +{'0'..'9', 'a'..'f'}
         path <- +{33..255}
-        commit <- "commit " * >hash * ?@>hash * ?@>hash:
-            let parents=case capture.len
-            of 4: @[substr($2, 0, 8), substr($3, 0, 8)]
-            of 3: @[substr($2, 0, 8)]
-            else: @["000000000"]
-            # echo "commits hash=",$1,", capture.len=",capture.len,", parents=",parents
-            e.was[].add Commit(hash: substr($1, 0, 8), parents: parents)
+        commit_hpp <- "commit " * >hash * @>hash * @>hash:
+            e.was[].add Commit(hash: parsesecurehash $1, parents: @[parsesecurehash $2, parsesecurehash $3])
+            e.st=Header
+        commit_hp <- "commit " * >hash * @>hash:
+            e.was[].add Commit(hash: parsesecurehash $1, parents: @[parsesecurehash $2])
+            e.st=Header
+        commit_h <- "commit " * >hash * !1:
+            e.was[].add Commit(hash: parsesecurehash $1, parents: @[])
             e.st=Header
         authorname <- {33..128} * +{33..128}
         author <- "Author:" * @>authorname * @'<':
@@ -95,7 +97,7 @@ proc parse_log(L: seq[string]): seq[Commit]=
             e.was[^1].files.add ("R", $3, $2)
         sonst <- >(*1) * !1:
             echo "Nicht erwartet: ", $1
-        line <- >commit | >author | >date | empty | >comment | >filestatus | >filestatus_rename | >sonst
+        line <- commit_hpp | commit_hp | commit_h | author | date | empty | comment | filestatus | filestatus_rename | sonst
     var e=parsercontext(st: None, was: addr result)
     for z in L:
         {.gcsafe.}:
@@ -108,23 +110,20 @@ proc parse_log(L: seq[string]): seq[Commit]=
 
 proc format_html(L: seq[Commit]): string=
     result="<table class='diff'>\n<tr><th>commit</th><th>who</th><th>when</th><th>affected</th><th>subject/details</th></tr>"
-    var chash="000000000"
     for index,commit in L:
         if index>0 and index mod 100==0:
             result.add "\n" & fmt"<tr><td><a id='top{index}'>{index}</a></td></tr>"
             # Vielfache von 100 erhalten eine Hinweiszeile, die auch als Sprungziel dient.
         var comments=htmlescape(commit.subject)
         for d in commit.details: comments.add "<br/>"&htmlescape(d)
-        let parent=if commit.parents.len>0: commit.parents[0]
-        else: "0000000"
+        let parent=if commit.parents.len>0: commit.parents[0] else: shanull
         var files=""
         for index,(s,p,old) in commit.files:
             if index>0: files.add "<br/>"
             if old=="": files.add fmt"{s} <a href='{url_diff parent, commit.hash, false, p, old}'>{p}</a>"
             else:       files.add fmt"{s} <a href='{url_diff parent, commit.hash, false, p, old}'>{p}<br/>&nbsp;&nbsp;from {old}</a>"
-        result.add "\n<tr><td>" & substr(commit.hash,0,7) & "</td><td>" & commit.author &
+        result.add "\n<tr><td>" & shaform(commit.hash) & "</td><td>" & commit.author &
             "</td><td>" & commit.date & "</td><td>" & files & "</td><td>" & comments & "</td></tr>"
-        chash=commit.hash
     result.add "\n" & fmt"<tr><td><a id='top{L.len}'>{L.len}</a></td></tr>"
     result.add "</table>"
 
