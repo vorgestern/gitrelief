@@ -13,6 +13,7 @@ import std/[cmdline,strutils]
 # 4. ok Stelle in git_log_follow immer die vollständige Entwicklung bis zum letzten commit dar.
 #       Hebe den in a=hash übergebenen commit einfach durch Fettdruck hervor.
 # 5.    Follow braucht ebenfalls 'next 100' Links.
+# 6.    Gib in Logs die Jahreszahl sparsam aus.
 
 proc parsequery(query: string): Table[string,string]=
         var
