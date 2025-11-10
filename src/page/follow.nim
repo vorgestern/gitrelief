@@ -51,19 +51,13 @@ proc parse_log(L: seq[string]): seq[Commit]=
         hash <- +{'0'..'9', 'a'..'f'}
         path <- +{33..255}
         commit_pp <- "commit " * >hash * @>hash * @>hash:
-            let parents= @[substr($2, 0, 8), substr($3, 0, 8)]
-            # echo "commits hash=",$1,", capture.len=",capture.len,", parents=",parents
-            e.was[].add Commit(hash: substr($1, 0, 8), parents: parents)
+            e.was[].add Commit(hash: substr($1, 0, 8), parents: @[substr($2, 0, 8), substr($3, 0, 8)])
             e.st=Header
         commit_p <- "commit " * >hash * @>hash:
-            let parents= @[substr($2, 0, 8)]
-            # echo "commits hash=",$1,", capture.len=",capture.len,", parents=",parents
-            e.was[].add Commit(hash: substr($1, 0, 8), parents: parents)
+            e.was[].add Commit(hash: substr($1, 0, 8), parents: @[substr($2, 0, 8)])
             e.st=Header
         commit <- "commit " * >hash * !1:
-            let parents= @["00000000"]
-            # echo "commits hash=",$1,", capture.len=",capture.len,", parents=",parents
-            e.was[].add Commit(hash: substr($1, 0, 8), parents: parents)
+            e.was[].add Commit(hash: substr($1, 0, 8), parents: @["00000000"])
             e.st=Header
         authorname <- {33..128} * +{33..128}
         author <- "Author:" * @>authorname * @'<':
