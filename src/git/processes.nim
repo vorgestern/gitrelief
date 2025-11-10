@@ -172,3 +172,53 @@ proc gitdiff_staged*(a, b: string, paths: openarray[string]): tuple[diffs: seq[F
         for a in args: X=X & " " & a
         X
     (parse_diff(Lines), cmd)
+
+# =====================================================================
+
+type
+    RepoStatus* =object
+        staged*, unstaged*: seq[tuple[status: FileStatus, path: string]]
+        notcontrolled*: seq[string]
+        unparsed*: seq[string]
+
+proc parse_status(Lines: seq[string]): RepoStatus=
+    type
+        parsercontext=object
+            res: ptr RepoStatus
+    const statuslineparser=peg("entry", e: parsercontext):
+        path <- +{1..31, 33..255}
+        hash <- +{'0'..'9', 'a'..'f'}
+        flags <- +{'0'..'9'}
+        num <- +{'0'..'9'}
+        XM <- " M " * >path:
+            e.res.staged.add (status: Modified, path: strip $1)
+        AX <- "A  " * >path:
+            e.res.staged.add (status: Added, path: strip $1)
+        AM <- "AM " * >path:
+            e.res.staged.add (status: Added, path: strip $1)
+        uncontrolled <- "?? " * >path:
+            e.res.notcontrolled.add (strip $1)
+        sonst <- >(*1) * !1:
+            e.res.unparsed.add $1
+        entry <- XM | AX | AM | uncontrolled | sonst
+
+    var e=parsercontext(res: addr result)
+    for z in Lines:
+        {.gcsafe.}:
+            let mr=statuslineparser.match(z, e)
+            if not mr.ok:
+                echo "failed to parse: ", z
+
+proc gitstatus*(): tuple[status: RepoStatus, cmd: string] =
+    var args= @["status", "--porcelain", "-unormal"]
+    let p=startprocess("git", args=args, options={poUsePath})
+    let pipe=outputstream(p)
+    var
+        Lines: seq[string]
+        line:  string
+    while readline(pipe, line): Lines.add line
+    let cmd=block:
+        var X="git"
+        for a in args: X=X & " " & a
+        X
+    (parse_status(Lines), cmd)

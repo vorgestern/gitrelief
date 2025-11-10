@@ -1,7 +1,7 @@
 
 import jesterfork
 import mehr/[helper]
-import page/[log,diff,follow]
+import page/[log,diff,follow,status]
 import std/[cmdline,paths,dirs,strutils,strformat]
 
 # asyncdispatch
@@ -67,6 +67,7 @@ routes:
                 var html=replace(root_html, "<td>pwd</td>", "<td>" & $pwd & "/</td>")
                 html=replace(html, "localfiles", pubdir)
                 resp Http200, html
+        get "/status": resp git_status(parsequery request.query)
         get "/gitrelief.css": resp Http200, gitrelief_css
         get "/git/log": resp git_log(parsequery request.query)
         get "/git/follow": resp git_log_follow(parsequery request.query)

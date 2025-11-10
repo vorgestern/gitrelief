@@ -26,6 +26,9 @@ body {
     font-family: Courier;
     font-size: 18pt;
 }
+h1, h2, h3 {
+    margin: 0
+}
 table {
     border-style: solid;
     border-width: 1px;
