@@ -38,8 +38,7 @@ proc parse_log(L: seq[string]): seq[LogCommit]=
             e.was[].add LogCommit(hash: parsesecurehash $1, parents: @[])
             e.st=Header
         authorname <- {33..128} * +{33..128}
-        author <- "Author:" * @>authorname * @'<':
-            e.was[^1].author= $1
+        author <- "Author:" * @>authorname * @'<': e.was[^1].author= $1
         datestring <- {'0'..'9', '-'}[10] * @{'0'..'9', ':'}[8] * @ {'0'..'9', '-', '+'}[5]
         date <- "Date: " * @>datestring * !1:
             let
@@ -62,12 +61,9 @@ proc parse_log(L: seq[string]): seq[LogCommit]=
                 e.st=Details
             of Details: e.was[^1].details.add $1
             else: discard
-        filestatus <- >{'A'..'Z'} * +{' ','\t'} * >+1:
-            e.was[^1].files.add ($1, $2, "")
-        filestatus_rename <- 'R' * >{'0'..'9'}[3] * @>path * @>path:
-            e.was[^1].files.add ("R", $3, $2)
-        sonst <- >(*1) * !1:
-            echo "Nicht erwartet: ", $1
+        filestatus <- >{'A'..'Z'} * +{' ','\t'} * >+1: e.was[^1].files.add ($1, $2, "")
+        filestatus_rename <- 'R' * >{'0'..'9'}[3] * @>path * @>path: e.was[^1].files.add ("R", $3, $2)
+        sonst <- >(*1) * !1: echo "Nicht erwartet: ", $1
         line <- commit_hpp | commit_hp | commit_h | author | date | empty | comment | filestatus | filestatus_rename | sonst
     var e=parsercontext(st: None, was: addr result)
     for z in L:

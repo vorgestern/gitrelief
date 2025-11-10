@@ -76,21 +76,15 @@ proc parse_diff(patch: seq[string]): seq[FileDiff]=
         index <- "index" * @>hash * ".." * @>hash * @flags:
             # Beachte: Die Hashes sind keine Commit-Hashes, sondern bezeichnen Blobs im Index.
             discard
-        aaa <- "---" * @>path:
-            e.fe[^1].apath= substr($1, 2)
+        aaa <- "---" * @>path: e.fe[^1].apath= substr($1, 2)
         bbb <- "+++" * @>path:
             e.fe[^1].bpath= substr($1, 2)
             if e.fe[^1].op==Other: e.fe[^1].op=Modified
-        newfile <- "new file mode" * @>flags:
-            e.fe[^1].op=Added
-        deletedfile <- "deleted file mode" * @>flags:
-            e.fe[^1].op=Deleted
-        similarity <- "similarity index" * @>num * '%':
-            discard
-        rename_from <- "rename from" * @>path:
-            e.fe[^1].op=Renamed
-        rename_to <- "rename to" * @>path:
-            e.fe[^1].op=Renamed
+        newfile <- "new file mode" * @>flags: e.fe[^1].op=Added
+        deletedfile <- "deleted file mode" * @>flags: e.fe[^1].op=Deleted
+        similarity <- "similarity index" * @>num * '%': discard
+        rename_from <- "rename from" * @>path: e.fe[^1].op=Renamed
+        rename_to <- "rename to" * @>path: e.fe[^1].op=Renamed
         atat <- "@@" * @'-' * >num * ',' * >num * @'+' * >num * ',' * >num * @"@@":
             e.na=parseint $2
             e.nb=parseint $4
@@ -100,8 +94,7 @@ proc parse_diff(patch: seq[string]): seq[FileDiff]=
         atat2 <- "@@" * @'-' * >num * @'+' * >num * @"@@":
             e.na=1
             e.nb=1
-        sonst <- >(*1) * !1:
-            discard
+        sonst <- >(*1) * !1: discard
         entry <- diff | index | newfile | deletedfile | aaa | bbb | rename_from | rename_to | similarity | atat | atat1 | atat2 | sonst
 
     var
@@ -193,20 +186,13 @@ proc parse_status(Lines: seq[string]): RepoStatus=
         path <- +{1..31, 33..255}
         flags <- +{'0'..'9'}
         num <- +{'0'..'9'}
-        XM <- " M " * >path:
-            e.res.staged.add (status: Modified, path: strip $1)
-        AX <- "A  " * >path:
-            e.res.staged.add (status: Added, path: strip $1)
-        AM <- "AM " * >path:
-            e.res.staged.add (status: Added, path: strip $1)
-        DX <- "D  " * >path:
-            e.res.unstaged.add (status: Deleted, path: strip $1)
-        XD <- " D " * >path:
-            e.res.staged.add (status: Deleted, path: strip $1)
-        uncontrolled <- "?? " * >path:
-            e.res.notcontrolled.add (strip $1)
-        sonst <- >(*1) * !1:
-            e.res.unparsed.add $1
+        XM <- " M " * >path: e.res.staged.add (status: Modified, path: strip $1)
+        AX <- "A  " * >path: e.res.staged.add (status: Added, path: strip $1)
+        AM <- "AM " * >path: e.res.staged.add (status: Added, path: strip $1)
+        DX <- "D  " * >path: e.res.unstaged.add (status: Deleted, path: strip $1)
+        XD <- " D " * >path: e.res.staged.add (status: Deleted, path: strip $1)
+        uncontrolled <- "?? " * >path: e.res.notcontrolled.add (strip $1)
+        sonst <- >(*1) * !1: e.res.unparsed.add $1
         entry <- XM | AX | AM | DX | XD | uncontrolled | sonst
 
     var e=parsercontext(res: addr result)
@@ -262,8 +248,7 @@ proc parse_follow(L: seq[string]): seq[Commit]=
             e.was[].add Commit(hash: parsesecurehash $1, parents: @[])
             e.st=Header
         authorname <- {33..128} * +{33..128}
-        author <- "Author:" * @>authorname * @'<':
-            e.was[^1].author= $1
+        author <- "Author:" * @>authorname * @'<': e.was[^1].author= $1
         datestring <- {'0'..'9', '-'}[10] * @{'0'..'9', ':'}[8] * @ {'0'..'9', '-', '+'}[5]
         date <- "Date: " * @>datestring * !1:
             let ts=substr($1, 0, 18)
