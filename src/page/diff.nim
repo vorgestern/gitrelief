@@ -21,7 +21,7 @@ const html_template="""
 </body></html>
 """
 
-proc format_html_toc(Patches: seq[FileDiff], staged: bool, ahash, bhash: string): string=
+proc format_html_toc(Patches: seq[FileDiff], staged: bool, ahash, bhash: SecureHash): string=
     result.add "<p><table>"
     for index,entry in Patches:
         let path=case entry.op
@@ -34,7 +34,7 @@ proc format_html_toc(Patches: seq[FileDiff], staged: bool, ahash, bhash: string)
         result.add fmt"<tr><td>{entry.op}</td><td><a href='{url}'>{tag}</a></td><td><a href='{url_follow path}'>Follow</a></td></tr>"
     result.add "</table></p>"
 
-proc format_html_patch(fileentry: FileDiff, staged: bool, ahash, bhash: string): string=
+proc format_html_patch(fileentry: FileDiff, staged: bool, ahash, bhash: SecureHash): string=
     let followurl=case fileentry.op
     of Modified: fmt"{url_follow fileentry.bpath, bhash}"
     of Added:    fmt"{url_follow fileentry.bpath, bhash}"
@@ -52,19 +52,19 @@ proc format_html_patch(fileentry: FileDiff, staged: bool, ahash, bhash: string):
         case fileentry.op:
         of Modified:
             result.add "\n<tr><th>" & fileentry.apath & "</th><th>" & fileentry.bpath & "</th></tr>"
-            result.add "\n<tr><th>" & ahash & "</th><th>" & bhash & "</th></tr>"
+            result.add "\n<tr><th>" & shaform(ahash) & "</th><th>" & shaform(bhash) & "</th></tr>"
         of Deleted:
             result.add "\n<tr><th>" & fileentry.apath & "</th><th>---</th></tr>"
-            result.add "\n<tr><th>" & ahash & "</th><th/></tr>"
+            result.add "\n<tr><th>" & shaform(ahash) & "</th><th/></tr>"
         of Added:
             result.add "\n<tr><th/><th>" & fileentry.bpath & "</th></tr>"
-            result.add "\n<tr><th/><th>" & bhash & "</th></tr>"
+            result.add "\n<tr><th/><th>" & shaform(bhash) & "</th></tr>"
         of Renamed:
             result.add "\n<tr><th>" & fileentry.apath & "</th><th>" & fileentry.bpath & "</th></tr>"
-            result.add "\n<tr><th>" & ahash & "</th><th>" & bhash & "</th></tr>"
+            result.add "\n<tr><th>" & shaform(ahash) & "</th><th>" & shaform(bhash) & "</th></tr>"
         of Other:
             result.add "\n<tr><th>" & fileentry.apath & "</th><th>" & fileentry.bpath & "</th></tr>"
-            result.add "\n<tr><th>" & ahash & "</th><th>" & bhash & "</th></tr>"
+            result.add "\n<tr><th>" & shaform(ahash) & "</th><th>" & shaform(bhash) & "</th></tr>"
         var
             a=0
             b=0
@@ -111,15 +111,15 @@ proc page_diff*(Args: Table[string,string]): string=
         if Args.contains "oldpath": X.add Args["oldpath"]
         X
     let staged=Args.contains "staged"
-    let (Diffs,cmd)=if staged: gitdiff_staged(Args.getordefault("a", ""), Args.getordefault("b", ""), paths)
-                    else:      gitdiff(       Args.getordefault("a", ""), Args.getordefault("b", ""), paths)
+    let
+        ahash=if Args.contains "a": gitcompletehash Args["a"] else: shanull
+        bhash=if Args.contains "b": gitcompletehash Args["b"] else: shanull
+    let (Diffs,cmd)=if staged: gitdiff_staged(ahash, bhash, paths)
+                    else:      gitdiff(       ahash, bhash, paths)
     let
         title="diff"
         cssurl="/gitrelief.css"
         content=block:
-            let
-                ahash=Args.getordefault("a", "")
-                bhash=Args.getordefault("b", "")
             if Diffs.len>1:    format_html_toc(Diffs, staged, ahash, bhash)
             elif Diffs.len==1: format_html_patch(Diffs[0], staged, ahash, bhash)
             else: "<p>No Modifications</p>"

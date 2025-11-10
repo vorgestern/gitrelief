@@ -159,9 +159,9 @@ func url_diff*(parent, commit: SecureHash, staged: bool, path:string, oldpath:st
         url.add q
     url
 
-func url_follow*(path: string, highlightcommit: string = ""): string=
-    if highlightcommit=="": fmt"/git/follow?path={path}"
-    else:                   fmt"/git/follow?path={path}&highlight={highlightcommit}#tr_{highlightcommit.substr(0,9)}"
+func url_follow*(path: string, highlightcommit: SecureHash=shanull): string=
+    if highlightcommit==shanull: fmt"/git/follow?path={path}"
+    else:                        fmt"/git/follow?path={path}&highlight={highlightcommit}#tr_{shaform highlightcommit}"
 
 when ismainmodule:
     let shademo="934e2293ead91cad3ce2ac665e8673ce8d30a3d9"

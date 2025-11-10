@@ -1,6 +1,7 @@
 
 import std/[osproc, strutils, streams, times]
 import checksums/sha1
+import mehr/helper
 import npeg
 
 export sha1
@@ -138,10 +139,10 @@ proc parse_diff(patch: seq[string]): seq[FileDiff]=
                     # e.zeile="??????"
                     discard
 
-proc gitdiff*(a, b: string, paths: openarray[string]): tuple[diffs: seq[FileDiff], cmd: string] =
+proc gitdiff*(a, b: SecureHash, paths: openarray[string]): tuple[diffs: seq[FileDiff], cmd: string] =
     var args= @["diff", "-U999999"]
-    if a!="" and b!="": args.add a&".."&b
-    elif a!="": args.add a
+    if a!=shanull and b!=shanull: args.add shaform(a) & ".." & shaform(b)
+    elif a!=shanull: args.add shaform a
     if paths.len>0:
         args.add "--"
         for p in paths: args.add p
@@ -157,10 +158,10 @@ proc gitdiff*(a, b: string, paths: openarray[string]): tuple[diffs: seq[FileDiff
         X
     (parse_diff(Lines), cmd)
 
-proc gitdiff_staged*(a, b: string, paths: openarray[string]): tuple[diffs: seq[FileDiff], cmd: string] =
+proc gitdiff_staged*(a, b: SecureHash, paths: openarray[string]): tuple[diffs: seq[FileDiff], cmd: string] =
     var args= @["diff", "-U999999", "--staged"]
-    if a!="" and b!="": args.add a&".."&b
-    elif a!="": args.add a
+    if a!=shanull and b!=shanull: args.add shaform(a) & ".." & shaform(b)
+    elif a!=shanull: args.add shaform a
     if paths.len>0:
         args.add "--"
         for p in paths: args.add p
@@ -320,3 +321,15 @@ proc gitfollow*(path: string, num: int): tuple[result: seq[Commit], cmd: string]
         line:  string
     while readline(pipe, line): Lines.add line
     (parse_follow Lines, cmd)
+
+# =====================================================================
+
+proc gitcompletehash*(hash: string): SecureHash=
+    let p=startprocess("git", args= @["rev-list", "--max-count=1", "--skip=#", hash], options={poUsePath})
+    let pipe=outputstream(p)
+    var
+        Lines: seq[string]
+        line:  string
+    while readline(pipe, line): Lines.add line
+    if Lines.len==1: parsesecurehash Lines[0]
+    else:            shanull
