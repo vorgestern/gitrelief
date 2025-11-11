@@ -24,8 +24,11 @@ const html_template="""
 </table></p>
 
 <p><table class='nolines'>
-<tr><td/><td>{htmlescape cmd}</td></tr>
-<tr><td><h2>Local files</h2>{localfiles}</td><td>{content}</td></tr>
+<tr><th><h2>Public</h2></th><th><h2>Status</h2></th><th><h2>Failed to Parse</h2></th></tr>
+""" &
+# <!-- <tr><td/><td>{htmlescape cmd}</td><td/></tr> -->
+"""
+<tr><td>{localfiles}</td><td>{content}</td><td>{failedtoparse}</td></tr>
 </table></p>
 </body></html>
 """
@@ -37,30 +40,32 @@ proc walkpublicdir(dir: Path): string=
         let p=replace(string path, string dir1, "")
         result.add fmt"{'\n'}<tr><td></td><td><a href='{p}'>{p}</a></td></tr>"
 
-proc format_html(Status: RepoStatus): string=
-    result="<p><h2>Staged</h2><table>"
+proc format_html(Status: RepoStatus): tuple[a,b: string]=
+    var A="<p><b>Staged</b><table>"
     for index,entry in Status.staged:
-        result.add fmt"<tr><td>{entry.status}</td><td><a href='{url_diff shanull, shanull, true, entry.path}'>diff</a> <a href='{url_follow entry.path}'>follow</a></td><td>{entry.path}</td></tr>"
-    result.add "</table></p>"
-    result.add "<p><h2>Not staged</h2><table>"
+        A.add fmt"<tr><td>{entry.status}</td><td><a href='{url_diff shanull, shanull, true, entry.path}'>diff</a> <a href='{url_follow entry.path}'>follow</a></td><td>{entry.path}</td></tr>"
+    A.add "</table></p>"
+
+    A.add "<p><h3>Not staged</h3><table>"
     for index,entry in Status.unstaged:
-        result.add fmt"<tr><td>{entry.status}</td><td><a href='{url_diff shanull, shanull, false, entry.path}'>diff</a> <a href='{url_follow entry.path}'>follow</a></td><td>{entry.path}</td></tr>"
-    result.add "</table></p>"
-    result.add "<p><h2>Not controlled</h2><table>"
-    for index,entry in Status.notcontrolled:
-        result.add fmt"<tr><td>{entry}</td></tr>"
-    result.add "</table></p>"
-    result.add "<p><h2>Failed to parse</h2><table>"
-    for index,entry in Status.unparsed:
-        result.add fmt"<tr><td>{entry}</td></tr>"
-    result.add "</table></p>"
+        A.add fmt"<tr><td>{entry.status}</td><td><a href='{url_diff shanull, shanull, false, entry.path}'>diff</a> <a href='{url_follow entry.path}'>follow</a></td><td>{entry.path}</td></tr>"
+    A.add "</table></p>"
+
+    A.add "<p><h3>Not controlled</h3><table>"
+    for index,entry in Status.notcontrolled: A.add fmt"<tr><td>{entry}</td></tr>"
+    A.add "</table></p>"
+
+    var B="<table>"
+    for index,entry in Status.unparsed: B.add fmt"<tr><td>{entry}</td></tr>"
+    B.add "</table></p>"
+    (A,B)
 
 proc page_status*(Args: Table[string,string], publicdir: string): string=
     let
         (Status,cmd)=gitstatus()
         title="status"
         cssurl="/gitrelief.css"
-        content=format_html(Status)
+        (content,failedtoparse)=format_html(Status)
         pwd=block:
             var X=getcurrentdir()
             normalizepath(X)
