@@ -68,7 +68,7 @@ proc format_html(Status: RepoStatus): tuple[a,b: string]=
 
 proc page_status*(Args: Table[string,string], publicdir: string): string=
     let
-        (Status,cmd)=gitstatus()
+        (Status,_)=gitstatus()
         title="status"
         cssurl="/gitrelief.css"
         (content,failedtoparse)=format_html(Status)
