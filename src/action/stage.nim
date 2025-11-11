@@ -1,8 +1,6 @@
 
-import std/[tables, strformat, strutils]
-import std/[paths,dirs]
+import std/tables
 import git/processes
-import mehr/helper
 
 proc action_stage*(Args: Table[string,string]): string=
     if not Args.contains "path": return "Error"

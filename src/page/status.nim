@@ -58,7 +58,9 @@ proc format_html(Status: RepoStatus): tuple[a,b: string]=
     A.add "</table></p>"
 
     A.add "<p><h3>Not controlled</h3><table>"
-    for index,entry in Status.notcontrolled: A.add fmt"<tr><td>{entry}</td></tr>"
+    for index,entry in Status.notcontrolled:
+        let stage="<a href='" & url_stage(entry) & "'>stage</a>"
+        A.add "\n" & fmt"<tr><td>{entry}</td><td>{stage}</td></tr>"
     A.add "</table></p>"
 
     var B="<table>"

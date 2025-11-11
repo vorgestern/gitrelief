@@ -207,7 +207,7 @@ proc parse_status(Lines: seq[string]): RepoStatus=
                 echo "failed to parse: ", z
 
 proc gitstatus*(): tuple[status: RepoStatus, cmd: string] =
-    var args= @["status", "--porcelain", "-unormal"]
+    var args= @["status", "--porcelain", "-uall"]
     let p=startprocess("git", args=args, options={poUsePath})
     let pipe=outputstream(p)
     var
