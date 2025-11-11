@@ -44,6 +44,12 @@ proc format_html(L: seq[LogCommit]): string=
             if index>0: files.add "<br/>"
             if old=="": files.add fmt"{s} <a href='{url_diff parent, commit.hash, false, p, old}'>{p}</a>"
             else:       files.add fmt"{s} <a href='{url_diff parent, commit.hash, false, p, old}'>{p}<br/>&nbsp;&nbsp;from {old}</a>"
+        # if commit.mergeinfo.len>0:
+        #     result.add "\n<tr><td colspan='5'>mergeinfo:"
+        #     for m in commit.mergeinfo: result.add " "&m
+        #     # result.add "; parents"
+        #     # result.add $commit.parents
+        #     result.add "</td></tr>"
         result.add "\n<tr><td>" & shaform(commit.hash) & "</td><td>" & commit.author &
             "</td><td>" & commit.date.format("d. MMM HH:mm") & "</td><td>" & files & "</td><td>" & comments & "</td></tr>"
     result.add "\n" & fmt"<tr><td><a id='top{L.len}'>{L.len}</a></td></tr>"

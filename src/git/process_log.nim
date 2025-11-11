@@ -18,6 +18,7 @@ type
         subject*: string
         details*: seq[string]
         files*: seq[filestatus]
+        mergeinfo*: seq[string]
 
 proc parse_log(L: seq[string]): seq[LogCommit]=
     type
@@ -37,6 +38,11 @@ proc parse_log(L: seq[string]): seq[LogCommit]=
         commit_h <- "commit " * >hash * !1:
             e.was[].add LogCommit(hash: parsesecurehash $1, parents: @[])
             e.st=Header
+        merge <- "Merge:" * @>hash * @+>hash:
+            # capture[0] beschreibt die ganze Zeile.
+            # capture[1..] sind die Hashes.
+            # Die hier genannten Hashes sind einfach die Kurzformen der in der commit-Zeile genannten.
+            for k in 1..<capture.len: e.was[^1].mergeinfo.add capture[k].s
         authorname <- {33..128} * +{33..128}
         author <- "Author:" * @>authorname * @'<': e.was[^1].author= $1
         datestring <- {'0'..'9', '-'}[10] * @{'0'..'9', ':'}[8] * @ {'0'..'9', '-', '+'}[5]
@@ -59,7 +65,7 @@ proc parse_log(L: seq[string]): seq[LogCommit]=
         filestatus <- >{'A'..'Z'} * +{' ','\t'} * >+1: e.was[^1].files.add ($1, $2, "")
         filestatus_rename <- 'R' * >{'0'..'9'}[3] * @>path * @>path: e.was[^1].files.add ("R", $3, $2)
         sonst <- >(*1) * !1: echo "Nicht erwartet: ", $1
-        line <- commit_hpp | commit_hp | commit_h | author | date | empty | comment | filestatus | filestatus_rename | sonst
+        line <- commit_hpp | commit_hp | commit_h | merge | author | date | empty | comment | filestatus | filestatus_rename | sonst
     var e=parsercontext(st: None, was: addr result)
     for z in L:
         {.gcsafe.}:
