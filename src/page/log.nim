@@ -31,6 +31,8 @@ const html_template="""
 """
 
 proc format_html(L: seq[LogCommit]): string=
+    let ynow=year(now())
+    var yage_merk=0
     result="<table class='diff'>\n<tr><th>commit</th><th>who</th><th>when</th><th>affected</th><th>subject/details</th></tr>"
     for index,commit in L:
         if index>0 and index mod 100==0:
@@ -52,8 +54,17 @@ proc format_html(L: seq[LogCommit]): string=
         #     result.add "\n<tr><td colspan='5'>parents:"
         #     for m in commit.parents: result.add " " & $m
         #     result.add "</td></tr>"
-        result.add "\n<tr><td>" & shaform(commit.hash) & "</td><td>" & commit.author &
-            "</td><td>" & commit.date.format("d. MMM HH:mm") & "</td><td>" & files & "</td><td>" & comments & "</td></tr>"
+        let yage=ynow-year(commit.date)
+        if yage>yage_merk:
+            let yclass=if yage mod 2==0: "yeven" else: "yodd"
+            result.add "\n<tr class='newyear'><td/><td/><td class='" & yclass & "'><b>" & $year(commit.date) & "</b></td><td/><td/></tr>"
+            yage_merk=yage
+        let df=commit.date.format("d. MMM HH:mm")
+        let tddate=block:
+            if yage==0:             "<td>" & df & "</td>"
+            elif yage mod 2==0:     "<td class='yeven'>" & df & "</td>"
+            else:                   "<td class='yodd'>" & df & "</td>"
+        result.add "\n<tr><td>" & shaform(commit.hash) & "</td><td>" & commit.author & "</td>" & tddate & "<td>" & files & "</td><td>" & comments & "</td></tr>"
     result.add "\n" & fmt"<tr><td><a id='top{L.len}'>{L.len}</a></td></tr>"
     result.add "</table>"
 

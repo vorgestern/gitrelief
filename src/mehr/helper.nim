@@ -39,12 +39,32 @@ table.diff tr td {
     white-space: pre;
     font-size: 70%;
 }
+
+/* table.diff tr td:first-of-type {
+    font-family: cursive;
+    color: white;
+    background-color: green;
+}*/
+/*table.diff tr td:nth-child(3) {
+    border-left: 5px solid white;
+}*/
+td.yeven {
+    border-left: 5px solid red;
+}
+td.yodd {
+    border-left: 5px solid yellow;
+}
+
 tr.head td {
     font-size:120%;
 }
 
 tr.highlight td {
     background-color: lightgray;
+}
+
+tr.newyear {
+    font-size: 200%;
 }
 
 td.Acmp {
