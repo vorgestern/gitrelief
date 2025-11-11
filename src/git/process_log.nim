@@ -29,14 +29,10 @@ proc parse_log(L: seq[string]): seq[LogCommit]=
     const loglineparser=peg("line", e: parsercontext):
         hash <- +{'0'..'9', 'a'..'f'}
         path <- +{33..255}
-        commit_hpp <- "commit " * >hash * @>hash * @>hash:
-            e.was[].add LogCommit(hash: parsesecurehash $1, parents: @[parsesecurehash $2, parsesecurehash $3])
-            e.st=Header
-        commit_hp <- "commit " * >hash * @>hash:
-            e.was[].add LogCommit(hash: parsesecurehash $1, parents: @[parsesecurehash $2])
-            e.st=Header
-        commit_h <- "commit " * >hash * !1:
-            e.was[].add LogCommit(hash: parsesecurehash $1, parents: @[])
+        commit <- "commit " * +@>hash:
+            var parents: seq[SecureHash]
+            for k in 2..<capture.len: parents.add parsesecurehash capture[k].s
+            e.was[].add LogCommit(hash: parsesecurehash $1, parents: parents)
             e.st=Header
         merge <- "Merge:" * @>hash * @+>hash:
             # capture[0] beschreibt die ganze Zeile.
@@ -65,7 +61,7 @@ proc parse_log(L: seq[string]): seq[LogCommit]=
         filestatus <- >{'A'..'Z'} * +{' ','\t'} * >+1: e.was[^1].files.add ($1, $2, "")
         filestatus_rename <- 'R' * >{'0'..'9'}[3] * @>path * @>path: e.was[^1].files.add ("R", $3, $2)
         sonst <- >(*1) * !1: echo "Nicht erwartet: ", $1
-        line <- commit_hpp | commit_hp | commit_h | merge | author | date | empty | comment | filestatus | filestatus_rename | sonst
+        line <- commit | merge | author | date | empty | comment | filestatus | filestatus_rename | sonst
     var e=parsercontext(st: None, was: addr result)
     for z in L:
         {.gcsafe.}:
