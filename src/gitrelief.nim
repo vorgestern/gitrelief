@@ -8,15 +8,17 @@ import std/[cmdline,strutils]
 # asyncdispatch
 
 # Maßnahmen
-# 1.    Wirf eine Ausnahme, wenn z.B. git_follow ohne path aufgerufen wird.
-# 2.    Erzeuge für Ausnahmen sinnvolle Htmlseiten.
-# 3. ok Nenne git_follow um in git/follow, weitere sinngemäß.
-# 4. ok Stelle in git_follow immer die vollständige Entwicklung bis zum letzten commit dar.
-#       Hebe den in a=hash übergebenen commit einfach durch Fettdruck hervor.
-# 5.    Follow braucht ebenfalls 'next 100' Links.
-# 6.    Gib in Logs die Jahreszahl sparsam aus.
-# 7.    Fasse die Commit-Typen Commit und LogCommit zusammen.
-# 8.    Biete bei Commits mit mehr als einem Elternknoten die Alternative an.
+# 1.     Wirf eine Ausnahme, wenn z.B. git_follow ohne path aufgerufen wird.
+# 2.     Erzeuge für Ausnahmen sinnvolle Htmlseiten.
+# 3.  ok Nenne git_follow um in git/follow, weitere sinngemäß.
+# 4.  ok Stelle in git_follow immer die vollständige Entwicklung bis zum letzten commit dar.
+#        Hebe den in a=hash übergebenen commit einfach durch Fettdruck hervor.
+# 5.     Follow braucht ebenfalls 'next 100' Links.
+# 6.     Gib in Logs die Jahreszahl sparsam aus.
+# 7.     Fasse die Commit-Typen Commit und LogCommit zusammen.
+# 8.     Biete bei Commits mit mehr als einem Elternknoten die Alternative an.
+# 9.     Recherchiere den Zugang zum locale in Nim.
+# 10.    Untersuche, ob gelegentliche Probleme beim Auffrischen einer Seite nach dem Neustart des Servers mit Http302 zu tun haben.
 
 proc parsequery(query: string): Table[string,string]=
         var
