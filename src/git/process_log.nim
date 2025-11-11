@@ -14,7 +14,7 @@ type
         hash*: SecureHash
         parents*: seq[SecureHash]
         author*: string
-        date*: string
+        date*: string # Implementiere dies mit DateiTime
         subject*: string
         details*: seq[string]
         files*: seq[filestatus]
