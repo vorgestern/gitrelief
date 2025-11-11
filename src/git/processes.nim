@@ -187,13 +187,14 @@ proc parse_status(Lines: seq[string]): RepoStatus=
         flags <- +{'0'..'9'}
         num <- +{'0'..'9'}
         XM <- " M " * >path: e.res.unstaged.add (status: Modified, path: strip $1)
+        MX <- "M  " * >path: e.res.staged.add (status: Modified, path: strip $1)
         AX <- "A  " * >path: e.res.staged.add (status: Added, path: strip $1)
         AM <- "AM " * >path: e.res.staged.add (status: Added, path: strip $1)
         DX <- "D  " * >path: e.res.unstaged.add (status: Deleted, path: strip $1)
         XD <- " D " * >path: e.res.staged.add (status: Deleted, path: strip $1)
         uncontrolled <- "?? " * >path: e.res.notcontrolled.add (strip $1)
         sonst <- >(*1) * !1: e.res.unparsed.add $1
-        entry <- XM | AX | AM | DX | XD | uncontrolled | sonst
+        entry <- XM | MX | AX | AM | DX | XD | uncontrolled | sonst
 
     var e=parsercontext(res: addr result)
     for z in Lines:

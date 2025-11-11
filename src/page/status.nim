@@ -43,7 +43,9 @@ proc walkpublicdir(dir: Path): string=
 proc format_html(Status: RepoStatus): tuple[a,b: string]=
     var A="<p><b>Staged</b><table>"
     for index,entry in Status.staged:
-        A.add fmt"<tr><td>{entry.status}</td><td><a href='{url_diff shanull, shanull, true, entry.path}'>diff</a> <a href='{url_follow entry.path}'>follow</a></td><td>{entry.path}</td></tr>"
+        let diff="<a href='" & url_diff(shanull, shanull, true, entry.path) & "'>diff</a>"
+        let follow="<a href='" & url_follow(entry.path) & "'>follow</a>"
+        A.add fmt"<tr><td>{entry.status}</td><td>{diff} {follow}</td><td>{entry.path}</td></tr>"
     A.add "</table></p>"
 
     A.add "<p><h3>Not staged</h3><table>"
