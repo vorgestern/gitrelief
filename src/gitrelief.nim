@@ -57,6 +57,8 @@ routes:
         get "/git/log":    resp page_log(parsequery request.query)
         get "/git/follow": resp page_follow(parsequery request.query)
         get "/git/diff":   resp page_diff(parsequery request.query)
+        get "/git/stage":  resp Http404, "add/stage: Not implemented yet."
+        get "/git/unstage": resp Http404, "unstage: Not implemented yet."
         get "/gitrelief.css": resp Http200, gitrelief_css
         # error Http404: resp Http404, "Looks you took a wrong turn somewhere."
         error Exception: resp Http500, "Exception caught: "&exception.msg
