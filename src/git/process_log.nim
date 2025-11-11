@@ -1,12 +1,12 @@
 
-import std/[strtabs, strformat, osproc, streams]
+import std/[strtabs, strformat, osproc, streams, times]
 import checksums/sha1
 import npeg
 
 export sha1
 
-let TMonat={"01": "Jan", "02": "Feb", "03": "Mär", "04": "Apr", "05": "Mai", "06": "Jun",
-            "07": "Jul", "08": "Aug", "09": "Sep", "10": "Okt", "11": "Nov", "12": "Dez"}.newstringtable
+let TMonat{.used.}={"01": "Jan", "02": "Feb", "03": "Mär", "04": "Apr", "05": "Mai", "06": "Jun",
+                    "07": "Jul", "08": "Aug", "09": "Sep", "10": "Okt", "11": "Nov", "12": "Dez"}.newstringtable
 
 type
     filestatus=tuple[status: string, path: string, oldpath: string]
@@ -14,7 +14,7 @@ type
         hash*: SecureHash
         parents*: seq[SecureHash]
         author*: string
-        date*: string # Implementiere dies mit DateiTime
+        date*: DateTime
         subject*: string
         details*: seq[string]
         files*: seq[filestatus]
@@ -41,13 +41,8 @@ proc parse_log(L: seq[string]): seq[LogCommit]=
         author <- "Author:" * @>authorname * @'<': e.was[^1].author= $1
         datestring <- {'0'..'9', '-'}[10] * @{'0'..'9', ':'}[8] * @ {'0'..'9', '-', '+'}[5]
         date <- "Date: " * @>datestring * !1:
-            let
-                # y=substr($1, 0, 3)
-                m=substr($1, 5, 6)
-                d=substr($1, 8, 9)
-                H=substr($1, 11, 12)
-                M=substr($1, 14, 15)
-            e.was[^1].date= fmt"{d}. {TMonat[m]} {H}:{M}"
+            let ts=substr($1, 0, 18)
+            e.was[^1].date=times.parse(ts, "yyyy-MM-dd HH:mm:ss")
         empty <- *{' ', '\t'} * !1:
             e.st=case e.st
             of Header:  Subject

@@ -1,5 +1,5 @@
 
-import std/[tables, strutils, strformat, parseutils]
+import std/[tables, strutils, strformat, parseutils, times]
 import npeg
 import mehr/helper
 import git/process_log
@@ -45,7 +45,7 @@ proc format_html(L: seq[LogCommit]): string=
             if old=="": files.add fmt"{s} <a href='{url_diff parent, commit.hash, false, p, old}'>{p}</a>"
             else:       files.add fmt"{s} <a href='{url_diff parent, commit.hash, false, p, old}'>{p}<br/>&nbsp;&nbsp;from {old}</a>"
         result.add "\n<tr><td>" & shaform(commit.hash) & "</td><td>" & commit.author &
-            "</td><td>" & commit.date & "</td><td>" & files & "</td><td>" & comments & "</td></tr>"
+            "</td><td>" & commit.date.format("d. MMM HH:mm") & "</td><td>" & files & "</td><td>" & comments & "</td></tr>"
     result.add "\n" & fmt"<tr><td><a id='top{L.len}'>{L.len}</a></td></tr>"
     result.add "</table>"
 
