@@ -144,10 +144,10 @@ func url_follow*(path: string, highlightcommit: SecureHash=shanull): string=
     else:                        fmt"/git/follow?path={path}&highlight={highlightcommit}#tr_{shaform highlightcommit}"
 
 func url_unstage*(path: string):string =
-    "/git/unstage?path=" & path
+    "/git/unstage?a=1&path=" & path
 
 func url_stage*(path: string):string =
-    "/git/stage?path=" & path
+    "/git/stage?z=1&path=" & path
 
 when ismainmodule:
     let shademo="934e2293ead91cad3ce2ac665e8673ce8d30a3d9"

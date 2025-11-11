@@ -2,6 +2,7 @@
 import jesterfork
 import mehr/[helper]
 import page/[log,diff,follow,status]
+import action/[stage]
 import std/[cmdline,strutils]
 
 # asyncdispatch
@@ -53,12 +54,12 @@ settings:
         staticdir=publicdir
 
 routes:
-        get "/":           resp page_status(parsequery request.query, "public")
-        get "/git/log":    resp page_log(parsequery request.query)
-        get "/git/follow": resp page_follow(parsequery request.query)
-        get "/git/diff":   resp page_diff(parsequery request.query)
-        get "/git/stage":  resp Http404, "add/stage: Not implemented yet."
-        get "/git/unstage": resp Http404, "unstage: Not implemented yet."
+        get "/":              resp page_status(parsequery request.query, "public")
+        get "/git/log":       resp page_log(parsequery request.query)
+        get "/git/follow":    resp page_follow(parsequery request.query)
+        get "/git/diff":      resp page_diff(parsequery request.query)
+        get "/git/stage?":    resp Http302, @[("Location", "/")], action_stage(parsequery request.query)
+        get "/git/unstage":   resp Http302, @[("Location", "/")], action_unstage(parsequery request.query)
         get "/gitrelief.css": resp Http200, gitrelief_css
         # error Http404: resp Http404, "Looks you took a wrong turn somewhere."
         error Exception: resp Http500, "Exception caught: "&exception.msg

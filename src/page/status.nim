@@ -43,18 +43,18 @@ proc walkpublicdir(dir: Path): string=
 proc format_html(Status: RepoStatus): tuple[a,b: string]=
     var A="<p><b>Staged</b><table>"
     for index,entry in Status.staged:
-        let diff="<a href='" & url_diff(shanull, shanull, true, entry.path) & "'>diff</a>"
-        let follow="<a href='" & url_follow(entry.path) & "'>follow</a>"
-        let unstage="<a href='" & url_unstage(entry.path) & "'>unstage</a>"
-        A.add fmt"<tr><td>{entry.status}</td><td>{diff} {follow} {unstage}</td><td>{entry.path}</td></tr>"
+        let diff="\n    <a href='" & url_diff(shanull, shanull, true, entry.path) & "'>diff</a>"
+        let follow="\n    <a href='" & url_follow(entry.path) & "'>follow</a>"
+        let unstage="\n    <a href='" & url_unstage(entry.path) & "'>unstage</a>"
+        A.add "\n" & fmt"<tr><td>{entry.status}</td><td>{diff}{follow}{unstage}</td><td>{entry.path}</td></tr>"
     A.add "</table></p>"
 
     A.add "<p><h3>Not staged</h3><table>"
     for index,entry in Status.unstaged:
-        let diff="<a href='" & url_diff(shanull, shanull, false, entry.path) & "'>diff</a>"
-        let follow="<a href='" & url_follow(entry.path) & "'>follow</a>"
-        let stage="<a href='" & url_stage(entry.path) & "'>stage</a>"
-        A.add fmt"<tr><td>{entry.status}</td><td>{diff} {follow} {stage}</td><td>{entry.path}</td></tr>"
+        let diff="\n    <a href='" & url_diff(shanull, shanull, false, entry.path) & "'>diff</a>"
+        let follow="\n    <a href='" & url_follow(entry.path) & "'>follow</a>"
+        let stage="\n    <a href='" & url_stage(entry.path) & "'>stage</a>"
+        A.add "\n" & fmt"<tr><td>{entry.status}</td><td>{diff}{follow}{stage}</td><td>{entry.path}</td></tr>"
     A.add "</table></p>"
 
     A.add "<p><h3>Not controlled</h3><table>"
