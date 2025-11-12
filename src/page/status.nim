@@ -1,5 +1,5 @@
 
-import std/[tables, strformat, strutils]
+import std/[tables, strformat, strutils, strtabs]
 import std/[paths,dirs]
 import git/processes
 import mehr/helper
@@ -29,6 +29,17 @@ const html_template="""
 # <!-- <tr><td/><td>{htmlescape cmd}</td><td/></tr> -->
 """
 <tr><td>{localfiles}</td><td>{content}</td><td>{failedtoparse}</td></tr>
+</table></p>
+
+<p>Remotes (fetch):
+<table>
+<tr><th>key</th><th>url</th></tr>
+{remotes_fetch}
+</table></p>
+<p>Remotes (push):
+<table>
+<tr><th>key</th><th>url</th></tr>
+{remotes_push}
 </table></p>
 </body></html>
 """
@@ -79,4 +90,18 @@ proc page_status*(Args: Table[string,string], publicdir: string): string=
             normalizepath(X)
             X
         localfiles="<table>" & walkpublicdir(Path publicdir) & "</table>"
+    let
+        R=gitremotes()
+        remotes_fetch=block:
+            var X=""
+            if R.fetch.len==0: X.add "<tr><td colspan='2'>(none)</td></tr>"
+            else:
+                for (k,v) in pairs(R.fetch): X.add "\n" & fmt"<tr><td>{k}</td><td>{v}</td></tr>"
+            X
+        remotes_push=block:
+            var X=""
+            if R.fetch.len==0: X.add "<tr><td colspan='2'>(none)</td></tr>"
+            else:
+                for (k,v) in pairs(R.push): X.add "\n" & fmt"<tr><td>{k}</td><td>{v}</td></tr>"
+            X
     return fmt html_template
