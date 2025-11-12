@@ -6,6 +6,20 @@ import npeg
 
 export sha1
 
+proc exec_path(command: string, args: openarray[string]): seq[string]=
+    let p=startprocess(command, args=args, options={poUsePath})
+    let pipe=outputstream(p)
+    var line:  string
+    while readline(pipe, line): result.add line
+    close p
+
+proc exec_path_text(command: string, args: openarray[string]): string=
+    let p=startprocess(command, args=args, options={poUsePath})
+    let pipe=outputstream(p)
+    var line:  string
+    while readline(pipe, line): result.add line & "\n"
+    close p
+
 type
     FileStatus* =enum Other, Modified, Deleted, Added, Renamed
     NABR* =enum N, A, B, R
@@ -139,13 +153,7 @@ proc gitdiff*(a, b: SecureHash, paths: openarray[string]): tuple[diffs: seq[File
     if paths.len>0:
         args.add "--"
         for p in paths: args.add p
-    let p=startprocess("git", args=args, options={poUsePath})
-    let pipe=outputstream(p)
-    var
-        Lines: seq[string]
-        line:  string
-    while readline(pipe, line): Lines.add line
-    close p
+    let Lines=exec_path("git", args)
     let cmd=block:
         var X="git"
         for a in args: X=X & " " & a
@@ -159,13 +167,7 @@ proc gitdiff_staged*(a, b: SecureHash, paths: openarray[string]): tuple[diffs: s
     if paths.len>0:
         args.add "--"
         for p in paths: args.add p
-    let p=startprocess("git", args=args, options={poUsePath})
-    let pipe=outputstream(p)
-    var
-        Lines: seq[string]
-        line:  string
-    while readline(pipe, line): Lines.add line
-    close p
+    let Lines=exec_path("git", args)
     let cmd=block:
         var X="git"
         for a in args: X=X & " " & a
@@ -210,13 +212,7 @@ proc parse_status(Lines: seq[string]): RepoStatus=
 
 proc gitstatus*(): tuple[status: RepoStatus, cmd: string] =
     var args= @["status", "--porcelain", "-uall"]
-    let p=startprocess("git", args=args, options={poUsePath})
-    let pipe=outputstream(p)
-    var
-        Lines: seq[string]
-        line:  string
-    while readline(pipe, line): Lines.add line
-    close p
+    let Lines=exec_path("git", args)
     let cmd=block:
         var X="git"
         for a in args: X=X & " " & a
@@ -306,40 +302,17 @@ proc gitfollow*(path: string, num: int): tuple[result: seq[Commit], cmd: string]
         var X="git"
         for a in args: X=X & " " & a
         X
-    let p=startprocess("git", args=args, options={poUsePath})
-    let pipe=outputstream(p)
-    var
-        Lines: seq[string]
-        line:  string
-    while readline(pipe, line): Lines.add line
-    close p
+    let Lines=exec_path("git", args)
     (parse_follow Lines, cmd)
 
 # =====================================================================
 
 proc gitcompletehash*(hash: string): SecureHash=
-    let p=startprocess("git", args= @["rev-list", "--max-count=1", "--skip=#", hash], options={poUsePath})
-    let pipe=outputstream(p)
-    var
-        Lines: seq[string]
-        line:  string
-    while readline(pipe, line): Lines.add line
-    close p
+    let Lines=exec_path("git", ["rev-list", "--max-count=1", "--skip=#", hash])
     if Lines.len==1: parsesecurehash Lines[0]
     else:            shanull
 
 # =====================================================================
 
-proc gitstage*(path: string): string=
-    let p=startprocess("git", args= @["add", path], options={poUsePath})
-    let pipe=outputstream(p)
-    var line:  string
-    while readline(pipe, line): result.add "\n" & line
-    close p
-
-proc gitunstage*(path: string): string=
-    let p=startprocess("git", args= @["restore", "--staged", path], options={poUsePath})
-    let pipe=outputstream(p)
-    var line:  string
-    while readline(pipe, line): result.add "\n" & line
-    close p
+proc gitstage*(path: string): string=exec_path_text("git", ["add", path])
+proc gitunstage*(path: string): string=exec_path_text("git", ["restore", "--staged", path])

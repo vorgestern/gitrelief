@@ -5,6 +5,13 @@ import npeg
 
 export sha1
 
+proc exec_path(command: string, args: openarray[string]): seq[string]=
+    let p=startprocess(command, args=args, options={poUsePath})
+    let pipe=outputstream(p)
+    var line:  string
+    while readline(pipe, line): result.add line
+    close p
+
 let TMonat{.used.}={"01": "Jan", "02": "Feb", "03": "Mär", "04": "Apr", "05": "Mai", "06": "Jun",
                     "07": "Jul", "08": "Aug", "09": "Sep", "10": "Okt", "11": "Nov", "12": "Dez"}.newstringtable
 
@@ -77,17 +84,10 @@ proc gitlog*(num: int): tuple[commits: seq[LogCommit], cmd: string]=
         var A= @["log", "--name-status", "--parents", "--date=iso-local"]
         if num>0: A.add fmt"-{num}"
         A
-    let p=startprocess("git", args=args, options={poUsePath})
-    let pipe=outputstream(p)
-    var
-        Lines: seq[string]
-        line:  string
-    while readline(pipe, line): Lines.add line
-    close p
     let
-        L=parse_log Lines
+        Lines=exec_path("git", args)
         cmd=block:
             var X="git"
             for a in args: X=X & " " & a
             X
-    (L, cmd)
+    (parse_log Lines, cmd)
