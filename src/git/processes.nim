@@ -344,3 +344,23 @@ proc gitremotes*(): remoteinfo=
     result.push=newStringTable()
     let Lines=exec_path("git", ["remote", "-v"])
     parse_remote_v(Lines, result.fetch, result.push)
+
+# =====================================================================
+
+proc parse_branches_remote(L: seq[string], remotename: string): seq[string]=
+    let s=remotename & "/"
+    for k in L:
+        let k1=k.substr(2)
+        if k1.startswith s: result.add k1.substr(s.len)
+        else:
+            echo "fail startswith '", k, "': ", s
+            result.add "?? " & k
+
+proc parse_branches_local(L: seq[string]): seq[string]=
+    for k in L: result.add k.substr(2)
+
+proc branchlist*(remotename: string=""): seq[string]=
+    let Lines=if remotename!="": exec_path("git", ["branch", "-rl", remotename & "/*"])
+              else:              exec_path("git", ["branch", "-l"])
+    result=if remotename!="": parse_branches_remote(Lines, remotename)
+           else:              parse_branches_local(Lines)
