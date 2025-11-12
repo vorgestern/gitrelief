@@ -328,10 +328,8 @@ proc parse_remote_v(L: seq[string], fetch, push: var StringTableRef)=
     const lineparser=peg("line", cx: parsercontext):
         name <- +{33..128}
         url <- +{33..128}
-        fetchentry <- >name * @>url * @"(fetch)":
-            cx.fetch[$1]= $2
-        pushentry <- >name * @>url * @"(push)":
-            cx.push[$1]= $2
+        fetchentry <- >name * @>url * @"(fetch)": cx.fetch[$1]= $2
+        pushentry <- >name * @>url * @"(push)":   cx.push[$1]= $2
         sonst <- >(*1) * !1: echo "parse_remote: Nicht erwartet: ", $1
         line <- fetchentry | pushentry | sonst
     var cx=parsercontext(fetch: fetch, push: push)
