@@ -145,6 +145,7 @@ proc gitdiff*(a, b: SecureHash, paths: openarray[string]): tuple[diffs: seq[File
         Lines: seq[string]
         line:  string
     while readline(pipe, line): Lines.add line
+    close p
     let cmd=block:
         var X="git"
         for a in args: X=X & " " & a
@@ -164,6 +165,7 @@ proc gitdiff_staged*(a, b: SecureHash, paths: openarray[string]): tuple[diffs: s
         Lines: seq[string]
         line:  string
     while readline(pipe, line): Lines.add line
+    close p
     let cmd=block:
         var X="git"
         for a in args: X=X & " " & a
@@ -214,6 +216,7 @@ proc gitstatus*(): tuple[status: RepoStatus, cmd: string] =
         Lines: seq[string]
         line:  string
     while readline(pipe, line): Lines.add line
+    close p
     let cmd=block:
         var X="git"
         for a in args: X=X & " " & a
@@ -309,6 +312,7 @@ proc gitfollow*(path: string, num: int): tuple[result: seq[Commit], cmd: string]
         Lines: seq[string]
         line:  string
     while readline(pipe, line): Lines.add line
+    close p
     (parse_follow Lines, cmd)
 
 # =====================================================================
@@ -320,6 +324,7 @@ proc gitcompletehash*(hash: string): SecureHash=
         Lines: seq[string]
         line:  string
     while readline(pipe, line): Lines.add line
+    close p
     if Lines.len==1: parsesecurehash Lines[0]
     else:            shanull
 
@@ -330,9 +335,11 @@ proc gitstage*(path: string): string=
     let pipe=outputstream(p)
     var line:  string
     while readline(pipe, line): result.add "\n" & line
+    close p
 
 proc gitunstage*(path: string): string=
     let p=startprocess("git", args= @["restore", "--staged", path], options={poUsePath})
     let pipe=outputstream(p)
     var line:  string
     while readline(pipe, line): result.add "\n" & line
+    close p

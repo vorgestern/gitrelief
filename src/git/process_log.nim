@@ -83,6 +83,7 @@ proc gitlog*(num: int): tuple[commits: seq[LogCommit], cmd: string]=
         Lines: seq[string]
         line:  string
     while readline(pipe, line): Lines.add line
+    close p
     let
         L=parse_log Lines
         cmd=block:
