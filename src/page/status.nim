@@ -24,11 +24,11 @@ const html_template="""
 </table></p>
 
 <p><table class='nolines'>
-<tr><th><h2>Public</h2></th><th><h2>Status</h2></th><th><h2>Failed to Parse</h2></th></tr>
+<tr><th><h2>Public Files</h2></th><th><h2>Status</h2></th><th><h2>Not controlled</h2></th><th><h2>Failed to Parse</h2></th></tr>
 """ &
 # <!-- <tr><td/><td>{htmlescape cmd}</td><td/></tr> -->
 """
-<tr><td>{localfiles}</td><td>{content}</td><td>{failedtoparse}</td></tr>
+<tr><td>{localfiles}</td><td>{controlled}</td><td>{notcontrolled}</td><td>{failedtoparse}</td></tr>
 </table></p>
 
 <table class='nolines'><tr><td>
@@ -53,7 +53,7 @@ proc walkpublicdir(dir: Path): string=
         let p=replace(string path, string dir1, "")
         result.add fmt"{'\n'}<tr><td></td><td><a href='{p}'>{p}</a></td></tr>"
 
-proc format_html(Status: RepoStatus): tuple[a,b: string]=
+proc format_html(Status: RepoStatus): tuple[a,b,c: string]=
     var A="<p><b>Staged</b><table>"
     for index,entry in Status.staged:
         let diff="\n    <a href='" & url_diff(shanull, shanull, true, entry.path) & "'>diff</a>"
@@ -70,23 +70,23 @@ proc format_html(Status: RepoStatus): tuple[a,b: string]=
         A.add "\n" & fmt"<tr><td>{entry.status}</td><td>{diff}{follow}{stage}</td><td>{entry.path}</td></tr>"
     A.add "</table></p>"
 
-    A.add "<p><h3>Not controlled</h3><table>"
+    var B="<p><h3>Not controlled</h3><table>"
     for index,entry in Status.notcontrolled:
         let stage="<a href='" & url_stage(entry) & "'>stage</a>"
-        A.add "\n" & fmt"<tr><td>{entry}</td><td>{stage}</td></tr>"
-    A.add "</table></p>"
-
-    var B="<table>"
-    for index,entry in Status.unparsed: B.add fmt"<tr><td>{entry}</td></tr>"
+        B.add "\n" & fmt"<tr><td>{entry}</td><td>{stage}</td></tr>"
     B.add "</table></p>"
-    (A,B)
+
+    var C="<table>"
+    for index,entry in Status.unparsed: C.add fmt"<tr><td>{entry}</td></tr>"
+    C.add "</table></p>"
+    (A,B,C)
 
 proc page_status*(Args: Table[string,string], publicdir: string): string=
     let
         (Status,_)=gitstatus()
         title="status"
         cssurl="/gitrelief.css"
-        (content,failedtoparse)=format_html(Status)
+        (controlled,notcontrolled,failedtoparse)=format_html(Status)
         pwd=block:
             var X=getcurrentdir()
             normalizepath(X)
