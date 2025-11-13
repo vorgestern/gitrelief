@@ -2,6 +2,7 @@
 import std/[strtabs, strformat, osproc, streams, times]
 import checksums/sha1
 import npeg
+import processes
 
 export sha1
 
@@ -16,7 +17,7 @@ let TMonat{.used.}={"01": "Jan", "02": "Feb", "03": "Mär", "04": "Apr", "05": "
                     "07": "Jul", "08": "Aug", "09": "Sep", "10": "Okt", "11": "Nov", "12": "Dez"}.newstringtable
 
 type
-    filestatus=tuple[status: string, path: string, oldpath: string]
+    filestatus=tuple[status: FileCommitStatus, path: string, oldpath: string]
     LogCommit* =object
         hash*: SecureHash
         parents*: seq[SecureHash]
@@ -65,10 +66,13 @@ proc parse_log(L: seq[string]): seq[LogCommit]=
                 e.st=Details
             of Details: e.was[^1].details.add $1
             else: discard
-        filestatus <- >{'A'..'Z'} * +{' ','\t'} * >+1: e.was[^1].files.add ($1, $2, "")
-        filestatus_rename <- 'R' * >{'0'..'9'}[3] * @>path * @>path: e.was[^1].files.add ("R", $3, $2)
+        # filestatus <- >{'A'..'Z'} * +{' ','\t'} * >+1: e.was[^1].files.add ($1, $2, "")
+        filestatus_added <- 'A' * +{' ','\t'} * >+1: e.was[^1].files.add (Added, $1, "")
+        filestatus_modified <- 'M' * +{' ','\t'} * >+1: e.was[^1].files.add (Modified, $1, "")
+        filestatus_deleted <- 'D' * +{' ','\t'} * >+1: e.was[^1].files.add (Deleted, $1, "")
+        filestatus_renamed <- 'R' * >{'0'..'9'}[3] * @>path * @>path: e.was[^1].files.add (Renamed, $3, $2)
         sonst <- >(*1) * !1: echo "Nicht erwartet: ", $1
-        line <- commit | merge | author | date | empty | comment | filestatus | filestatus_rename | sonst
+        line <- commit | merge | author | date | empty | comment | filestatus_added | filestatus_modified | filestatus_deleted | filestatus_renamed | sonst
     var e=parsercontext(st: None, was: addr result)
     for z in L:
         {.gcsafe.}:
