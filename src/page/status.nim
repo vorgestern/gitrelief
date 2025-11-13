@@ -111,27 +111,21 @@ proc page_status*(Args: Table[string,string], publicdir: string): string=
                 for (k,v) in pairs(R.push): X.add "\n" & fmt"<tr><td>{k}</td><td>{v}</td></tr>"
             X
     let
-        branchnames=block:
+        remotenames=block:
             var X: seq[string]
             var T: Table[string,int]
-            T[""]=1
             for k in keys(R.fetch): T[k]=1
             for k in keys(R.push): T[k]=2
             for k in keys(T): X.add k
             X
-        B=block:
-            var X: seq[tuple[name: string, branches: seq[string]]]
-            for branchname in branchnames:
-                let L=branchlist(branchname)
-                X.add (branchname, L)
-            X
         branches=block:
-            var X="<tr>"
-            for k in branchnames:
-                if k=="": X.add "<th>(local)</th>"
-                else:     X.add "<th>" & "remotes/" & htmlescape(k) & "</th>"
-            X.add "</tr>\n<tr>"
-            for (name,branches) in B:
+            var X="<tr><th>(local)</th>"
+            for k in remotenames: X.add "<th>remotes/" & htmlescape(k) & "</th>"
+            X.add "</tr>\n<tr>\n<td>\n"
+            for k in gitbranches_local(): X.add htmlescape(k) & "<br/>"
+            X.add "</td>"
+            for remote in remotenames:
+                let branches=gitbranches_remote(remote)
                 X.add "\n<td>"
                 for b in branches: X.add htmlescape(b)&"<br/>"
                 X.add "</td>"
