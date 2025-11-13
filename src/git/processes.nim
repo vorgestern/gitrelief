@@ -366,3 +366,22 @@ proc gitbranches_local*(): seq[string]=
 proc gitbranches_remote*(remotename: string): seq[string]=
     let Lines=exec_path("git", ["branch", "-rl", remotename & "/*"])
     result=parse_branches_remote(Lines, remotename)
+
+# =====================================================================
+
+# Ermittle die Liste der Hashes die von einem der inclbranches erreichbar sind,
+# aber von keinem der exclbranches.
+# Einfachste Anwendung: 
+# gitrevlist(["datetime"], ["master"]) ermittelt die commits, die von dem Zweig 'datetime'
+#     erreichbar, aber noch nicht in den Zweig 'master' gemergt wurden. Wenn diese Liste leer ist,
+#     ist der Zweig 'datetime' volltändig in 'master' übernommen.
+proc gitrevlist*(inclbranches, exclbranches: openarray[string]): seq[SecureHash]=
+    var args= @["rev-list", "--topo-order", "--reverse"]
+    for k in inclbranches: args.add k
+    for k in exclbranches: args.add "^"&k
+    let Lines=exec_path("git", args)
+    for k in Lines: result.add parsesecurehash k
+
+# So findet man auf der Kommandozeile den ältesten commit in datetime,
+# der nicht in den master übernommen wurde.
+# git rev-list --topo-order --reverse datetime ^master | head -1
