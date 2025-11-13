@@ -10,6 +10,29 @@ body {
 h1, h2, h3 {
     margin: 0
 }
+
+table.status {
+    border-style: none;
+}
+table.status tr {
+    border-style: none;
+}
+table.status tr td {
+    border-style: none;
+}
+/*table.status tr td:nth-child(odd) {
+    border-style: none;
+    background-color: lightgray;
+}*/
+th.status1, td.status1 {
+    border-style: none;
+    background-color: lightgray;
+}
+th.status2, td.status2 {
+    border-style: none;
+    background-color: white;
+}
+
 table.nolines {
     border-style: none;
 }
@@ -18,7 +41,9 @@ table.nolines tr {
 }
 table.nolines tr td {
     border-style: none;
+    background-color: white;
 }
+
 table {
     border-style: solid;
     border-width: 1px;

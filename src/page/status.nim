@@ -23,22 +23,20 @@ const html_template="""
     <td><a href="/git/diff?staged">Diff (staged)</a></td></tr>
 </table></p>
 
-<p><table class='nolines'>
-<tr><th><h2>Public Files</h2></th><th><h2>Status</h2></th><th><h2>Not controlled</h2></th><th><h2>Failed to Parse</h2></th></tr>
-""" &
-# <!-- <tr><td/><td>{htmlescape cmd}</td><td/></tr> -->
-"""
-<tr><td>{localfiles}</td><td>{controlled}</td><td>{notcontrolled}</td><td>{failedtoparse}</td></tr>
+<p><table class='status'>
+<tr><th class='status1'><h2>Public Files</h2></th><th class='status2'><h2>Status</h2></th><th class='status1'><h2>Not controlled</h2></th><th class='status2'><h2>Failed to Parse</h2></th></tr>
+<tr><td class='status1'>{localfiles}</td><td class='status2'>{controlled}</td><td class='status1'>{notcontrolled}</td><td class='status2'>{failedtoparse}</td></tr>
 </table></p>
 
-<table class='nolines'><tr><td>
-<h2>Remotes</h2>
+<table class='status'>
+<tr><td class='status1'><h2>Remotes</h2>
 <table>
 <tr><th>name</th><th>fetch</th><th>push</th></tr>
 {remoteurls}
 </table>
-</td><td>
-<h2>Branches</h2>
+</td>
+
+<td class='status2'><h2>Branches</h2>
 <table>
 {branches}
 </table>
@@ -54,32 +52,34 @@ proc walkpublicdir(dir: Path): string=
         result.add fmt"{'\n'}<tr><td></td><td><a href='{p}'>{p}</a></td></tr>"
 
 proc format_html(Status: RepoStatus): tuple[a,b,c: string]=
-    var A="<p><b>Staged</b><table>"
+    var A="<h2>Staged</h2><table class='nolines'>"
     for index,entry in Status.staged:
         let diff="\n    <a href='" & url_diff(shanull, shanull, true, entry.path) & "'>diff</a>"
         let follow="\n    <a href='" & url_follow(entry.path) & "'>follow</a>"
         let unstage="\n    <a href='" & url_unstage(entry.path) & "'>unstage</a>"
         A.add "\n" & fmt"<tr><td>{entry.status}</td><td>{diff}{follow}{unstage}</td><td>{entry.path}</td></tr>"
-    A.add "</table></p>"
+    A.add "</table>"
 
-    A.add "<p><h3>Not staged</h3><table>"
+    A.add "<h3>Not staged</h3><table class='nolines'>"
     for index,entry in Status.unstaged:
         let diff="\n    <a href='" & url_diff(shanull, shanull, false, entry.path) & "'>diff</a>"
         let follow="\n    <a href='" & url_follow(entry.path) & "'>follow</a>"
         let stage="\n    <a href='" & url_stage(entry.path) & "'>stage</a>"
         A.add "\n" & fmt"<tr><td>{entry.status}</td><td>{diff}{follow}{stage}</td><td>{entry.path}</td></tr>"
-    A.add "</table></p>"
+    A.add "</table>"
 
-    var B="<p><h3>Not controlled</h3><table>"
+    var B="<table>"
     for index,entry in Status.notcontrolled:
         let stage="<a href='" & url_stage(entry) & "'>stage</a>"
         B.add "\n" & fmt"<tr><td>{entry}</td><td>{stage}</td></tr>"
-    B.add "</table></p>"
+    B.add "</table>"
 
-    var C="<table>"
+    var C="<table class='nolines'>"
     for index,entry in Status.unparsed: C.add fmt"<tr><td>{entry}</td></tr>"
     C.add "</table></p>"
     (A,B,C)
+
+# =====================================================================
 
 proc page_status*(Args: Table[string,string], publicdir: string): string=
     let
@@ -114,9 +114,9 @@ proc page_status*(Args: Table[string,string], publicdir: string): string=
             for k in gitbranches_local(): X.add htmlescape(k) & "<br/>"
             X.add "</td>"
             for remote in remotenames:
-                let branches=gitbranches_remote(remote)
+                let rembranches=gitbranches_remote(remote)
                 X.add "\n<td>"
-                for b in branches: X.add htmlescape(b)&"<br/>"
+                for b in rembranches: X.add htmlescape(b) & "<br/>"
                 X.add "</td>"
             X.add "</tr>"
             X
