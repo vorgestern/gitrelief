@@ -1,5 +1,5 @@
 
-import std/[tables, strformat, strutils, strtabs]
+import std/[tables, strformat, strutils]
 import std/[paths,dirs]
 import git/processes
 import mehr/helper
@@ -31,22 +31,18 @@ const html_template="""
 <tr><td>{localfiles}</td><td>{content}</td><td>{failedtoparse}</td></tr>
 </table></p>
 
-<p>Remotes (fetch):
+<table class='nolines'><tr><td>
+<h2>Remotes</h2>
 <table>
-<tr><th>key</th><th>url</th></tr>
-{remotes_fetch}
-</table></p>
-<p>Remotes (push):
-<table>
-<tr><th>key</th><th>url</th></tr>
-{remotes_push}
-</table></p>
-
-<p>Branches:
+<tr><th>name</th><th>fetch</th><th>push</th></tr>
+{remoteurls}
+</table>
+</td><td>
+<h2>Branches</h2>
 <table>
 {branches}
 </table>
-
+</td></tr></table>
 </body></html>
 """
 
@@ -96,28 +92,21 @@ proc page_status*(Args: Table[string,string], publicdir: string): string=
             normalizepath(X)
             X
         localfiles="<table>" & walkpublicdir(Path publicdir) & "</table>"
+
     let
         R=gitremotes()
-        remotes_fetch=block:
-            var X=""
-            if R.fetch.len==0: X.add "<tr><td colspan='2'>(none)</td></tr>"
-            else:
-                for (k,v) in pairs(R.fetch): X.add "\n" & fmt"<tr><td>{k}</td><td>{v}</td></tr>"
-            X
-        remotes_push=block:
-            var X=""
-            if R.fetch.len==0: X.add "<tr><td colspan='2'>(none)</td></tr>"
-            else:
-                for (k,v) in pairs(R.push): X.add "\n" & fmt"<tr><td>{k}</td><td>{v}</td></tr>"
-            X
     let
         remotenames=block:
             var X: seq[string]
-            var T: Table[string,int]
-            for k in keys(R.fetch): T[k]=1
-            for k in keys(R.push): T[k]=2
-            for k in keys(T): X.add k
+            for k in keys(R): X.add k
             X
+        remoteurls=block:
+            var X=""
+            for (name,urls) in pairs(R):
+                if urls.fetchurl!=urls.pushurl: X.add "<tr><td>" & htmlescape(name) & "</td><td>" & htmlescape(urls.fetchurl) & "</td><td>" & htmlescape(urls.pushurl) & "</td></tr>"
+                else:  X.add "<tr><td>" & htmlescape(name) & "</td><td colspan='2'>" & htmlescape(urls.fetchurl) & "</td></tr>"
+            X
+    let
         branches=block:
             var X="<tr><th>(local)</th>"
             for k in remotenames: X.add "<th>remotes/" & htmlescape(k) & "</th>"

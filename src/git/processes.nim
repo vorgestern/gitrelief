@@ -1,5 +1,5 @@
 
-import std/[osproc, strutils, streams, times, strtabs]
+import std/[osproc, strutils, streams, times, tables]
 import checksums/sha1
 import mehr/helper
 import npeg
@@ -320,28 +320,30 @@ proc gitunstage*(path: string): string=exec_path_text("git", ["restore", "--stag
 # =====================================================================
 
 type
-    remoteinfo* =tuple[fetch,push: StringTableRef]
+    remoteurls* =tuple[fetchurl, pushurl: string]
+    remoteinfo* =Table[string, remoteurls]
 
-proc parse_remote_v(L: seq[string], fetch, push: var StringTableRef)=
-    type parsercontext=object
-        fetch, push: StringTableRef
-    const lineparser=peg("line", cx: parsercontext):
+proc parse_remote_v(L: seq[string]): remoteinfo=
+    const lineparser=peg("line", cx: remoteinfo):
         name <- +{33..128}
         url <- +{33..128}
-        fetchentry <- >name * @>url * @"(fetch)": cx.fetch[$1]= $2
-        pushentry <- >name * @>url * @"(push)":   cx.push[$1]= $2
+        fetchentry <- >name * @>url * @"(fetch)":
+            # cx.fetch[$1]= $2
+            if    cx.contains $1: cx[$1].fetchurl= $2
+            else: cx[$1]=($2, "")
+        pushentry <- >name * @>url * @"(push)":
+            # cx.push[$1]= $2
+            if    cx.contains $1: cx[$1].pushurl= $2
+            else: cx[$1]=("", $2)
         sonst <- >(*1) * !1: echo "parse_remote: Nicht erwartet: ", $1
         line <- fetchentry | pushentry | sonst
-    var cx=parsercontext(fetch: fetch, push: push)
     for z in L:
         {.gcsafe.}:
-            discard lineparser.match(z, cx)
+            discard lineparser.match(z, result)
 
 proc gitremotes*(): remoteinfo=
-    result.fetch=newStringTable()
-    result.push=newStringTable()
     let Lines=exec_path("git", ["remote", "-v"])
-    parse_remote_v(Lines, result.fetch, result.push)
+    parse_remote_v(Lines)
 
 # =====================================================================
 
