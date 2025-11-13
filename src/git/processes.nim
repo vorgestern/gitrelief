@@ -1,5 +1,5 @@
 
-import std/[osproc, strutils, streams, times, tables]
+import std/[osproc, strutils, strformat, streams, times, tables]
 import checksums/sha1
 import mehr/helper
 import npeg
@@ -230,6 +230,7 @@ type
         subject*: string
         details*: seq[string]
         files*: seq[CommittedOperation]
+        mergeinfo*: seq[string]
 
 proc parse_follow(L: seq[string]): seq[Commit]=
     type
@@ -302,6 +303,76 @@ proc gitfollow*(path: string, num: int): tuple[result: seq[Commit], cmd: string]
         for a in args: X=X & " " & a
         X
     (parse_follow exec_path("git", args), cmd)
+
+# =====================================================================
+
+proc parse_log(L: seq[string]): seq[Commit]=
+    type
+        context=enum None, Header, Subject, Details, Files
+        parsercontext=object
+            st: context
+            was: ptr seq[Commit]
+    const loglineparser=peg("line", e: parsercontext):
+        hash <- +{'0'..'9', 'a'..'f'}
+        path <- +{33..255}
+        commit <- "commit " * +@>hash:
+            var parents: seq[SecureHash]
+            for k in 2..<capture.len: parents.add parsesecurehash capture[k].s
+            e.was[].add Commit(hash: parsesecurehash $1, parents: parents)
+            e.st=Header
+        merge <- "Merge:" * @>hash * @+>hash:
+            # capture[0] beschreibt die ganze Zeile.
+            # capture[1..] sind die Hashes.
+            # Die hier genannten Hashes sind einfach die Kurzformen der in der commit-Zeile genannten.
+            for k in 1..<capture.len: e.was[^1].mergeinfo.add capture[k].s
+        authorname <- {33..128} * +{33..128}
+        author <- "Author:" * @>authorname * @'<': e.was[^1].author= $1
+        datestring <- {'0'..'9', '-'}[10] * @{'0'..'9', ':'}[8] * @ {'0'..'9', '-', '+'}[5]
+        date <- "Date: " * @>datestring * !1:
+            let ts=substr($1, 0, 18)
+            e.was[^1].date=times.parse(ts, "yyyy-MM-dd HH:mm:ss")
+        empty <- *{' ', '\t'} * !1:
+            e.st=case e.st
+            of Header:  Subject
+            of Subject: Details
+            of Details: Details
+            else: Files
+        comment <- "    " * >+1:
+            case e.st
+            of Subject:
+                e.was[^1].subject= $1
+                e.st=Details
+            of Details: e.was[^1].details.add $1
+            else: discard
+        # filestatus <- >{'A'..'Z'} * +{' ','\t'} * >+1: e.was[^1].files.add ($1, $2, "")
+        filestatus_added <- 'A' * +{' ','\t'} * >+1: e.was[^1].files.add (Added, $1, "")
+        filestatus_modified <- 'M' * +{' ','\t'} * >+1: e.was[^1].files.add (Modified, $1, "")
+        filestatus_deleted <- 'D' * +{' ','\t'} * >+1: e.was[^1].files.add (Deleted, $1, "")
+        filestatus_renamed <- 'R' * >{'0'..'9'}[3] * @>path * @>path: e.was[^1].files.add (Renamed, $3, $2)
+        sonst <- >(*1) * !1: echo "Nicht erwartet: ", $1
+        line <- commit | merge | author | date | empty | comment | filestatus_added | filestatus_modified | filestatus_deleted | filestatus_renamed | sonst
+    var e=parsercontext(st: None, was: addr result)
+    for z in L:
+        {.gcsafe.}:
+            if loglineparser.match(z, e).ok:
+                discard
+            else:
+                # error
+                # e.zeile="??????"
+                discard
+
+proc gitlog*(num: int): tuple[commits: seq[Commit], cmd: string]=
+    let args=block:
+        var A= @["log", "--name-status", "--parents", "--date=iso-local"]
+        if num>0: A.add fmt"-{num}"
+        A
+    let
+        Lines=exec_path("git", args)
+        cmd=block:
+            var X="git"
+            for a in args: X=X & " " & a
+            X
+    (parse_log Lines, cmd)
 
 # =====================================================================
 

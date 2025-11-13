@@ -2,7 +2,7 @@
 import std/[tables, strutils, strformat, parseutils, times]
 import npeg
 import mehr/helper
-import git/process_log
+import git/processes
 
 func htmlescape(s: string): string=replace(s, "<", "&lt;")
 
@@ -30,7 +30,7 @@ const html_template="""
 </html>
 """
 
-proc format_html(L: seq[LogCommit]): string=
+proc format_html(L: seq[Commit]): string=
     let ynow=year(now())
     var yage_merk=0
     result="<table class='diff'>\n<tr><th>commit</th><th>who</th><th>when</th><th>affected</th><th>subject/details</th></tr>"
