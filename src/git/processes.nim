@@ -202,7 +202,6 @@ proc parse_status(Lines: seq[string]): RepoStatus=
         uncontrolled <- "?? " * >path: e.res.notcontrolled.add (strip $1)
         sonst <- >(*1) * !1: e.res.unparsed.add $1
         entry <- XM | MX | MM | AX | AM | DX | XD | uncontrolled | sonst
-
     var e=parsercontext(res: addr result)
     for z in Lines:
         {.gcsafe.}:
@@ -302,8 +301,7 @@ proc gitfollow*(path: string, num: int): tuple[result: seq[Commit], cmd: string]
         var X="git"
         for a in args: X=X & " " & a
         X
-    let Lines=exec_path("git", args)
-    (parse_follow Lines, cmd)
+    (parse_follow exec_path("git", args), cmd)
 
 # =====================================================================
 
@@ -341,9 +339,7 @@ proc parse_remote_v(L: seq[string]): remoteinfo=
         {.gcsafe.}:
             discard lineparser.match(z, result)
 
-proc gitremotes*(): remoteinfo=
-    let Lines=exec_path("git", ["remote", "-v"])
-    parse_remote_v(Lines)
+proc gitremotes*(): remoteinfo=parse_remote_v(exec_path("git", ["remote", "-v"]))
 
 # =====================================================================
 
@@ -359,13 +355,8 @@ proc parse_branches_remote(L: seq[string], remotename: string): seq[string]=
 proc parse_branches_local(L: seq[string]): seq[string]=
     for k in L: result.add k.substr(2)
 
-proc gitbranches_local*(): seq[string]=
-    let Lines=exec_path("git", ["branch", "-l"])
-    result=parse_branches_local(Lines)
-
-proc gitbranches_remote*(remotename: string): seq[string]=
-    let Lines=exec_path("git", ["branch", "-rl", remotename & "/*"])
-    result=parse_branches_remote(Lines, remotename)
+proc gitbranches_local*(): seq[string]= parse_branches_local(exec_path("git", ["branch", "-l"]))
+proc gitbranches_remote*(remotename: string): seq[string]= parse_branches_remote(exec_path("git", ["branch", "-rl", remotename & "/*"]), remotename)
 
 # =====================================================================
 
