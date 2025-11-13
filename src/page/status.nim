@@ -52,32 +52,32 @@ proc walkpublicdir(dir: Path): string=
         result.add fmt"{'\n'}<tr><td></td><td><a href='{p}'>{p}</a></td></tr>"
 
 proc format_html(Status: RepoStatus): tuple[a,b,c: string]=
-    var A="<h3>Staged</h3><table class='nolines'>"
+    var Controlled="<h3>Staged</h3><table class='nolines'>"
     for index,entry in Status.staged:
         let diff="\n    <a href='" & url_diff(shanull, shanull, true, entry.path) & "'>diff</a>"
         let follow="\n    <a href='" & url_follow(entry.path) & "'>follow</a>"
         let unstage="\n    <a href='" & url_unstage(entry.path) & "'>unstage</a>"
-        A.add "\n" & fmt"<tr><td>{entry.status}</td><td>{diff}{follow}{unstage}</td><td>{entry.path}</td></tr>"
-    A.add "</table>"
+        Controlled.add "\n" & fmt"<tr><td>{entry.status}</td><td>{diff}{follow}{unstage}</td><td>{entry.path}</td></tr>"
+    Controlled.add "</table>"
 
-    A.add "<h3>Not staged</h3><table class='nolines'>"
+    Controlled.add "<h3>Not staged</h3><table class='nolines'>"
     for index,entry in Status.unstaged:
         let diff="\n    <a href='" & url_diff(shanull, shanull, false, entry.path) & "'>diff</a>"
         let follow="\n    <a href='" & url_follow(entry.path) & "'>follow</a>"
         let stage="\n    <a href='" & url_stage(entry.path) & "'>stage</a>"
-        A.add "\n" & fmt"<tr><td>{entry.status}</td><td>{diff}{follow}{stage}</td><td>{entry.path}</td></tr>"
-    A.add "</table>"
+        Controlled.add "\n" & fmt"<tr><td>{entry.status}</td><td>{diff}{follow}{stage}</td><td>{entry.path}</td></tr>"
+    Controlled.add "</table>"
 
-    var B="<table>"
+    var NotControlled="<table>"
     for index,entry in Status.notcontrolled:
         let stage="<a href='" & url_stage(entry) & "'>stage</a>"
-        B.add "\n" & fmt"<tr><td>{entry}</td><td>{stage}</td></tr>"
-    B.add "</table>"
+        NotControlled.add "\n" & fmt"<tr><td>{entry}</td><td>{stage}</td></tr>"
+    NotControlled.add "</table>"
 
-    var C="<table class='nolines'>"
-    for index,entry in Status.unparsed: C.add fmt"<tr><td>{entry}</td></tr>"
-    C.add "</table></p>"
-    (A,B,C)
+    var ParseError="<table class='nolines'>"
+    for index,entry in Status.unparsed: ParseError.add fmt"<tr><td>{entry}</td></tr>"
+    ParseError.add "</table></p>"
+    (Controlled,NotControlled,ParseError)
 
 # =====================================================================
 
