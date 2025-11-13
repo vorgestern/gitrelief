@@ -21,7 +21,7 @@ proc exec_path_text(command: string, args: openarray[string]): string=
     close p
 
 type
-    FileStatus* =enum Other, Modified, Deleted, Added, Renamed
+    FileCommitStatus* =enum Other, Modified, Deleted, Added, Renamed
     NABR* =enum N, A, B, R
     DiffSection* =object
         case kind*: NABR
@@ -30,7 +30,7 @@ type
         of R:
             razeilen*, rbzeilen*: seq[string]
     FileDiff* =object
-        op*: FileStatus
+        op*: FileCommitStatus
         apath*, bpath*: string
         sections*: seq[DiffSection]
 
@@ -178,7 +178,7 @@ proc gitdiff_staged*(a, b: SecureHash, paths: openarray[string]): tuple[diffs: s
 
 type
     RepoStatus* =object
-        staged*, unstaged*: seq[tuple[status: FileStatus, path: string]]
+        staged*, unstaged*: seq[tuple[status: FileCommitStatus, path: string]]
         notcontrolled*: seq[string]
         unparsed*: seq[string]
 
@@ -221,7 +221,7 @@ proc gitstatus*(): tuple[status: RepoStatus, cmd: string] =
 # =====================================================================
 
 type
-    filestatus=tuple[status: FileStatus, path: string, oldpath: string]
+    CommittedOperation=tuple[status: FileCommitStatus, path: string, oldpath: string]
     Commit* =object
         hash*: SecureHash
         parents*: seq[SecureHash]
@@ -229,7 +229,7 @@ type
         date*: DateTime
         subject*: string
         details*: seq[string]
-        files*: seq[filestatus]
+        files*: seq[CommittedOperation]
 
 proc parse_follow(L: seq[string]): seq[Commit]=
     type
@@ -268,18 +268,18 @@ proc parse_follow(L: seq[string]): seq[Commit]=
                 e.st=Details
             of Details: e.was[^1].details.add $1
             else: discard
-        filestatus <- >{'A', 'M', 'D'} * +{' ','\t'} * >+1:
+        namestatus <- >{'A', 'M', 'D'} * +{' ','\t'} * >+1:
             let stat=case $1
             of "M": Modified
             of "D": Deleted
             of "A": Added
             else: Other
             e.was[^1].files.add (stat, $2, "")
-        filestatus_rename <- 'R' * {'0'..'9'}[3] * '\t' * >path * '\t' * >path:
+        renamestatus <- 'R' * {'0'..'9'}[3] * '\t' * >path * '\t' * >path:
             e.was[^1].files.add (Renamed, $2, $1)
         sonst <- >(*1) * !1:
             echo "Nicht erwartet: ", $1
-        line <- commit_hpp | commit_hp | commit_h | author | date | empty | comment | filestatus | filestatus_rename | sonst
+        line <- commit_hpp | commit_hp | commit_h | author | date | empty | comment | namestatus | renamestatus | sonst
     var e=parsercontext(st: None, was: addr result)
     for z in L:
         {.gcsafe.}:
