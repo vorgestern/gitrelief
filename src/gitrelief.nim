@@ -19,6 +19,7 @@ import std/[cmdline,strutils]
 # 8.     Biete bei Commits mit mehr als einem Elternknoten die Alternative an.
 # 9.     Recherchiere den Zugang zum locale in Nim.
 # 10.    Untersuche, ob gelegentliche Probleme beim Auffrischen einer Seite nach dem Neustart des Servers mit Http302 zu tun haben.
+# 11.    Finde den ältesten commit aus Zweig xy, der nicht in master liegt: git rev-list --topo-order --reverse xy ^master | head -1
 
 proc parsequery(query: string): Table[string,string]=
         var
