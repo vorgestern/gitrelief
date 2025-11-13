@@ -25,20 +25,20 @@ const html_template="""
 
 <p><table class='status'>
 <tr><th class='status1'><h2>Public Files</h2></th><th class='status2'><h2>Status</h2></th><th class='status1'><h2>Not controlled</h2></th><th class='status2'><h2>Failed to Parse</h2></th></tr>
-<tr><td class='status1'>{localfiles}</td><td class='status2'>{controlled}</td><td class='status1'>{notcontrolled}</td><td class='status2'>{failedtoparse}</td></tr>
+<tr><td class='status1'>{html_localfiles}</td><td class='status2'>{html_controlled}</td><td class='status1'>{html_notcontrolled}</td><td class='status2'>{html_failedtoparse}</td></tr>
 </table></p>
 
 <table class='status'>
 <tr><td class='status1'><h2>Remotes</h2>
 <table>
 <tr><th>name</th><th>fetch</th><th>push</th></tr>
-{remoteurls}
+{html_remoteurls}
 </table>
 </td>
 
 <td class='status2'><h2>Branches</h2>
 <table>
-{branches}
+{html_branches}
 </table>
 </td></tr></table>
 </body></html>
@@ -86,12 +86,12 @@ proc page_status*(Args: Table[string,string], publicdir: string): string=
         (Status,_)=gitstatus()
         title="status"
         cssurl="/gitrelief.css"
-        (controlled,notcontrolled,failedtoparse)=format_html(Status)
+        (html_controlled,html_notcontrolled,html_failedtoparse)=format_html(Status)
         pwd=block:
             var X=getcurrentdir()
             normalizepath(X)
             X
-        localfiles="<table>" & walkpublicdir(Path publicdir) & "</table>"
+        html_localfiles="<table>" & walkpublicdir(Path publicdir) & "</table>"
 
     let
         R=gitremotes()
@@ -100,14 +100,14 @@ proc page_status*(Args: Table[string,string], publicdir: string): string=
             var X: seq[string]
             for k in keys(R): X.add k
             X
-        remoteurls=block:
+        html_remoteurls=block:
             var X=""
             for (name,urls) in pairs(R):
                 if urls.fetchurl!=urls.pushurl: X.add "<tr><td>" & htmlescape(name) & "</td><td>" & htmlescape(urls.fetchurl) & "</td><td>" & htmlescape(urls.pushurl) & "</td></tr>"
                 else:  X.add "<tr><td>" & htmlescape(name) & "</td><td colspan='2'>" & htmlescape(urls.fetchurl) & "</td></tr>"
             X
     let
-        branches=block:
+        html_branches=block:
             var X="<tr><th>(local)</th>"
             for k in remotenames: X.add "<th>remotes/" & htmlescape(k) & "</th>"
             X.add "</tr>\n<tr>\n<td>\n"
