@@ -10,8 +10,8 @@ const html_template="""
 <html>
 <head>
 <meta charset="utf-8">
-<link rel="stylesheet" href="{cssurl}">
-<title>{htmlescape title}</title>
+<link rel="stylesheet" href="{html_cssurl}">
+<title>{html_title}</title>
 </head>
 <body>
 
@@ -84,29 +84,25 @@ proc format_html(Status: RepoStatus): tuple[a,b,c: string]=
 proc page_status*(Args: Table[string,string], publicdir: string): string=
     let
         (Status,_)=gitstatus()
-        title="status"
-        cssurl="/gitrelief.css"
-        (html_controlled,html_notcontrolled,html_failedtoparse)=format_html(Status)
+        R=gitremotes()
         pwd=block:
             var X=getcurrentdir()
             normalizepath(X)
             X
-        html_localfiles="<table>" & walkpublicdir(Path publicdir) & "</table>"
-
-    let
-        R=gitremotes()
-    let
         remotenames=block:
             var X: seq[string]
             for k in keys(R): X.add k
             X
+    let
+        html_cssurl="/gitrelief.css"
+        html_title="status"
+        (html_controlled,html_notcontrolled,html_failedtoparse)=format_html(Status)
         html_remoteurls=block:
             var X=""
             for (name,urls) in pairs(R):
                 if urls.fetchurl!=urls.pushurl: X.add "<tr><td>" & htmlescape(name) & "</td><td>" & htmlescape(urls.fetchurl) & "</td><td>" & htmlescape(urls.pushurl) & "</td></tr>"
                 else:  X.add "<tr><td>" & htmlescape(name) & "</td><td colspan='2'>" & htmlescape(urls.fetchurl) & "</td></tr>"
             X
-    let
         html_branches=block:
             var X="<tr><th>(local)</th>"
             for k in remotenames: X.add "<th>remotes/" & htmlescape(k) & "</th>"
@@ -120,5 +116,6 @@ proc page_status*(Args: Table[string,string], publicdir: string): string=
                 X.add "</td>"
             X.add "</tr>"
             X
+        html_localfiles="<table>" & walkpublicdir(Path publicdir) & "</table>"
 
     return fmt html_template
