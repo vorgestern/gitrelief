@@ -2,6 +2,7 @@
 import std/[strutils, tables, times]
 import checksums/sha1
 import npeg
+import mehr/helper
 
 type
     FileCommitStatus* =enum Other, Modified, Deleted, Added, Renamed
@@ -20,6 +21,27 @@ type
         details*: seq[string]
         files*: seq[CommittedOperation]
         mergeinfo*: seq[string]
+
+func url_diff*(parent, commit: SecureHash, staged: bool, op: CommittedOperation): string=
+    var X: seq[string]
+    if parent!=shanull and commit!=shanull:
+        X.add "a="&shaform parent
+        X.add "b="&shaform commit
+    elif parent!=shanull:
+        X.add "a="&shaform parent
+    if staged:
+        X.add "staged"
+    case op.status
+    of Renamed:
+        X.add "path="&op.newpath
+        X.add "oldpath="&op.oldpath
+    else:
+        X.add "path="&op.path
+    var url="/git/diff"
+    for j,q in X:
+        url.add if j==0: "?" else: "&"
+        url.add q
+    url
 
 # =====================================================================
 #               gitdiff
