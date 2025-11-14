@@ -22,7 +22,12 @@ proc exec_path_text(command: string, args: openarray[string]): string=
 
 type
     FileCommitStatus* =enum Other, Modified, Deleted, Added, Renamed
-    CommittedOperation=tuple[status: FileCommitStatus, path: string, oldpath: string]
+    CommittedOperation* =object
+        case status*: FileCommitStatus
+        of Renamed:
+            oldpath*, newpath*: string
+        else:
+            path*: string
     Commit* =object
         hash*: SecureHash
         parents*: seq[SecureHash]
@@ -276,14 +281,12 @@ proc parse_follow(L: seq[string]): seq[Commit]=
             of Details: e.was[^1].details.add $1
             else: discard
         namestatus <- >{'A', 'M', 'D'} * +{' ','\t'} * >+1:
-            let stat=case $1
-            of "M": Modified
-            of "D": Deleted
-            of "A": Added
-            else: Other
-            e.was[^1].files.add (stat, $2, "")
+            case $1
+            of "M": e.was[^1].files.add CommittedOperation(status: Modified, path: $2)
+            of "D": e.was[^1].files.add CommittedOperation(status: Deleted, path: $2)
+            of "A": e.was[^1].files.add CommittedOperation(status: Added, path: $2)
         renamestatus <- 'R' * {'0'..'9'}[3] * '\t' * >path * '\t' * >path:
-            e.was[^1].files.add (Renamed, $2, $1)
+            e.was[^1].files.add CommittedOperation(status: Renamed, newpath: $2, oldpath: $1)
         sonst <- >(*1) * !1:
             echo "Nicht erwartet: ", $1
         line <- commit_hpp | commit_hp | commit_h | author | date | empty | comment | namestatus | renamestatus | sonst
@@ -351,11 +354,10 @@ proc parse_log(L: seq[string]): seq[Commit]=
                 e.st=Details
             of Details: e.was[^1].details.add $1
             else: discard
-        # filestatus <- >{'A'..'Z'} * +{' ','\t'} * >+1: e.was[^1].files.add ($1, $2, "")
-        filestatus_added <- 'A' * +{' ','\t'} * >+1: e.was[^1].files.add (Added, $1, "")
-        filestatus_modified <- 'M' * +{' ','\t'} * >+1: e.was[^1].files.add (Modified, $1, "")
-        filestatus_deleted <- 'D' * +{' ','\t'} * >+1: e.was[^1].files.add (Deleted, $1, "")
-        filestatus_renamed <- 'R' * >{'0'..'9'}[3] * @>path * @>path: e.was[^1].files.add (Renamed, $3, $2)
+        filestatus_added <- 'A' * +{' ','\t'} * >+1: e.was[^1].files.add CommittedOperation(status: Added, path: $1)
+        filestatus_modified <- 'M' * +{' ','\t'} * >+1: e.was[^1].files.add CommittedOperation(status: Modified, path: $1)
+        filestatus_deleted <- 'D' * +{' ','\t'} * >+1: e.was[^1].files.add CommittedOperation(status: Deleted, path: $1)
+        filestatus_renamed <- 'R' * >{'0'..'9'}[3] * @>path * @>path: e.was[^1].files.add CommittedOperation(status: Renamed, newpath: $3, oldpath: $2)
         sonst <- >(*1) * !1: echo "Nicht erwartet: ", $1
         line <- commit | merge | author | date | empty | comment | filestatus_added | filestatus_modified | filestatus_deleted | filestatus_renamed | sonst
     var e=parsercontext(st: None, was: addr result)

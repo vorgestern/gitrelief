@@ -42,10 +42,11 @@ proc format_html(L: seq[Commit]): string=
         for d in commit.details: comments.add "<br/>"&htmlescape(d)
         let parent=if commit.parents.len>0: commit.parents[0] else: shanull
         var files=""
-        for index,(s,p,old) in commit.files:
+        for index,op in commit.files:
             if index>0: files.add "<br/>"
-            if old=="": files.add fmt"{s} <a href='{url_diff parent, commit.hash, false, p, old}'>{p}</a>"
-            else:       files.add fmt"{s} <a href='{url_diff parent, commit.hash, false, p, old}'>{p}<br/>&nbsp;&nbsp;from {old}</a>"
+            case op.status
+            of Renamed: files.add fmt"{op.status} <a href='{url_diff parent, commit.hash, false, op.newpath, op.oldpath}'>{op.newpath}<br/>&nbsp;&nbsp;from {op.oldpath}</a>"
+            else:       files.add fmt"{op.status} <a href='{url_diff(parent, commit.hash, false, op.path)}'>{op.path}</a>"
         # if commit.mergeinfo.len>0:
         #     result.add "\n<tr><td colspan='5'>mergeinfo:"
         #     for m in commit.mergeinfo: result.add " "&m
