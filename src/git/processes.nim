@@ -290,12 +290,7 @@ proc parse_follow(L: seq[string]): seq[Commit]=
     var e=parsercontext(st: None, was: addr result)
     for z in L:
         {.gcsafe.}:
-            if lineparser.match(z, e).ok:
-                discard
-            else:
-                # error
-                # e.zeile="??????"
-                discard
+            discard lineparser.match(z, e)
 
 proc gitfollow*(path: string, num: int): tuple[result: seq[Commit], cmd: string]=
     let args=block:
@@ -360,12 +355,7 @@ proc parse_log(L: seq[string]): seq[Commit]=
     var e=parsercontext(st: None, was: addr result)
     for z in L:
         {.gcsafe.}:
-            if loglineparser.match(z, e).ok:
-                discard
-            else:
-                # error
-                # e.zeile="??????"
-                discard
+            discard loglineparser.match(z, e)
 
 proc gitlog*(num: int): tuple[commits: seq[Commit], cmd: string]=
     let args=block:
