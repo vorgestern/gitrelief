@@ -174,6 +174,11 @@ func url_unstage*(path: string):string =
 func url_stage*(path: string):string =
     "/git/stage?z=1&path=" & path
 
+func concat*(A: openarray[string]): string=
+    var X=""
+    for a in A: X=X & " " & a
+    X
+
 when ismainmodule:
     let shademo="934e2293ead91cad3ce2ac665e8673ce8d30a3d9"
     let hash1: SecureHash=parsesecurehash(shademo)

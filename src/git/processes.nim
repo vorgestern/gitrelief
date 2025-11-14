@@ -174,12 +174,7 @@ proc gitdiff*(a, b: SecureHash, paths: openarray[string]): tuple[diffs: seq[File
     if paths.len>0:
         args.add "--"
         for p in paths: args.add p
-    let Lines=exec_path("git", args)
-    let cmd=block:
-        var X="git"
-        for a in args: X=X & " " & a
-        X
-    (parse_diff(Lines), cmd)
+    (parse_diff(exec_path("git", args)), "git" & concat(args))
 
 proc gitdiff_staged*(a, b: SecureHash, paths: openarray[string]): tuple[diffs: seq[FileDiff], cmd: string] =
     var args= @["diff", "-U999999", "--staged"]
@@ -188,12 +183,7 @@ proc gitdiff_staged*(a, b: SecureHash, paths: openarray[string]): tuple[diffs: s
     if paths.len>0:
         args.add "--"
         for p in paths: args.add p
-    let Lines=exec_path("git", args)
-    let cmd=block:
-        var X="git"
-        for a in args: X=X & " " & a
-        X
-    (parse_diff(Lines), cmd)
+    (parse_diff(exec_path("git", args)), "git" & concat(args))
 
 # =====================================================================
 #               gitstatus
@@ -232,13 +222,8 @@ proc parse_status(Lines: seq[string]): RepoStatus=
                 echo "failed to parse: ", z
 
 proc gitstatus*(): tuple[status: RepoStatus, cmd: string] =
-    var args= @["status", "--porcelain", "-uall"]
-    let Lines=exec_path("git", args)
-    let cmd=block:
-        var X="git"
-        for a in args: X=X & " " & a
-        X
-    (parse_status(Lines), cmd)
+    let args= @["status", "--porcelain", "-uall"]
+    (parse_status(exec_path("git", args)), "git" & concat(args))
 
 # =====================================================================
 
@@ -301,11 +286,7 @@ proc gitfollow*(path: string, num: int): tuple[result: seq[Commit], cmd: string]
         X.add "--"
         X.add path
         X
-    let cmd=block:
-        var X="git"
-        for a in args: X=X & " " & a
-        X
-    (parse_log exec_path("git", args), cmd)
+    (parse_log exec_path("git", args), "git" & concat(args))
 
 # =====================================================================
 #               gitlog
@@ -315,13 +296,7 @@ proc gitlog*(num: int): tuple[commits: seq[Commit], cmd: string]=
         var A= @["log", "--name-status", "--parents", "--date=iso-local"]
         if num>0: A.add fmt"-{num}"
         A
-    let
-        Lines=exec_path("git", args)
-        cmd=block:
-            var X="git"
-            for a in args: X=X & " " & a
-            X
-    (parse_log Lines, cmd)
+    (parse_log exec_path("git", args), "git" & concat(args))
 
 # =====================================================================
 
