@@ -281,3 +281,15 @@ proc parse_remote_v*(L: seq[string]): remoteinfo=
     for z in L:
         {.gcsafe.}:
             discard lineparser.match(z, result)
+
+proc parse_branches_remote*(L: seq[string], remotename: string): seq[string]=
+    let s=remotename & "/"
+    for k in L:
+        let k1=k.substr(2)
+        if k1.startswith s: result.add k1.substr(s.len)
+        else:
+            echo "fail startswith '", k, "': ", s
+            result.add "?? " & k
+
+proc parse_branches_local*(L: seq[string]): seq[string]=
+    for k in L: result.add k.substr(2)
