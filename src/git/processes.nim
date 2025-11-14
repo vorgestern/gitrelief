@@ -454,3 +454,26 @@ proc gitrevlist*(inclbranches, exclbranches: openarray[string]): seq[SecureHash]
 # So findet man auf der Kommandozeile den ältesten commit in datetime,
 # der nicht in den master übernommen wurde.
 # git rev-list --topo-order --reverse datetime ^master | head -1
+
+# =====================================================================
+
+func url_diff*(parent, commit: SecureHash, staged: bool, op: CommittedOperation): string=
+    var X: seq[string]
+    if parent!=shanull and commit!=shanull:
+        X.add "a="&shaform parent
+        X.add "b="&shaform commit
+    elif parent!=shanull:
+        X.add "a="&shaform parent
+    if staged:
+        X.add "staged"
+    case op.status
+    of Renamed:
+        X.add "path="&op.newpath
+        X.add "oldpath="&op.oldpath
+    else:
+        X.add "path="&op.path
+    var url="/git/diff"
+    for j,q in X:
+        url.add if j==0: "?" else: "&"
+        url.add q
+    url

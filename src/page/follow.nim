@@ -39,10 +39,11 @@ proc format_html(L: seq[Commit], highlight=""): string=
         var files=""
         for fileindex,op in commit.files:
             if fileindex>0: files.add "<br/>"
-            if op.status==Renamed:  files.add fmt"<a href='{url_diff(parent, commit.hash, false, op.newpath)}'>{op.status}</a><br/>to {op.newpath}<br/>from {op.oldpath}"
-            elif op.status==Added:  files.add fmt"<a href='{url_diff(parent, commit.hash, false, op.path)}'>{op.status}</a><br/>{op.path}"
-            elif commitindex==0:    files.add fmt"<a href='{url_diff(parent, commit.hash, false, op.path)}'>{op.status}</a><br/>{op.path}"
-            else:                   files.add fmt"<a href='{url_diff(parent, commit.hash, false, op.path)}'>{op.status}</a>"
+            let url=url_diff(parent, commit.hash, false, op)
+            if op.status==Renamed:  files.add fmt"<a href='{url}'>{op.status}</a><br/>to {op.newpath}<br/>from {op.oldpath}"
+            elif op.status==Added:  files.add fmt"<a href='{url}'>{op.status}</a><br/>{op.path}"
+            elif commitindex==0:    files.add fmt"<a href='{url}'>{op.status}</a><br/>{op.path}"
+            else:                   files.add fmt"<a href='{url}'>{op.status}</a>"
         let hx=shaform commit.hash
         let
             tr=if shamatch(commit.hash, highlight): "\n<tr class='highlight'>" else: "\n<tr>"
