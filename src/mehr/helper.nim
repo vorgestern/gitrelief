@@ -144,26 +144,6 @@ func url_log*(num: int, top: int= -1): string=
     if top<0: "/git/log?num=" & $num
     else:     "/git/log?num=" & $num & "#top" & $top
 
-# func url_diff*(parent,commit: string, staged: bool, path:string, oldpath:string=""): string=
-#     var X: seq[string]
-#     if parent!="" and commit!="":
-#         X.add "a="&parent
-#         X.add "b="&commit
-#     elif parent!="":
-#         X.add "a="&parent
-#     if staged:
-#         X.add "staged"
-#     if oldpath!="" and path!="":
-#         X.add "path="&path
-#         X.add "oldpath="&oldpath
-#     elif oldpath=="":
-#         X.add "path="&path
-#     var url="/git/diff"
-#     for j,q in X:
-#         url.add if j==0: "?" else: "&"
-#         url.add q
-#     url
-
 func url_diff*(parent, commit: SecureHash, staged: bool, path:string, oldpath:string=""): string=
     var X: seq[string]
     if parent!=shanull and commit!=shanull:
