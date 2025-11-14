@@ -128,7 +128,7 @@ proc page_diff*(Args: Table[string,string]): string=
                 let ci=if bhash!=shanull:
                     let X=gitcommit(bhash)
                     var h="<p><table><tr><td>" & X.author & "</td><th>" & htmlescape(X.subject) & "</th></tr>"
-                    h.add "<tr><td>" & X.date.format("d. MMM HH:mm") & "</td><td>"
+                    h.add "<tr><td>" & X.date.format("d. MMM yyyy HH:mm") & "</td><td>"
                     for k in X.details: h.add htmlescape(k) & "<br/>"
                     h & "</td></tr></table>"
                 else: ""
