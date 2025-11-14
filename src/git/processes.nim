@@ -22,6 +22,12 @@ proc exec_path_text(command: string, args: openarray[string]): string=
 
 type
     FileCommitStatus* =enum Other, Modified, Deleted, Added, Renamed
+
+# =====================================================================
+#               gitdiff
+#               gitdiff_staged
+
+type
     NABR* =enum N, A, B, R
     DiffSection* =object
         case kind*: NABR
@@ -175,6 +181,7 @@ proc gitdiff_staged*(a, b: SecureHash, paths: openarray[string]): tuple[diffs: s
     (parse_diff(Lines), cmd)
 
 # =====================================================================
+#               gitstatus
 
 type
     RepoStatus* =object
@@ -219,6 +226,7 @@ proc gitstatus*(): tuple[status: RepoStatus, cmd: string] =
     (parse_status(Lines), cmd)
 
 # =====================================================================
+#               gitfollow
 
 type
     CommittedOperation=tuple[status: FileCommitStatus, path: string, oldpath: string]
@@ -305,6 +313,7 @@ proc gitfollow*(path: string, num: int): tuple[result: seq[Commit], cmd: string]
     (parse_follow exec_path("git", args), cmd)
 
 # =====================================================================
+#               gitlog
 
 proc parse_log(L: seq[string]): seq[Commit]=
     type
@@ -380,13 +389,11 @@ proc gitcompletehash*(hash: string): SecureHash=
     let Lines=exec_path("git", ["rev-list", "--max-count=1", "--skip=#", hash])
     if Lines.len==1: parsesecurehash Lines[0]
     else:            shanull
-
-# =====================================================================
-
 proc gitstage*(path: string): string=exec_path_text("git", ["add", path])
 proc gitunstage*(path: string): string=exec_path_text("git", ["restore", "--staged", path])
 
 # =====================================================================
+#               gitremotes
 
 type
     remoteurls* =tuple[fetchurl, pushurl: string]
@@ -413,6 +420,8 @@ proc parse_remote_v(L: seq[string]): remoteinfo=
 proc gitremotes*(): remoteinfo=parse_remote_v(exec_path("git", ["remote", "-v"]))
 
 # =====================================================================
+#               gitbranches_local
+#               gitbranches_remote
 
 proc parse_branches_remote(L: seq[string], remotename: string): seq[string]=
     let s=remotename & "/"
@@ -430,6 +439,7 @@ proc gitbranches_local*(): seq[string]= parse_branches_local(exec_path("git", ["
 proc gitbranches_remote*(remotename: string): seq[string]= parse_branches_remote(exec_path("git", ["branch", "-rl", remotename & "/*"]), remotename)
 
 # =====================================================================
+#               gitrevlist
 
 # Ermittle die Liste der Hashes die von einem der inclbranches erreichbar sind,
 # aber von keinem der exclbranches.
