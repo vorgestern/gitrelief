@@ -22,6 +22,16 @@ proc exec_path_text(command: string, args: openarray[string]): string=
 
 type
     FileCommitStatus* =enum Other, Modified, Deleted, Added, Renamed
+    CommittedOperation=tuple[status: FileCommitStatus, path: string, oldpath: string]
+    Commit* =object
+        hash*: SecureHash
+        parents*: seq[SecureHash]
+        author*: string
+        date*: DateTime
+        subject*: string
+        details*: seq[string]
+        files*: seq[CommittedOperation]
+        mergeinfo*: seq[string]
 
 # =====================================================================
 #               gitdiff
@@ -227,18 +237,6 @@ proc gitstatus*(): tuple[status: RepoStatus, cmd: string] =
 
 # =====================================================================
 #               gitfollow
-
-type
-    CommittedOperation=tuple[status: FileCommitStatus, path: string, oldpath: string]
-    Commit* =object
-        hash*: SecureHash
-        parents*: seq[SecureHash]
-        author*: string
-        date*: DateTime
-        subject*: string
-        details*: seq[string]
-        files*: seq[CommittedOperation]
-        mergeinfo*: seq[string]
 
 proc parse_follow(L: seq[string]): seq[Commit]=
     type
