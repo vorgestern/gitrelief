@@ -252,14 +252,10 @@ proc parse_follow(L: seq[string]): seq[Commit]=
     const lineparser=peg("line", e: parsercontext):
         hash <- +{'0'..'9', 'a'..'f'}
         path <- +{33..255}
-        commit_hpp <- "commit " * >hash * @>hash * @>hash:
-            e.was[].add Commit(hash: parsesecurehash $1, parents: @[parsesecurehash $2, parsesecurehash $3])
-            e.st=Header
-        commit_hp <- "commit " * >hash * @>hash:
-            e.was[].add Commit(hash: parsesecurehash $1, parents: @[parsesecurehash $2])
-            e.st=Header
-        commit_h <- "commit " * >hash * !1:
-            e.was[].add Commit(hash: parsesecurehash $1, parents: @[])
+        commit <- "commit " * +@>hash:
+            var parents: seq[SecureHash]
+            for k in 2..<capture.len: parents.add parsesecurehash capture[k].s
+            e.was[].add Commit(hash: parsesecurehash $1, parents: parents)
             e.st=Header
         authorname <- {33..128} * +{33..128}
         author <- "Author:" * @>authorname * @'<': e.was[^1].author= $1
@@ -286,7 +282,7 @@ proc parse_follow(L: seq[string]): seq[Commit]=
         filestatus_renamed <- 'R' * >{'0'..'9'}[3] * @>path * @>path: e.was[^1].files.add CommittedOperation(status: Renamed, newpath: $3, oldpath: $2)
         sonst <- >(*1) * !1:
             echo "Nicht erwartet: ", $1
-        line <- commit_hpp | commit_hp | commit_h | author | date | empty | comment | filestatus_added | filestatus_modified | filestatus_deleted | filestatus_renamed | sonst
+        line <- commit | author | date | empty | comment | filestatus_added | filestatus_modified | filestatus_deleted | filestatus_renamed | sonst
     var e=parsercontext(st: None, was: addr result)
     for z in L:
         {.gcsafe.}:
@@ -314,7 +310,7 @@ proc parse_log(L: seq[string]): seq[Commit]=
         parsercontext=object
             st: context
             was: ptr seq[Commit]
-    const loglineparser=peg("line", e: parsercontext):
+    const lineparser=peg("line", e: parsercontext):
         hash <- +{'0'..'9', 'a'..'f'}
         path <- +{33..255}
         commit <- "commit " * +@>hash:
@@ -355,7 +351,7 @@ proc parse_log(L: seq[string]): seq[Commit]=
     var e=parsercontext(st: None, was: addr result)
     for z in L:
         {.gcsafe.}:
-            discard loglineparser.match(z, e)
+            discard lineparser.match(z, e)
 
 proc gitlog*(num: int): tuple[commits: seq[Commit], cmd: string]=
     let args=block:
