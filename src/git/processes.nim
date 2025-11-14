@@ -280,16 +280,13 @@ proc parse_follow(L: seq[string]): seq[Commit]=
                 e.st=Details
             of Details: e.was[^1].details.add $1
             else: discard
-        namestatus <- >{'A', 'M', 'D'} * +{' ','\t'} * >+1:
-            case $1
-            of "M": e.was[^1].files.add CommittedOperation(status: Modified, path: $2)
-            of "D": e.was[^1].files.add CommittedOperation(status: Deleted, path: $2)
-            of "A": e.was[^1].files.add CommittedOperation(status: Added, path: $2)
-        renamestatus <- 'R' * {'0'..'9'}[3] * '\t' * >path * '\t' * >path:
-            e.was[^1].files.add CommittedOperation(status: Renamed, newpath: $2, oldpath: $1)
+        filestatus_added <- 'A' * +{' ','\t'} * >+1: e.was[^1].files.add CommittedOperation(status: Added, path: $1)
+        filestatus_modified <- 'M' * +{' ','\t'} * >+1: e.was[^1].files.add CommittedOperation(status: Modified, path: $1)
+        filestatus_deleted <- 'D' * +{' ','\t'} * >+1: e.was[^1].files.add CommittedOperation(status: Deleted, path: $1)
+        filestatus_renamed <- 'R' * >{'0'..'9'}[3] * @>path * @>path: e.was[^1].files.add CommittedOperation(status: Renamed, newpath: $3, oldpath: $2)
         sonst <- >(*1) * !1:
             echo "Nicht erwartet: ", $1
-        line <- commit_hpp | commit_hp | commit_h | author | date | empty | comment | namestatus | renamestatus | sonst
+        line <- commit_hpp | commit_hp | commit_h | author | date | empty | comment | filestatus_added | filestatus_modified | filestatus_deleted | filestatus_renamed | sonst
     var e=parsercontext(st: None, was: addr result)
     for z in L:
         {.gcsafe.}:
