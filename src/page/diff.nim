@@ -1,5 +1,5 @@
 
-import std/[tables, strformat, strutils]
+import std/[tables, strformat, strutils, times]
 import mehr/helper
 import git/processes
 
@@ -17,6 +17,7 @@ const html_template="""
 <tr><th>Navigate</th><th>Command</th></tr>
 <tr><td><a href='/'>Start</a></td><td>{htmlescape cmd}</td></tr>
 </table>
+<p/>
 {content}
 </body></html>
 """
@@ -34,12 +35,12 @@ proc format_html_toc(Patches: seq[FileDiff], staged: bool, ahash, bhash: SecureH
         result.add fmt"<tr><td>{entry.op}</td><td><a href='{url}'>{tag}</a></td><td><a href='{url_follow path}'>Follow</a></td></tr>"
     result.add "</table></p>"
 
-proc format_html_patch(fileentry: FileDiff, staged: bool, ahash, bhash: SecureHash): string=
+proc format_html_head(fileentry: FileDiff, hash: SecureHash): string=
     let followurl=case fileentry.op
-    of Modified: fmt"{url_follow fileentry.bpath, bhash}"
-    of Added:    fmt"{url_follow fileentry.bpath, bhash}"
-    of Deleted:  fmt"{url_follow fileentry.apath, bhash}"
-    of Renamed:  fmt"{url_follow fileentry.bpath, bhash}"
+    of Modified: fmt"{url_follow fileentry.bpath, hash}"
+    of Added:    fmt"{url_follow fileentry.bpath, hash}"
+    of Deleted:  fmt"{url_follow fileentry.apath, hash}"
+    of Renamed:  fmt"{url_follow fileentry.bpath, hash}"
     of Other:    fmt"{url_follow fileentry.apath}"
     case fileentry.op:
     of Modified: result.add fmt"{'\n'}<p>Modified {fileentry.apath} <span><a href='{followurl}'>Follow</a></span></p>"
@@ -47,6 +48,8 @@ proc format_html_patch(fileentry: FileDiff, staged: bool, ahash, bhash: SecureHa
     of Added:    result.add fmt"{'\n'}<p>Added {fileentry.bpath} <span><a href='{followurl}'>Follow</a></span></p>"
     of Renamed:  result.add fmt"{'\n'}<p>Renamed {fileentry.apath} to {fileentry.bpath} <span><a href='{followurl}'>Follow</a></span></p>"
     of Other:    result.add fmt"{'\n'}<p>Unknown operation {fileentry.apath} <span><a href='{followurl}'>Follow</a></span></p>"
+
+proc format_html_patch(fileentry: FileDiff, staged: bool, ahash, bhash: SecureHash): string=
     if fileentry.op!=Other:
         result.add "<p><table class='diff'>"
         case fileentry.op:
@@ -121,7 +124,15 @@ proc page_diff*(Args: Table[string,string]): string=
         cssurl="/gitrelief.css"
         content=block:
             if Diffs.len>1:    format_html_toc(Diffs, staged, ahash, bhash)
-            elif Diffs.len==1: format_html_patch(Diffs[0], staged, ahash, bhash)
+            elif Diffs.len==1:
+                let ci=if bhash!=shanull:
+                    let X=gitcommit(bhash)
+                    var h="<p><table><tr><td>" & X.author & "</td><th>" & htmlescape(X.subject) & "</th></tr>"
+                    h.add "<tr><td>" & X.date.format("d. MMM HH:mm") & "</td><td>"
+                    for k in X.details: h.add htmlescape(k) & "<br/>"
+                    h & "</td></tr></table>"
+                else: ""
+                format_html_head(Diffs[0], bhash) & ci & format_html_patch(Diffs[0], staged, ahash, bhash)
             else: "<p>No Modifications</p>"
     return fmt html_template
 
