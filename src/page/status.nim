@@ -1,6 +1,5 @@
 
-import std/[tables, strformat, strutils]
-import std/[paths,dirs]
+import std/[tables, strformat, strutils, paths, dirs]
 import git/processes
 import mehr/helper
 
