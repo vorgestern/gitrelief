@@ -103,7 +103,7 @@ proc page_status*(Args: Table[string,string], publicdir: string): string=
                 else:  X.add "<tr><td>" & htmlescape(name) & "</td><td colspan='2'>" & htmlescape(urls.fetchurl) & "</td></tr>"
             X
         html_branches=block:
-            var X="<tr><th>(local)</th>"
+            var X="<tr><th><a href='/git/branches'>(local)</a></th>"
             for k in remotenames: X.add "<th>remotes/" & htmlescape(k) & "</th>"
             X.add "</tr>\n<tr>\n<td>\n"
             for k in gitbranches_local(): X.add htmlescape(k) & "<br/>"

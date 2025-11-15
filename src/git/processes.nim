@@ -88,7 +88,7 @@ proc gitbranches_remote*(remotename: string): seq[string]= parse_branches_remote
 #     erreichbar, aber noch nicht in den Zweig 'master' gemergt wurden. Wenn diese Liste leer ist,
 #     ist der Zweig 'datetime' volltändig in 'master' übernommen.
 proc gitrevlist*(inclbranches, exclbranches: openarray[string]): seq[SecureHash]=
-    var args= @["rev-list", "--topo-order", "--reverse"]
+    var args= @["rev-list", "--topo-order"] # "--reverse"
     for k in inclbranches: args.add k
     for k in exclbranches: args.add "^"&k
     let Lines=exec_path("git", args)

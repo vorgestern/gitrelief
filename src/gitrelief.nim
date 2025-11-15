@@ -1,7 +1,7 @@
 
 import jesterfork
 import mehr/[helper]
-import page/[log,diff,follow,status]
+import page/[log,diff,follow,status,branches]
 import action/[stage]
 import std/[cmdline,strutils]
 
@@ -63,6 +63,7 @@ routes:
         get "/git/log":       resp page_log(parsequery request.query)
         get "/git/follow":    resp page_follow(parsequery request.query)
         get "/git/diff":      resp page_diff(parsequery request.query)
+        get "/git/branches":  resp page_branches(parsequery request.query)
         get "/git/stage?":    resp Http302, @[("Location", "/")], action_stage(parsequery request.query)
         get "/git/unstage":   resp Http302, @[("Location", "/")], action_unstage(parsequery request.query)
         get "/gitrelief.css": resp Http200, gitrelief_css
