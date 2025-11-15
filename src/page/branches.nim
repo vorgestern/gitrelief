@@ -29,7 +29,17 @@ proc page_branches*(Args: Table[string,string]): string=
             var T="\n<tr>"
             for b in branchnames:
                 T.add "<td>"
-                let A=gitrevlist([b], [])[0..3]
+                let A=block:
+                    var X=if b=="master": gitrevlist(["master"], [])
+                    else:
+                        let X1=gitrevlist([b], ["master"])
+                        if X1.len>0: X1
+                        else:
+                            let X2=gitrevlist([b], [])
+                            if X2.len>0: X2[0..0]
+                            else: X2
+                    if X.len>10: X[0..9]
+                    else: X
                 for hash in A:
                     let commit=gitcommit(hash)
                     var comments=htmlescape(commit.subject)
