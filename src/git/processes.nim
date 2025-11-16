@@ -98,7 +98,11 @@ proc gitrevlist*(inclbranches, exclbranches: openarray[string]): seq[SecureHash]
 # der nicht in den master übernommen wurde.
 # git rev-list --topo-order --reverse datetime ^master | head -1
 
-proc gitshowbranches*(branchnames: openarray[string]): ShowBranch=
+proc gitshowbranches*(branchnames: openarray[string]): tuple[result: ShowBranch, cmd: string]=
     var args= @["show-branch", "--date-order", "--color=never", "--sha1-name"]
     for b in branchnames: args.add b
-    parse_show_branches(exec_path("git", args))
+    let cmd=block:
+        var X="git"
+        for k in args: X.add " "&k
+        X
+    (parse_show_branches(exec_path("git", args)), cmd)

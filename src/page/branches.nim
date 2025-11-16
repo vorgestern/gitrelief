@@ -44,8 +44,8 @@ proc page_branches*(Args: Table[string,string]): string=
         html_title="status"
         html_cmd=""
         html_showbranches=block:
-            let SB=gitshowbranches([mastername, branchname])
-            var X="<p>"
+            let (SB, cmd)=gitshowbranches([mastername, branchname])
+            var X="<p>" & cmd & "</p><p>"
             for k in SB.branches: X.add "&nbsp;"&k
             X.add "</p><table>"
             for k in SB.commits: X.add "<tr><td>" & k.tags & "</td><td>" & k.hash & "</td><td>" & k.subject & "</td></tr>"
