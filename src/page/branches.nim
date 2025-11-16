@@ -28,9 +28,6 @@ const html_template="""
 <h2>Branches (neue Ansicht)</h2>
 {html_showbranches}
 
-<p/>
-<h2>Branches (bisherige Ansicht)</h2>
-{html_alteansicht}
 </body></html>
 """
 
@@ -41,7 +38,7 @@ proc page_branches*(Args: Table[string,string]): string=
         branchnames=gitbranches_local()
     let
         html_cssurl="/gitrelief.css"
-        html_title="status"
+        html_title="branches"
         html_localbranches=block:
             var X=""
             for b in branchnames:
@@ -68,7 +65,11 @@ proc page_branches*(Args: Table[string,string]): string=
                 X.add "<td>" & k.hash & "</td><td>" & k.subject & "</td></tr>"
             X.add "</table>"
             (X, cmd)
+    return fmt html_template
+
+proc obsolete(): string=
     let
+        branchnames=gitbranches_local()
         branchinfo=block:
             var T="\n<tr>"
             for b in branchnames:
@@ -100,4 +101,23 @@ proc page_branches*(Args: Table[string,string]): string=
             X.add branchinfo
             X.add "</table>"
             X
-    return fmt html_template
+        html_cssurl="/gitrelief.css"
+        html_title="branches"
+    const html_tmpl="""
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="{html_cssurl}">
+<title>{html_title}</title>
+</head>
+<body>
+<table>
+<tr><th>Navigate</th><th>Command</th></tr>
+<tr><td><a href='/'>Start</a></td><td></td></tr>
+</table>
+<p/>
+<h2>Branches (bisherige Ansicht)</h2>
+{html_alteansicht}
+</body></html>
+    """
+    return fmt html_tmpl
