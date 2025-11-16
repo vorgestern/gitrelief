@@ -66,6 +66,11 @@ proc gitcommit*(hash: SecureHash): Commit=
     return if X.len==1: X[0]
     else: Commit()
 
+proc gitcommit*(hash: string): Commit=
+    let X=parse_log exec_path("git", ["log", "--name-status", "--parents", "--date=iso-local", hash, "-1"])
+    return if X.len==1: X[0]
+    else: Commit()
+
 proc gitcompletehash*(hash: string): SecureHash=
     let Lines=exec_path("git", ["rev-list", "--max-count=1", "--skip=#", hash])
     if Lines.len==1: parsesecurehash Lines[0]

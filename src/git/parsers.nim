@@ -22,6 +22,8 @@ type
         files*: seq[CommittedOperation]
         mergeinfo*: seq[string]
 
+func datestring*(C: Commit): string=C.date.format("d. MMM HH:mm")
+
 func url_diff*(parent, commit: SecureHash, staged: bool, op: CommittedOperation): string=
     var X: seq[string]
     if parent!=shanull and commit!=shanull:
