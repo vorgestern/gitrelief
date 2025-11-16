@@ -57,8 +57,11 @@ proc page_branches*(Args: Table[string,string]): string=
             let (SB, cmd)=gitshowbranches([mastername, branchname])
             var X="<p>" & cmd & "</p><p>"
             for k in SB.branches: X.add "&nbsp;"&k
-            X.add "</p><table>"
-            for k in SB.commits: X.add "<tr><td>" & k.tags & "</td><td>" & k.hash & "</td><td>" & k.subject & "</td></tr>"
+            X.add "</p><table class='showbranch'>"
+            for k in SB.commits:
+                X.add "<tr>"
+                for t in k.tags: X.add "<td>" & t & "</td>"
+                X.add "<td>" & k.hash & "</td><td>" & k.subject & "</td></tr>"
             X.add "</table>"
             (X, cmd)
     let

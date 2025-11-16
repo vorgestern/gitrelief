@@ -44,6 +44,24 @@ table.nolines tr td {
     background-color: white;
 }
 
+table.showbranch tr td {
+    padding: 0 0.2em 0;
+    /* background-color: yellow; */
+    white-space: pre;
+}
+
+table.showbranch tr td:nth-last-child(1) {
+    /* background-color: lightgray; */
+    white-space: normal;
+    padding:0 .5em 0;
+}
+
+table.showbranch tr td:nth-last-child(2) {
+    /* background-color: lightgray; */
+    white-space: normal;
+    padding:0 .5em 0;
+}
+
 table {
     border-style: solid;
     border-width: 1px;
