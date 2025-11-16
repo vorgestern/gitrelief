@@ -59,8 +59,7 @@ proc page_branches*(Args: Table[string,string]): string=
             for jb in 0..<SB.branches.len:
                 X.add "<tr>"
                 for kb in 0..<SB.branches.len:
-                    X.add if kb==jb: "<td>" & $kb & "</td>"
-                          else: "<td/>"
+                    X.add if kb==jb: "<td>" & $kb & "</td>" else: "<td/>"
                 X.add "<th/><th>" & SB.branches[jb] & "</th>"
                 X.add "<tr>"
             for k in SB.commits:

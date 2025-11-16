@@ -316,33 +316,23 @@ proc parse_show_branches*(Lines: openarray[string]): ShowBranch=
             let tags=if len($1)>1: substr($1, 0, len($1)-2)
             else: $1
             cx=taggedcommit(tags: tags, hash: $2, subject: $3)
-
     var k=0
     while k<Lines.len:
         {.gcsafe.}:
             let z=Lines[k]
             inc k
-            # echo "==== ", z
             var e=bcontext(s: "")
-            if branchparser.match(z, e).ok:
-                # echo "found branch ", e.s
-                result.branches.add e.s
+            if branchparser.match(z, e).ok: result.branches.add e.s
             else: break
-
-    # echo "Lies commits:"
     while k<Lines.len:
         {.gcsafe.}:
             let z=Lines[k]
             inc k
-            # echo "---- '", z, "'"
             var x: taggedcommit
-            if commitparser.match(z, x).ok:
-                # echo "found commit ", x
-                result.commits.add x
+            if commitparser.match(z, x).ok: result.commits.add x
             else:
                 # echo "failed to parse commit."
                 break;
-
     if k<Lines.len:
         echo "Nicht mehr gelesen: ", Lines.len-k, " Zeilen:"
         while k<Lines.len:
