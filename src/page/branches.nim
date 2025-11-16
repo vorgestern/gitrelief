@@ -30,7 +30,7 @@ const html_template="""
 
 <p/>
 <h2>Branches (bisherige Ansicht)</h2>
-{html_content}
+{html_alteansicht}
 </body></html>
 """
 
@@ -42,15 +42,6 @@ proc page_branches*(Args: Table[string,string]): string=
     let
         html_cssurl="/gitrelief.css"
         html_title="status"
-        html_cmd=""
-        html_showbranches=block:
-            let (SB, cmd)=gitshowbranches([mastername, branchname])
-            var X="<p>" & cmd & "</p><p>"
-            for k in SB.branches: X.add "&nbsp;"&k
-            X.add "</p><table>"
-            for k in SB.commits: X.add "<tr><td>" & k.tags & "</td><td>" & k.hash & "</td><td>" & k.subject & "</td></tr>"
-            X.add "</table>"
-            X
         html_localbranches=block:
             var X=""
             for b in branchnames:
@@ -61,6 +52,15 @@ proc page_branches*(Args: Table[string,string]): string=
                 else:                     "<td>B="&htmlescape(b)&"</td>"
                 X.add "\n" & fmt"<tr><td>{b1}</td>{td2}{td3}</tr>"
             X
+    let
+        (html_showbranches, html_cmd)=block:
+            let (SB, cmd)=gitshowbranches([mastername, branchname])
+            var X="<p>" & cmd & "</p><p>"
+            for k in SB.branches: X.add "&nbsp;"&k
+            X.add "</p><table>"
+            for k in SB.commits: X.add "<tr><td>" & k.tags & "</td><td>" & k.hash & "</td><td>" & k.subject & "</td></tr>"
+            X.add "</table>"
+            (X, cmd)
     let
         branchinfo=block:
             var T="\n<tr>"
@@ -85,7 +85,7 @@ proc page_branches*(Args: Table[string,string]): string=
                     T.add inf&"<br/>"
                 T.add "</td>"
             T & "</tr>"
-        html_content=block:
+        html_alteansicht=block:
             var X="<table>"
             X.add "<tr>"
             for b in branchnames: X.add "<th>" & htmlescape(b) & "</th>"
