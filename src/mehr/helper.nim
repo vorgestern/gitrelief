@@ -92,6 +92,10 @@ tr.newyear {
     font-size: 200%;
 }
 
+td.re {
+    text-align: right;
+}
+
 td.Acmp {
     width:50em;
     white-space: pre;
@@ -173,6 +177,12 @@ func url_unstage*(path: string):string =
 
 func url_stage*(path: string):string =
     "/git/stage?z=1&path=" & path
+
+proc url_branches*(m, b: string):string =
+    if m!="" and b!="": fmt"/git/branches?m={m}&b={b}"
+    elif m!="":         fmt"/git/branches?m={m}"
+    elif b!="":         fmt"/git/branches?b={b}"
+    else:               fmt"/git/branches"
 
 func concat*(A: openarray[string]): string=
     var X=""

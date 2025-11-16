@@ -293,3 +293,104 @@ proc parse_branches_remote*(L: seq[string], remotename: string): seq[string]=
 
 proc parse_branches_local*(L: seq[string]): seq[string]=
     for k in L: result.add k.substr(2)
+
+# =====================================================================
+
+type
+    taggedcommit* =object
+        tags*, hash*, subject*: string
+    ShowBranch* =object
+        branches*: seq[string]
+        commits*: seq[taggedcommit]
+
+proc parse_show_branches*(Lines: openarray[string]): ShowBranch=
+    type
+        bcontext=object
+            s: string
+    const branchparser=peg("line", name: bcontext):
+        line <- @>+{'*', '!', ' '} * '[' * >+{33..0x5c, 0x5e..127} * "] " * >+1:
+            # echo "     branch '", $1, "', '", $2, "', '", $3, "'"
+            name.s= $2
+    const commitparser=peg("line", cx: taggedcommit):
+        line <- >+{' ', '*', '+', '-'} * '[' * >+{'0'..'9', 'a'..'f'} * "] " * >+1:
+            let tags=if len($1)>1: substr($1, 0, len($1)-2)
+            else: $1
+            cx=taggedcommit(tags: tags, hash: $2, subject: $3)
+
+    var k=0
+    while k<Lines.len:
+        {.gcsafe.}:
+            let z=Lines[k]
+            inc k
+            # echo "==== ", z
+            var e=bcontext(s: "")
+            if branchparser.match(z, e).ok:
+                # echo "found branch ", e.s
+                result.branches.add e.s
+            else: break
+
+    # echo "Lies commits:"
+    while k<Lines.len:
+        {.gcsafe.}:
+            let z=Lines[k]
+            inc k
+            # echo "---- '", z, "'"
+            var x: taggedcommit
+            if commitparser.match(z, x).ok:
+                # echo "found commit ", x
+                result.commits.add x
+            else:
+                # echo "failed to parse commit."
+                break;
+
+    if k<Lines.len:
+        echo "Nicht mehr gelesen: ", Lines.len-k, " Zeilen:"
+        while k<Lines.len:
+            echo "'", Lines[k], "'"
+            inc k
+
+when ismainmodule:
+    # git show-branch --date-order --color=never --sha1-name master zv Zustandsvariable
+    const demo1="""
+* [master] Anpassung Hilfetext nach #944
+ ! [zv] zv Start
+  ! [Zustandsvariable] Aktualisierung (26.9.)
+---
+-   [f41c19345] Anpassung Hilfetext nach #944
+*   [994535807] Anpassung Hilfetext nach #944
+*   [059005df7] Schreibende Transaktion im SunSpec-Modbus und EEBUS Anwendung Limit Power Consumption (#946)
+*   [fc6dbe86f] Externe Leistung von SC3 an SolvisTom (#942)
+*   [ffe50e903] fix: display correct version number of SolvisTim #925
+*   [e036b5af8] Enable multiple network interfaces (#939)
+*   [435257f65] Clever pv basic (#936)
+*   [fdda88e4e] Xtra tcp heap (#938)
+*   [eec760a9e] update min/max capacity curves
+*   [59a51dfe3] fix: display the correct charge pump value in Waermeerzeuger->Waermepumpe #879
+ +  [c27972932] zv Start
+*+  [89db6131e] Nachtrag/ Bugfix 3.23 (#927)
+*+  [3aaf8a9ed] Behandlung der Watchdog-Semaphore bei idle-Jobs verbessert (#923)
+*+  [4f13226e5] #918 Bruno Influx-Logging aktiviert
+*+  [ca98c5104] annotations in s6-log #920
+*+  [e402cfc86] in Tabellen/SDKarte/ an Dateienden Zeilenenden entfernt; Typofix
+*+  [c9297f6ea] aus Branch cpp: einige Typo-Fixes und Umlautanpassungen
+*+  [1316699a9] aus Branch cpp: kleinere Fixes
+*+  [125a50581] aus Branch cpp: Generierung von ParamNames.h/.c zur Verwendung in der RegelungsAkademie
+--  [577f48c8d] Merge pull request #916 from solvis-bs/Translate3237
+*+  [7bbefb802] Übersetzungen für 3.23.7 aktualisiert
+*+  [8f097c743] Vertausch VL/RL des Alsonic (#911)
+*+  [75c5fa22a] Dashboard Menü (#912)
+  - [b5f98a49d] Aktualisierung (26.9.)
+*+  [fe65eaa15] fix fan setting dialog for burner (#909)
+  + [26d4e4fb2] Nachtrag
+  + [a49cde2d4] Status: Aktualisierung
+*+  [5342595a2] Fehler im S6-Logging (#908)
+*+  [3fb016467] replace heatingrod_autoLevel() with heatingrod_outputLevel() (#907)
+*+  [c91c02a6f] rework IWS_getMessages, saves about 700 bytes (#897)
+*+  [50b82e256] text and parameter changes (#910)
+  + [177a0ecfa] Alias aktualisiert
+  + [83a17beca] Alias repariert
+--- [4fcfc498a] Merge pull request #902 from solvis-bs/Translate3236
+    """
+    let X=parse_show_branch(demo1.split('\n'))
+    echo "Zweige: ", X.branches
+    echo "Commits: ", X.commits

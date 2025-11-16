@@ -97,3 +97,8 @@ proc gitrevlist*(inclbranches, exclbranches: openarray[string]): seq[SecureHash]
 # So findet man auf der Kommandozeile den ältesten commit in datetime,
 # der nicht in den master übernommen wurde.
 # git rev-list --topo-order --reverse datetime ^master | head -1
+
+proc gitshowbranches*(branchnames: openarray[string]): ShowBranch=
+    var args= @["show-branch", "--date-order", "--color=never", "--sha1-name"]
+    for b in branchnames: args.add b
+    parse_show_branches(exec_path("git", args))

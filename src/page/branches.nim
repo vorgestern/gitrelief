@@ -18,11 +18,25 @@ const html_template="""
 <tr><td><a href='/'>Start</a></td><td>{html_cmd}</td></tr>
 </table>
 <p/>
+<h2>Local Branches</h2>
+<table>
+<tr><th>branch</th><th>A</th><th>B</th></tr>
+{html_localbranches}
+</table>
+
+<p/>
+<h2>Branches (neue Ansicht)</h2>
+{html_showbranches}
+
+<p/>
+<h2>Branches (bisherige Ansicht)</h2>
 {html_content}
 </body></html>
 """
 
 proc page_branches*(Args: Table[string,string]): string=
+    let mastername=if Args.contains "m": Args["m"] else: ""
+    let branchname=if Args.contains "b": Args["b"] else: ""
     let
         branchnames=gitbranches_local()
         branchinfo=block:
@@ -59,5 +73,23 @@ proc page_branches*(Args: Table[string,string]): string=
             X.add "</tr>"
             X.add branchinfo
             X.add "</table>"
+            X
+        html_showbranches=block:
+            let SB=gitshowbranches([mastername, branchname])
+            var X="<p>"
+            for k in SB.branches: X.add "&nbsp;"&k
+            X.add "</p><table>"
+            for k in SB.commits: X.add "<tr><td>" & k.tags & "</td><td>" & k.hash & "</td><td>" & k.subject & "</td></tr>"
+            X.add "</table>"
+            X
+        html_localbranches=block:
+            var X=""
+            for b in branchnames:
+                let b1=htmlescape b
+                let td2=if b!=mastername: fmt"<td class='re'><a href='{url_branches b, branchname}'>select</a></td>"
+                else:                     "<td>A="&htmlescape(b)&"</td>"
+                let td3=if b!=branchname: fmt"<td class='re'><a href='{url_branches mastername, b}'>select</a></td>"
+                else:                     "<td>B="&htmlescape(b)&"</td>"
+                X.add "\n" & fmt"<tr><td>{b1}</td>{td2}{td3}</tr>"
             X
     return fmt html_template
