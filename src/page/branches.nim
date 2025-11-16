@@ -55,9 +55,14 @@ proc page_branches*(Args: Table[string,string]): string=
     let
         (html_showbranches, html_cmd)=block:
             let (SB, cmd)=gitshowbranches([mastername, branchname])
-            var X="<p>" & cmd & "</p><p>"
-            for k in SB.branches: X.add "&nbsp;"&k
-            X.add "</p><table class='showbranch'>"
+            var X="<p>" & cmd & "</p><table class='showbranch'>"
+            for jb in 0..<SB.branches.len:
+                X.add "<tr>"
+                for kb in 0..<SB.branches.len:
+                    X.add if kb==jb: "<td>" & $kb & "</td>"
+                          else: "<td/>"
+                X.add "<th/><th>" & SB.branches[jb] & "</th>"
+                X.add "<tr>"
             for k in SB.commits:
                 X.add "<tr>"
                 for t in k.tags: X.add "<td>" & t & "</td>"
