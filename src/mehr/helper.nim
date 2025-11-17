@@ -6,6 +6,8 @@ func shamatch*(sha: SecureHash, h: string): bool=h.len>0 and h.len<=40 and cmpig
 func shaform*(sha: SecureHash): string=substr($sha, 0, 9)
 const shanull* =parsesecurehash "0000000000000000000000000000000000000000"
 
+var servertitle*: cstring="gitrelief"
+
 func url_log*(num: int, top: int= -1): string=
     if top<0: "/git/log?num=" & $num
     else:     "/git/log?num=" & $num & "#top" & $top

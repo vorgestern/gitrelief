@@ -57,7 +57,7 @@ proc page_status*(Args: Table[string,string], publicdir: string): string=
             for k in keys(R): X.add k
             X
     let
-        html_title="status"
+        html_title= $servertitle & " status"
         (html_controlled,html_notcontrolled,html_failedtoparse)=format_html(Status)
         html_remoteurls=block:
             var X=""

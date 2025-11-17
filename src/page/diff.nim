@@ -105,7 +105,7 @@ proc page_diff*(Args: Table[string,string]): string=
     let (Diffs,html_cmd)=if staged: gitdiff_staged(ahash, bhash, paths)
                          else:      gitdiff(       ahash, bhash, paths)
     let
-        html_title="diff"
+        html_title= $servertitle & " diff"
         html_content=block:
             if Diffs.len>1:    format_html_toc(Diffs, staged, ahash, bhash)
             elif Diffs.len==1:

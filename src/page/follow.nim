@@ -46,7 +46,7 @@ proc page_follow*(Args: Table[string,string]): string=
         commithash=Args.getordefault("highlight", "")
     let (L,html_cmd)=gitfollow(pathtofollow, num)
     let
-        html_title="log_follow"
+        html_title= $servertitle & " follow"
         html_pathtofollow=htmlescape pathtofollow
         html_content=format_html(L, commithash)
     return fmt html_template_follow
