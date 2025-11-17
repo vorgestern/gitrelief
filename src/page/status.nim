@@ -5,42 +5,7 @@ import mehr/helper
 
 func htmlescape(s: string): string=replace(s, "<", "&lt;")
 
-const html_template="""
-<html>
-<head>
-<meta charset="utf-8">
-<link rel="stylesheet" href="{html_cssurl}">
-<title>{html_title}</title>
-</head>
-<body>
-
-<p><table class='head'>
-<tr><td><h1>Start</h1></td><td><h1>Root</h1></td></tr>
-<tr class='head'><td>
-    <a href="/git/log">Show Log</a><br/>
-    <a href='/git/branches'>Show Branches</a></td><td>{pwd}</td></tr>
-</table></p>
-
-<p><table class='status'>
-<tr><th class='status1'><h2>Public Files</h2></th><th class='status2'><h2>Status</h2></th><th class='status1'><h2>Not controlled</h2></th><th class='status2'><h2>Failed to Parse</h2></th></tr>
-<tr><td class='status1'>{html_localfiles}</td><td class='status2'>{html_controlled}</td><td class='status1'>{html_notcontrolled}</td><td class='status2'>{html_failedtoparse}</td></tr>
-</table></p>
-
-<table class='status'>
-<tr><td class='status1'><h2>Remotes</h2>
-<table>
-<tr><th>name</th><th>fetch</th><th>push</th></tr>
-{html_remoteurls}
-</table>
-</td>
-
-<td class='status2'><h2>Branches</h2>
-<table>
-{html_branches}
-</table>
-</td></tr></table>
-</body></html>
-"""
+const html_template_status=staticread "../public/status.html"
 
 proc walkpublicdir(dir: Path): string=
     var dir1=dir
@@ -92,7 +57,6 @@ proc page_status*(Args: Table[string,string], publicdir: string): string=
             for k in keys(R): X.add k
             X
     let
-        html_cssurl="/gitrelief.css"
         html_title="status"
         (html_controlled,html_notcontrolled,html_failedtoparse)=format_html(Status)
         html_remoteurls=block:
@@ -116,4 +80,4 @@ proc page_status*(Args: Table[string,string], publicdir: string): string=
             X
         html_localfiles="<table>" & walkpublicdir(Path publicdir) & "</table>"
 
-    return fmt html_template
+    return fmt html_template_status
