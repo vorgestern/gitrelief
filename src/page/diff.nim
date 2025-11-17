@@ -5,22 +5,7 @@ import git/processes
 
 func htmlescape(s: string): string=replace(s, "<", "&lt;")
 
-const html_template="""
-<html>
-<head>
-<meta charset="utf-8">
-<link rel="stylesheet" href="{cssurl}">
-<title>{htmlescape title}</title>
-</head>
-<body>
-<table>
-<tr><th>Navigate</th><th>Command</th></tr>
-<tr><td><a href='/'>Start</a></td><td>{htmlescape cmd}</td></tr>
-</table>
-<p/>
-{content}
-</body></html>
-"""
+const html_template_diff=staticread "../public/diff.html"
 
 proc format_html_toc(Patches: seq[FileDiff], staged: bool, ahash, bhash: SecureHash): string=
     result.add "<p><table>"
@@ -134,7 +119,7 @@ proc page_diff*(Args: Table[string,string]): string=
                 else: ""
                 format_html_head(Diffs[0], bhash) & ci & format_html_patch(Diffs[0], staged, ahash, bhash)
             else: "<p>No Modifications</p>"
-    return fmt html_template
+    return fmt html_template_diff
 
 # =====================================================================
 
