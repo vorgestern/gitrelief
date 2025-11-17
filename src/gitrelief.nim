@@ -46,21 +46,21 @@ const gitrelief_css=staticread "../public/gitrelief.css"
 
 var
         port=8080
-        publicdir="public"
+        publicdir: cstring= cstring "public"
 
 let args=commandlineparams()
 for k in 0..<args.len:
         if args[k]=="--port"and k+1<args.len: port=parseint args[k+1]
-        if args[k]=="--public" and k+1<args.len: publicdir=args[k+1]
+        if args[k]=="--public" and k+1<args.len: publicdir=cstring args[k+1]
 
 settings:
         # appname="gitrelief" Dieser Name wird am Anfang von urls entfernt, er ist kein hostname.
         # bindaddr="gitrelief" Dies muss anscheinend eine numerische Adresse sein.
         port=Port(port)
-        staticdir=publicdir
+        staticdir= $publicdir
 
 routes:
-        get "/":              resp page_status(parsequery request.query, "public")
+        get "/":              resp page_status(parsequery request.query, $publicdir)
         get "/git/log":       resp page_log(parsequery request.query)
         get "/git/follow":    resp page_follow(parsequery request.query)
         get "/git/diff":      resp page_diff(parsequery request.query)
