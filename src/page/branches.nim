@@ -14,8 +14,8 @@ const html_template="""
 </head>
 <body>
 <table>
-<tr><th>Navigate</th><th>Command</th></tr>
-<tr><td><a href='/'>Start</a></td><td>{html_cmd}</td></tr>
+<tr><th>Navigate</th></tr>
+<tr><td><a href='/'>Start</a></td></tr>
 </table>
 <p/>
 <h2>Local Branches</h2>
@@ -23,9 +23,9 @@ const html_template="""
 <tr><th>branch</th><th>A</th><th>B</th></tr>
 {html_localbranches}
 </table>
-<p/>
-<h2>Branches (neue Ansicht)</h2>
+<p>
 {html_showbranches}
+</p>
 </body></html>
 """
 
@@ -52,12 +52,16 @@ proc page_branches*(Args: Table[string,string]): string=
                 X.add "\n" & fmt"<tr><td>{b1}</td>{td2}{td3}</tr>"
             X
     let
-        (html_showbranches, html_cmd)=block:
+        html_showbranches=if mastername=="" or branchname=="":
+            if mastername=="" and branchname=="": "<p>Select A and B to show relationship between two branches"
+            elif mastername=="": "<p>Select A to show relationship between two branches"
+            else: "<p>Select B to show relationship between two branches"
+        else:
             let
                 (SB, cmd)=gitshowbranches([mastername, branchname])
                 B=SB.branches
                 T=resolvecommits SB
-            var X="<p>" & cmd & "</p><table class='showbranch'>"
+            var X="<h2>Branches</h2>\n" & cmd & "\n<table class='showbranch'>"
             for jb in 0..<B.len:
                 X.add "<tr>"
                 for kb in 0..<B.len:
@@ -74,7 +78,7 @@ proc page_branches*(Args: Table[string,string]): string=
                 for line in k.commit.details: X.add "<br/>" & htmlescape(line)
                 X.add "</td></tr>"
             X.add "</table>"
-            (X, cmd)
+            X
     return fmt html_template
 
 # =====================================================================
