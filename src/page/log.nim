@@ -11,21 +11,25 @@ proc page_log*(Args: Table[string,string]): string=
                         let str=Args.getordefault("num", "100")
                         if parseint(str, X)<str.len: X=100
                         X
-                (L,cmd)=gitlog num
-                html_title= $servertitle & " log"
-                html_add100_top=if L.len>=num: fmt"<td><a href='{url_log num+100}'>100 more</a></td>" else: ""
-                html_add100_bottom=if L.len>=num: fmt"<td><a href='{url_log num+100, num}'>100 more</a></td>" else: ""
-                html_cmd=htmlescape cmd
+                (L,cmd)=                gitlog num
+        let
+                html_title=             $servertitle & " log"
+                html_add100_top=        if L.len>=num: fmt"<td><a href='{url_log num+100}'>100 more</a></td>"
+                                        else: ""
+                html_add100_bottom=     if L.len>=num: fmt"<td><a href='{url_log num+100, num}'>100 more</a></td>"
+                                        else: ""
+                html_cmd=               htmlescape cmd
                 html_content=block:
                         let ynow=year(now())
                         var yage_merk=0
                         var res="<table class='diff'>\n<tr><th>commit</th><th>who</th><th>when</th><th>affected</th><th>subject/details</th></tr>"
                         for index,commit in L:
-                                if index>0 and index mod 100==0:
-                                        res.add "\n" & fmt"<tr><td><a id='top{index}'>{index}</a></td></tr>"
-                                        # Vielfache von 100 erhalten eine Hinweiszeile, die auch als Sprungziel dient.
-                                var comments=htmlescape(commit.subject)
-                                for d in commit.details: comments.add "<br/>"&htmlescape(d)
+                                # Vielfache von 100 erhalten eine Hinweiszeile, die auch als Sprungziel dient.
+                                if index>0 and index mod 100==0: res.add "\n" & fmt"<tr><td><a id='top{index}'>{index}</a></td></tr>"
+                                let comments=block:
+                                        var s=htmlescape(commit.subject)
+                                        for d in commit.details: s.add "<br/>"&htmlescape(d)
+                                        s
                                 let parent=if commit.parents.len>0: commit.parents[0] else: shanull
                                 var files=""
                                 for index,op in commit.files:
@@ -34,14 +38,6 @@ proc page_log*(Args: Table[string,string]): string=
                                         case op.status
                                         of Renamed: files.add fmt"{op.status} <a href='{url}'>{op.newpath}<br/>&nbsp;&nbsp;from {op.oldpath}</a>"
                                         else:       files.add fmt"{op.status} <a href='{url}'>{op.path}</a>"
-                                # if commit.mergeinfo.len>0:
-                                #     res.add "\n<tr><td colspan='5'>mergeinfo:"
-                                #     for m in commit.mergeinfo: res.add " "&m
-                                #     res.add "</td></tr>"
-                                # if commit.parents.len>0:
-                                #     res.add "\n<tr><td colspan='5'>parents:"
-                                #     for m in commit.parents: res.add " " & $m
-                                #     res.add "</td></tr>"
                                 let yage=ynow-year(commit.date)
                                 if yage>yage_merk:
                                         let yclass=if yage mod 2==0: "yeven" else: "yodd"
@@ -57,3 +53,12 @@ proc page_log*(Args: Table[string,string]): string=
                         res.add "</table>"
                         res
         fmt staticread "../public/log.html"
+
+                                # if commit.mergeinfo.len>0:
+                                #     res.add "\n<tr><td colspan='5'>mergeinfo:"
+                                #     for m in commit.mergeinfo: res.add " "&m
+                                #     res.add "</td></tr>"
+                                # if commit.parents.len>0:
+                                #     res.add "\n<tr><td colspan='5'>parents:"
+                                #     for m in commit.parents: res.add " " & $m
+                                #     res.add "</td></tr>"
