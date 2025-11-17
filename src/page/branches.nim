@@ -5,29 +5,7 @@ import mehr/helper
 
 func htmlescape(s: string): string=replace(s, "<", "&lt;")
 
-const html_template="""
-<html>
-<head>
-<meta charset="utf-8">
-<link rel="stylesheet" href="{html_cssurl}">
-<title>{html_title}</title>
-</head>
-<body>
-<table>
-<tr><th>Navigate</th></tr>
-<tr><td><a href='/'>Start</a></td></tr>
-</table>
-<p/>
-<h2>Local Branches</h2>
-<table>
-<tr><th>branch</th><th>A</th><th>B</th></tr>
-{html_localbranches}
-</table>
-<p>
-{html_showbranches}
-</p>
-</body></html>
-"""
+const html_template_branches=staticread "../public/branches.html"
 
 proc resolvecommits(SB: ShowBranch): seq[tuple[tags: string, commit: Commit]]=
     collect(newseq()):
@@ -39,7 +17,6 @@ proc page_branches*(Args: Table[string,string]): string=
         branchname=if Args.contains "b": Args["b"] else: ""
         branchnames=gitbranches_local()
     let
-        html_cssurl="/gitrelief.css"
         html_title="branches"
         html_localbranches=block:
             var X=""
@@ -79,7 +56,7 @@ proc page_branches*(Args: Table[string,string]): string=
                 X.add "</td></tr>"
             X.add "</table>"
             X
-    return fmt html_template
+    return fmt html_template_branches
 
 # =====================================================================
 
@@ -89,7 +66,6 @@ proc page_branches_alt*(Args: Table[string,string]): string=
         branchname=if Args.contains "b": Args["b"] else: ""
         branchnames=gitbranches_local()
     let
-        html_cssurl="/gitrelief.css"
         html_title="branches"
         html_localbranches=block:
             var X=""
@@ -117,7 +93,7 @@ proc page_branches_alt*(Args: Table[string,string]): string=
                 X.add "<td>" & k.hash & "</td><td>" & k.subject & "</td></tr>"
             X.add "</table>"
             X
-    return fmt html_template
+    return fmt html_template_branches
 
 proc obsolete(): string {.used.}=
     let
