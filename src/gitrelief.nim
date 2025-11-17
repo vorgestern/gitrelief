@@ -1,9 +1,8 @@
 
 import jesterfork
-import mehr/[helper]
 import page/[log,diff,follow,status,branches]
 import action/[stage]
-import std/[cmdline,strutils]
+import std/[cmdline,strutils,paths]
 
 # asyncdispatch
 
@@ -42,6 +41,9 @@ proc parsequery(query: string): Table[string,string]=
                 let q=s.find '='
                 if q>0: result[s.substr(0,q-1)]=s.substr(q+1)
                 else: result[s]=""
+
+proc loadfile(fn: string): string {.compileTime.}=staticread(fn)
+const gitrelief_css=loadfile "../public/gitrelief.css"
 
 var
         port=8080
