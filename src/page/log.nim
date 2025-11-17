@@ -7,10 +7,10 @@ import git/processes
 proc page_log*(Args: Table[string,string]): string=
         let
                 num=block:
-                    var X=0
-                    let str=Args.getordefault("num", "100")
-                    if parseint(str, X)<str.len: X=100
-                    X
+                        var X=0
+                        let str=Args.getordefault("num", "100")
+                        if parseint(str, X)<str.len: X=100
+                        X
                 (L,cmd)=gitlog num
                 html_title= $servertitle & " log"
                 html_add100_top=if L.len>=num: fmt"<td><a href='{url_log num+100}'>100 more</a></td>" else: ""
@@ -56,4 +56,4 @@ proc page_log*(Args: Table[string,string]): string=
                         res.add "\n" & fmt"<tr><td><a id='top{L.len}'>{L.len}</a></td></tr>"
                         res.add "</table>"
                         res
-        return fmt staticread "../public/log.html"
+        fmt staticread "../public/log.html"
