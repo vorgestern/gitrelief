@@ -5,56 +5,56 @@ import mehr/helper
 import git/processes
 
 proc format_html(L: seq[Commit]): string=
-    let ynow=year(now())
-    var yage_merk=0
-    result="<table class='diff'>\n<tr><th>commit</th><th>who</th><th>when</th><th>affected</th><th>subject/details</th></tr>"
-    for index,commit in L:
-        if index>0 and index mod 100==0:
-            result.add "\n" & fmt"<tr><td><a id='top{index}'>{index}</a></td></tr>"
-            # Vielfache von 100 erhalten eine Hinweiszeile, die auch als Sprungziel dient.
-        var comments=htmlescape(commit.subject)
-        for d in commit.details: comments.add "<br/>"&htmlescape(d)
-        let parent=if commit.parents.len>0: commit.parents[0] else: shanull
-        var files=""
-        for index,op in commit.files:
-            if index>0: files.add "<br/>"
-            let url=url_diff(parent, commit.hash, false, op)
-            case op.status
-            of Renamed: files.add fmt"{op.status} <a href='{url}'>{op.newpath}<br/>&nbsp;&nbsp;from {op.oldpath}</a>"
-            else:       files.add fmt"{op.status} <a href='{url}'>{op.path}</a>"
-        # if commit.mergeinfo.len>0:
-        #     result.add "\n<tr><td colspan='5'>mergeinfo:"
-        #     for m in commit.mergeinfo: result.add " "&m
-        #     result.add "</td></tr>"
-        # if commit.parents.len>0:
-        #     result.add "\n<tr><td colspan='5'>parents:"
-        #     for m in commit.parents: result.add " " & $m
-        #     result.add "</td></tr>"
-        let yage=ynow-year(commit.date)
-        if yage>yage_merk:
-            let yclass=if yage mod 2==0: "yeven" else: "yodd"
-            result.add "\n<tr class='newyear'><td/><td/><td class='" & yclass & "'><b>" & $year(commit.date) & "</b></td><td/><td/></tr>"
-            yage_merk=yage
-        let df=commit.date.format("d. MMM HH:mm")
-        let tddate=block:
-            if yage==0:             "<td>" & df & "</td>"
-            elif yage mod 2==0:     "<td class='yeven'>" & df & "</td>"
-            else:                   "<td class='yodd'>" & df & "</td>"
-        result.add "\n<tr><td>" & shaform(commit.hash) & "</td><td>" & commit.author & "</td>" & tddate & "<td>" & files & "</td><td>" & comments & "</td></tr>"
-    result.add "\n" & fmt"<tr><td><a id='top{L.len}'>{L.len}</a></td></tr>"
-    result.add "</table>"
+        let ynow=year(now())
+        var yage_merk=0
+        result="<table class='diff'>\n<tr><th>commit</th><th>who</th><th>when</th><th>affected</th><th>subject/details</th></tr>"
+        for index,commit in L:
+                if index>0 and index mod 100==0:
+                        result.add "\n" & fmt"<tr><td><a id='top{index}'>{index}</a></td></tr>"
+                        # Vielfache von 100 erhalten eine Hinweiszeile, die auch als Sprungziel dient.
+                var comments=htmlescape(commit.subject)
+                for d in commit.details: comments.add "<br/>"&htmlescape(d)
+                let parent=if commit.parents.len>0: commit.parents[0] else: shanull
+                var files=""
+                for index,op in commit.files:
+                        if index>0: files.add "<br/>"
+                        let url=url_diff(parent, commit.hash, false, op)
+                        case op.status
+                        of Renamed: files.add fmt"{op.status} <a href='{url}'>{op.newpath}<br/>&nbsp;&nbsp;from {op.oldpath}</a>"
+                        else:       files.add fmt"{op.status} <a href='{url}'>{op.path}</a>"
+                # if commit.mergeinfo.len>0:
+                #     result.add "\n<tr><td colspan='5'>mergeinfo:"
+                #     for m in commit.mergeinfo: result.add " "&m
+                #     result.add "</td></tr>"
+                # if commit.parents.len>0:
+                #     result.add "\n<tr><td colspan='5'>parents:"
+                #     for m in commit.parents: result.add " " & $m
+                #     result.add "</td></tr>"
+                let yage=ynow-year(commit.date)
+                if yage>yage_merk:
+                        let yclass=if yage mod 2==0: "yeven" else: "yodd"
+                        result.add "\n<tr class='newyear'><td/><td/><td class='" & yclass & "'><b>" & $year(commit.date) & "</b></td><td/><td/></tr>"
+                        yage_merk=yage
+                let df=commit.date.format("d. MMM HH:mm")
+                let tddate=block:
+                        if yage==0:             "<td>" & df & "</td>"
+                        elif yage mod 2==0:     "<td class='yeven'>" & df & "</td>"
+                        else:                   "<td class='yodd'>" & df & "</td>"
+                result.add "\n<tr><td>" & shaform(commit.hash) & "</td><td>" & commit.author & "</td>" & tddate & "<td>" & files & "</td><td>" & comments & "</td></tr>"
+        result.add "\n" & fmt"<tr><td><a id='top{L.len}'>{L.len}</a></td></tr>"
+        result.add "</table>"
 
 proc page_log*(Args: Table[string,string]): string=
-    let num=block:
-        var X=0
-        let str=Args.getordefault("num", "100")
-        if parseint(str, X)<str.len: X=100
-        X
-    let (L,cmd)=gitlog num
-    let
-        html_title= $servertitle & " log"
-        html_add100_top=if L.len>=num: fmt"<td><a href='{url_log num+100}'>100 more</a></td>" else: ""
-        html_add100_bottom=if L.len>=num: fmt"<td><a href='{url_log num+100, num}'>100 more</a></td>" else: ""
-        html_content=format_html(L)
-        html_cmd=htmlescape cmd
-    return fmt staticread "../public/log.html"
+        let num=block:
+                var X=0
+                let str=Args.getordefault("num", "100")
+                if parseint(str, X)<str.len: X=100
+                X
+        let (L,cmd)=gitlog num
+        let
+                html_title= $servertitle & " log"
+                html_add100_top=if L.len>=num: fmt"<td><a href='{url_log num+100}'>100 more</a></td>" else: ""
+                html_add100_bottom=if L.len>=num: fmt"<td><a href='{url_log num+100, num}'>100 more</a></td>" else: ""
+                html_content=format_html(L)
+                html_cmd=htmlescape cmd
+        return fmt staticread "../public/log.html"
