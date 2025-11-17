@@ -34,21 +34,16 @@ proc format_html_patch(fileentry: FileDiff, staged: bool, ahash, bhash: SecureHa
         if fileentry.op!=Other:
                 result.add "<p><table class='diff'>"
                 case fileentry.op:
-                of Modified:
-                        result.add "\n<tr><th>" & fileentry.apath & "</th><th>" & fileentry.bpath & "</th></tr>"
-                        result.add "\n<tr><th>" & shaform(ahash) & "</th><th>" & shaform(bhash) & "</th></tr>"
-                of Deleted:
-                        result.add "\n<tr><th>" & fileentry.apath & "</th><th>---</th></tr>"
-                        result.add "\n<tr><th>" & shaform(ahash) & "</th><th/></tr>"
-                of Added:
-                        result.add "\n<tr><th/><th>" & fileentry.bpath & "</th></tr>"
-                        result.add "\n<tr><th/><th>" & shaform(bhash) & "</th></tr>"
-                of Renamed:
-                        result.add "\n<tr><th>" & fileentry.apath & "</th><th>" & fileentry.bpath & "</th></tr>"
-                        result.add "\n<tr><th>" & shaform(ahash) & "</th><th>" & shaform(bhash) & "</th></tr>"
-                of Other:
-                        result.add "\n<tr><th>" & fileentry.apath & "</th><th>" & fileentry.bpath & "</th></tr>"
-                        result.add "\n<tr><th>" & shaform(ahash) & "</th><th>" & shaform(bhash) & "</th></tr>"
+                of Modified: result.add "\n<tr><th>" & fileentry.apath & "</th><th>" & fileentry.bpath & "</th></tr>" &
+                                        "\n<tr><th>" & shaform(ahash) & "</th><th>" & shaform(bhash) & "</th></tr>"
+                of Deleted: result.add  "\n<tr><th>" & fileentry.apath & "</th><th>---</th></tr>" &
+                                        "\n<tr><th>" & shaform(ahash) & "</th><th/></tr>"
+                of Added: result.add    "\n<tr><th/><th>" & fileentry.bpath & "</th></tr>" &
+                                        "\n<tr><th/><th>" & shaform(bhash) & "</th></tr>"
+                of Renamed: result.add  "\n<tr><th>" & fileentry.apath & "</th><th>" & fileentry.bpath & "</th></tr>" &
+                                        "\n<tr><th>" & shaform(ahash) & "</th><th>" & shaform(bhash) & "</th></tr>"
+                of Other: result.add    "\n<tr><th>" & fileentry.apath & "</th><th>" & fileentry.bpath & "</th></tr>" &
+                                        "\n<tr><th>" & shaform(ahash) & "</th><th>" & shaform(bhash) & "</th></tr>"
                 var
                         a=0
                         b=0
@@ -89,21 +84,22 @@ proc format_html_patch(fileentry: FileDiff, staged: bool, ahash, bhash: SecureHa
                 result.add "</table></p>"
 
 proc page_diff*(Args: Table[string,string]): string=
-        let paths=block:
-                var X: seq[string]
-                if Args.contains "path": X.add Args["path"]
-                if Args.contains "oldpath": X.add Args["oldpath"]
-                X
-        let staged=Args.contains "staged"
         let
+                paths=block:
+                        var X: seq[string]
+                        if Args.contains "path": X.add Args["path"]
+                        if Args.contains "oldpath": X.add Args["oldpath"]
+                        X
+                staged=Args.contains "staged"
                 ahash=if Args.contains "a": gitcompletehash Args["a"] else: shanull
                 bhash=if Args.contains "b": gitcompletehash Args["b"] else: shanull
-        let (Diffs,html_cmd)=   if staged: gitdiff_staged(ahash, bhash, paths)
+                (Diffs,cmd)=    if staged: gitdiff_staged(ahash, bhash, paths)
                                 else:      gitdiff(       ahash, bhash, paths)
         let
                 html_title= $servertitle & " diff"
+                html_cmd=htmlescape cmd
                 html_content=block:
-                        if Diffs.len>1:    format_html_toc(Diffs, staged, ahash, bhash)
+                        if Diffs.len>1: format_html_toc(Diffs, staged, ahash, bhash)
                         elif Diffs.len==1:
                                 let ci=if bhash!=shanull:
                                         let X=gitcommit(bhash)
