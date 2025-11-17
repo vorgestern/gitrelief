@@ -14,20 +14,30 @@
 </table></p>
 
 <table class='status'>
-<tr><th class='status1'><h2>Public Files</h2></th><th class='status2'><h2>Status</h2></th><th class='status1'><h2>Not controlled</h2></th><th class='status2'><h2>Failed to Parse</h2></th></tr>
+<tr>
+    <th><h2>Public Files</h2></th>
+    <th><h2>Status</h2></th>
+    <th><h2>Not controlled</h2></th>
+    <th><h2>Failed to Parse</h2></th></tr>
 
-<tr><td class='status1'>{html_localfiles}</td><td class='status2'>{html_controlled}</td><td class='status1'>{html_notcontrolled}</td><td class='status2'>{html_failedtoparse}</td></tr>
+<tr>
+    <td>{html_localfiles}</td>
+    <td>{html_controlled}</td>
+    <td>{html_notcontrolled}</td>
+    <td>{html_failedtoparse}</td></tr>
 
 <tr><td>&nbsp;</td></tr>
 
-<tr><td class='status1'><h2>Remotes</h2>
-    <table>
-    <tr><th>name</th><th>fetch</th><th>push</th></tr>
-    {html_remoteurls}
-    </table></td>
-    <td class='status2'><h2>Branches</h2>
-    <table>
-    {html_branches}
-    </table></td></tr>
+<tr><td>
+        <h2>Remotes</h2>
+        <table class='nolines'>
+        <tr><th>name</th><th>fetch</th><th>push</th></tr>
+        {html_remoteurls}
+        </table></td>
+    <td>
+        <h2>Branches</h2>
+        <table class='nolines'>
+        {html_branches}
+        </table></td></tr>
 </table>
 </body></html>

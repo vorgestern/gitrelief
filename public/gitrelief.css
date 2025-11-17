@@ -1,3 +1,4 @@
+
 body {
     font-family: Courier;
     font-size: 18pt;
@@ -6,27 +7,32 @@ h1, h2, h3 {
     margin: 0
 }
 
+/* ================================================================= */
+
 table.status {
     border-style: none;
 }
 table.status tr {
     border-style: none;
 }
+table.status tr th {
+    border-style: solid;
+    border-color: black;
+    border-width: 0 0 0 0.2em;
+}
 table.status tr td {
+    border-style: solid;
+    border-color: black;
+    border-width: 0 0 0 0.2em;
+}
+table.status tr th:first-child {
     border-style: none;
 }
-/*table.status tr td:nth-child(odd) {
+table.status tr td:first-child {
     border-style: none;
-    background-color: lightgray;
-}*/
-th.status1, td.status1 {
-    border-style: none;
-    background-color: lightgray;
 }
-th.status2, td.status2 {
-    border-style: none;
-    background-color: white;
-}
+
+/* ================================================================= */
 
 table.nolines {
     border-style: none;
@@ -34,28 +40,31 @@ table.nolines {
 table.nolines tr {
     border-style: none;
 }
+table.nolines tr th {
+    border-style: none;
+}
 table.nolines tr td {
     border-style: none;
-    background-color: white;
 }
+
+/* ================================================================= */
 
 table.showbranch tr td {
     padding: 0 0.2em 0;
-    /* background-color: yellow; */
     white-space: pre;
 }
 
 table.showbranch tr td:nth-last-child(1) {
-    /* background-color: lightgray; */
-    white-space: normal;
     padding:0 .5em 0;
+    white-space: normal;
 }
 
 table.showbranch tr td:nth-last-child(2) {
-    /* background-color: lightgray; */
-    white-space: normal;
     padding:0 .5em 0;
+    white-space: normal;
 }
+
+/* ================================================================= */
 
 table {
     border-style: solid;

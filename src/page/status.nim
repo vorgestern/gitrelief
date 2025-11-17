@@ -66,7 +66,7 @@ proc page_status*(Args: Table[string,string], publicdir: string): string=
                 else:  X.add "<tr><td>" & htmlescape(name) & "</td><td colspan='2'>" & htmlescape(urls.fetchurl) & "</td></tr>"
             X
         html_branches=block:
-            var X="<tr>"
+            var X="<tr><th/>"
             for k in remotenames: X.add "<th>remotes/" & htmlescape(k) & "</th>"
             X.add "</tr>\n<tr>\n<td>\n"
             for k in gitbranches_local(): X.add htmlescape(k) & "<br/>"
@@ -78,6 +78,6 @@ proc page_status*(Args: Table[string,string], publicdir: string): string=
                 X.add "</td>"
             X.add "</tr>"
             X
-        html_localfiles="<table>" & walkpublicdir(Path publicdir) & "</table>"
+        html_localfiles="<table class='nolines'>" & walkpublicdir(Path publicdir) & "</table>"
 
     return fmt html_template_status
