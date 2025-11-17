@@ -9,23 +9,7 @@ import git/processes
 
 func htmlescape(s: string): string=replace(s, "<", "&lt;")
 
-const html_template="""
-<html>
-<head>
-<meta charset="utf-8">
-<title>{htmlescape title}</title>
-<link rel="stylesheet" href="{cssurl}">
-</head>
-<body>
-<table>
-<tr><th>Navigate</th><th>Command</th></tr>
-<tr><td><a href='/'>Start</a></td><td>{htmlescape cmd}</td></tr>
-</table>
-<p>Following &nbsp;&nbsp;&nbsp;&nbsp;<b>{pathtofollow}</b></p>
-{content}
-</body>
-</html>
-"""
+const html_template_follow=staticread "../public/follow.html"
 
 let TMonat {.used.}={"01": "Jan", "02": "Feb", "03": "Mär", "04": "Apr", "05": "Mai", "06": "Jun",
             "07": "Jul", "08": "Aug", "09": "Sep", "10": "Okt", "11": "Nov", "12": "Dez"}.newstringtable
@@ -63,9 +47,8 @@ proc page_follow*(Args: Table[string,string]): string=
     let (L,cmd)=gitfollow(pathtofollow, num)
     let
         title="log_follow"
-        cssurl="/gitrelief.css"
         content=format_html(L, commithash)
-    return fmt html_template
+    return fmt html_template_follow
 
 # =====================================================================
 

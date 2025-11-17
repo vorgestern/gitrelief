@@ -106,7 +106,6 @@ proc page_diff*(Args: Table[string,string]): string=
                     else:      gitdiff(       ahash, bhash, paths)
     let
         title="diff"
-        cssurl="/gitrelief.css"
         content=block:
             if Diffs.len>1:    format_html_toc(Diffs, staged, ahash, bhash)
             elif Diffs.len==1:
