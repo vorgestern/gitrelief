@@ -102,7 +102,7 @@ proc page_branches_alt*(Args: Table[string,string]): string=
                 X.add "\n" & fmt"<tr><td>{b1}</td>{td2}{td3}</tr>"
             X
     let
-        (html_showbranches, html_cmd)=block:
+        html_showbranches=block:
             let (SB, cmd)=gitshowbranches([mastername, branchname])
             var X="<p>" & cmd & "</p><table class='showbranch'>"
             for jb in 0..<SB.branches.len:
@@ -116,7 +116,7 @@ proc page_branches_alt*(Args: Table[string,string]): string=
                 for t in k.tags: X.add "<td>" & t & "</td>"
                 X.add "<td>" & k.hash & "</td><td>" & k.subject & "</td></tr>"
             X.add "</table>"
-            (X, cmd)
+            X
     return fmt html_template
 
 proc obsolete(): string {.used.}=
