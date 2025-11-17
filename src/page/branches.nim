@@ -29,42 +29,6 @@ const html_template="""
 </body></html>
 """
 
-proc page_branches_alt*(Args: Table[string,string]): string=
-    let
-        mastername=if Args.contains "m": Args["m"] else: ""
-        branchname=if Args.contains "b": Args["b"] else: ""
-        branchnames=gitbranches_local()
-    let
-        html_cssurl="/gitrelief.css"
-        html_title="branches"
-        html_localbranches=block:
-            var X=""
-            for b in branchnames:
-                let b1=htmlescape b
-                let td2=if b!=mastername: fmt"<td class='re'><a href='{url_branches b, branchname}'>select</a></td>"
-                else:                     "<td>A="&htmlescape(b)&"</td>"
-                let td3=if b!=branchname: fmt"<td class='re'><a href='{url_branches mastername, b}'>select</a></td>"
-                else:                     "<td>B="&htmlescape(b)&"</td>"
-                X.add "\n" & fmt"<tr><td>{b1}</td>{td2}{td3}</tr>"
-            X
-    let
-        (html_showbranches, html_cmd)=block:
-            let (SB, cmd)=gitshowbranches([mastername, branchname])
-            var X="<p>" & cmd & "</p><table class='showbranch'>"
-            for jb in 0..<SB.branches.len:
-                X.add "<tr>"
-                for kb in 0..<SB.branches.len:
-                    X.add if kb==jb: "<td>" & $kb & "</td>" else: "<td/>"
-                X.add "<th/><th>" & SB.branches[jb] & "</th>"
-                X.add "</tr>"
-            for k in SB.commits:
-                X.add "<tr>"
-                for t in k.tags: X.add "<td>" & t & "</td>"
-                X.add "<td>" & k.hash & "</td><td>" & k.subject & "</td></tr>"
-            X.add "</table>"
-            (X, cmd)
-    return fmt html_template
-
 proc resolvecommits(SB: ShowBranch): seq[tuple[tags: string, commit: Commit]]=
     collect(newseq()):
         for tc in SB.commits: (tc.tags, gitcommit tc.hash)
@@ -114,6 +78,42 @@ proc page_branches*(Args: Table[string,string]): string=
     return fmt html_template
 
 # =====================================================================
+
+proc page_branches_alt*(Args: Table[string,string]): string=
+    let
+        mastername=if Args.contains "m": Args["m"] else: ""
+        branchname=if Args.contains "b": Args["b"] else: ""
+        branchnames=gitbranches_local()
+    let
+        html_cssurl="/gitrelief.css"
+        html_title="branches"
+        html_localbranches=block:
+            var X=""
+            for b in branchnames:
+                let b1=htmlescape b
+                let td2=if b!=mastername: fmt"<td class='re'><a href='{url_branches b, branchname}'>select</a></td>"
+                else:                     "<td>A="&htmlescape(b)&"</td>"
+                let td3=if b!=branchname: fmt"<td class='re'><a href='{url_branches mastername, b}'>select</a></td>"
+                else:                     "<td>B="&htmlescape(b)&"</td>"
+                X.add "\n" & fmt"<tr><td>{b1}</td>{td2}{td3}</tr>"
+            X
+    let
+        (html_showbranches, html_cmd)=block:
+            let (SB, cmd)=gitshowbranches([mastername, branchname])
+            var X="<p>" & cmd & "</p><table class='showbranch'>"
+            for jb in 0..<SB.branches.len:
+                X.add "<tr>"
+                for kb in 0..<SB.branches.len:
+                    X.add if kb==jb: "<td>" & $kb & "</td>" else: "<td/>"
+                X.add "<th/><th>" & SB.branches[jb] & "</th>"
+                X.add "</tr>"
+            for k in SB.commits:
+                X.add "<tr>"
+                for t in k.tags: X.add "<td>" & t & "</td>"
+                X.add "<td>" & k.hash & "</td><td>" & k.subject & "</td></tr>"
+            X.add "</table>"
+            (X, cmd)
+    return fmt html_template
 
 proc obsolete(): string {.used.}=
     let
