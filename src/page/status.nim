@@ -15,11 +15,10 @@ const html_template="""
 <body>
 
 <p><table class='head'>
-<tr><td><h1>Start</h1></td><td><h1>Root</h1></td><td colspan='3'><h1>git ...</h1></td></tr>
-<tr class='head'><td>&nbsp;</td><td>{pwd}</td>
-    <td><a href="/git/log">Log</a></td>
-    <td><a href="/git/diff">Diff</a></td>
-    <td><a href="/git/diff?staged">Diff (staged)</a></td></tr>
+<tr><td><h1>Start</h1></td><td><h1>Root</h1></td></tr>
+<tr class='head'><td>
+    <a href="/git/log">Show Log</a><br/>
+    <a href='/git/branches'>Show Branches</a></td><td>{pwd}</td></tr>
 </table></p>
 
 <p><table class='status'>
@@ -103,7 +102,7 @@ proc page_status*(Args: Table[string,string], publicdir: string): string=
                 else:  X.add "<tr><td>" & htmlescape(name) & "</td><td colspan='2'>" & htmlescape(urls.fetchurl) & "</td></tr>"
             X
         html_branches=block:
-            var X="<tr><th><a href='/git/branches'>(local)</a></th>"
+            var X="<tr>"
             for k in remotenames: X.add "<th>remotes/" & htmlescape(k) & "</th>"
             X.add "</tr>\n<tr>\n<td>\n"
             for k in gitbranches_local(): X.add htmlescape(k) & "<br/>"
