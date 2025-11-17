@@ -4,8 +4,6 @@ import npeg
 import mehr/helper
 import git/processes
 
-const html_template_log=staticread "../public/log.html"
-
 proc format_html(L: seq[Commit]): string=
     let ynow=year(now())
     var yage_merk=0
@@ -59,4 +57,4 @@ proc page_log*(Args: Table[string,string]): string=
         html_add100_bottom=if L.len>=num: fmt"<td><a href='{url_log num+100, num}'>100 more</a></td>" else: ""
         html_content=format_html(L)
         html_cmd=htmlescape cmd
-    return fmt html_template_log
+    return fmt staticread "../public/log.html"

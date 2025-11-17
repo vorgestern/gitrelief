@@ -3,8 +3,6 @@ import std/[tables, strformat, strutils, times]
 import mehr/helper
 import git/processes
 
-const html_template_diff=staticread "../public/diff.html"
-
 proc format_html_toc(Patches: seq[FileDiff], staged: bool, ahash, bhash: SecureHash): string=
     result.add "<p><table>"
     for index,entry in Patches:
@@ -116,7 +114,7 @@ proc page_diff*(Args: Table[string,string]): string=
                 else: ""
                 format_html_head(Diffs[0], bhash) & ci & format_html_patch(Diffs[0], staged, ahash, bhash)
             else: "<p>No Modifications</p>"
-    return fmt html_template_diff
+    return fmt staticread "../public/diff.html"
 
 # =====================================================================
 

@@ -7,8 +7,6 @@ import npeg
 import mehr/helper
 import git/processes
 
-const html_template_follow=staticread "../public/follow.html"
-
 let TMonat {.used.}={"01": "Jan", "02": "Feb", "03": "Mär", "04": "Apr", "05": "Mai", "06": "Jun",
             "07": "Jul", "08": "Aug", "09": "Sep", "10": "Okt", "11": "Nov", "12": "Dez"}.newstringtable
 
@@ -47,7 +45,7 @@ proc page_follow*(Args: Table[string,string]): string=
         html_title= $servertitle & " follow"
         html_pathtofollow=htmlescape pathtofollow
         html_content=format_html(L, commithash)
-    return fmt html_template_follow
+    return fmt staticread "../public/follow.html"
 
 # =====================================================================
 

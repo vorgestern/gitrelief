@@ -3,8 +3,6 @@ import std/[tables, strformat, strutils, paths, dirs]
 import git/processes
 import mehr/helper
 
-const html_template_status=staticread "../public/status.html"
-
 proc walkpublicdir(dir: Path): string=
     var dir1=dir
     normalizepathend(dir1, true)
@@ -77,4 +75,4 @@ proc page_status*(Args: Table[string,string], publicdir: string): string=
             X.add "</tr>"
             X
 
-    return fmt html_template_status
+    return fmt staticread "../public/status.html"
