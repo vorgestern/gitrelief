@@ -44,10 +44,11 @@ proc page_follow*(Args: Table[string,string]): string=
         pathtofollow=Args.getordefault("path", "???")
         num=parseint Args.getordefault("num", "100")
         commithash=Args.getordefault("highlight", "")
-    let (L,cmd)=gitfollow(pathtofollow, num)
+    let (L,html_cmd)=gitfollow(pathtofollow, num)
     let
-        title="log_follow"
-        content=format_html(L, commithash)
+        html_title="log_follow"
+        html_pathtofollow=htmlescape pathtofollow
+        html_content=format_html(L, commithash)
     return fmt html_template_follow
 
 # =====================================================================

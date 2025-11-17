@@ -102,11 +102,11 @@ proc page_diff*(Args: Table[string,string]): string=
     let
         ahash=if Args.contains "a": gitcompletehash Args["a"] else: shanull
         bhash=if Args.contains "b": gitcompletehash Args["b"] else: shanull
-    let (Diffs,cmd)=if staged: gitdiff_staged(ahash, bhash, paths)
-                    else:      gitdiff(       ahash, bhash, paths)
+    let (Diffs,html_cmd)=if staged: gitdiff_staged(ahash, bhash, paths)
+                         else:      gitdiff(       ahash, bhash, paths)
     let
-        title="diff"
-        content=block:
+        html_title="diff"
+        html_content=block:
             if Diffs.len>1:    format_html_toc(Diffs, staged, ahash, bhash)
             elif Diffs.len==1:
                 let ci=if bhash!=shanull:

@@ -18,7 +18,7 @@ proc page_branches*(Args: Table[string,string]): string=
         branchnames=gitbranches_local()
     let
         html_title="branches"
-        html_localbranches=block:
+        html_selectbranches=block:
             var X=""
             for b in branchnames:
                 let b1=htmlescape b
@@ -28,7 +28,6 @@ proc page_branches*(Args: Table[string,string]): string=
                 else:                     "<td>B="&htmlescape(b)&"</td>"
                 X.add "\n" & fmt"<tr><td>{b1}</td>{td2}{td3}</tr>"
             X
-    let
         html_showbranches=if mastername=="" or branchname=="":
             if mastername=="" and branchname=="": "<p>Select A and B to show relationship between two branches"
             elif mastername=="": "<p>Select A to show relationship between two branches"
@@ -67,7 +66,7 @@ proc page_branches_alt*(Args: Table[string,string]): string=
         branchnames=gitbranches_local()
     let
         html_title="branches"
-        html_localbranches=block:
+        html_selectbranches=block:
             var X=""
             for b in branchnames:
                 let b1=htmlescape b
@@ -77,7 +76,6 @@ proc page_branches_alt*(Args: Table[string,string]): string=
                 else:                     "<td>B="&htmlescape(b)&"</td>"
                 X.add "\n" & fmt"<tr><td>{b1}</td>{td2}{td3}</tr>"
             X
-    let
         html_showbranches=block:
             let (SB, cmd)=gitshowbranches([mastername, branchname])
             var X="<p>" & cmd & "</p><table class='showbranch'>"
