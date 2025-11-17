@@ -13,22 +13,21 @@
     <a href='/git/branches'>Show Branches</a></td><td>{pwd}</td></tr>
 </table></p>
 
-<p><table class='status'>
-<tr><th class='status1'><h2>Public Files</h2></th><th class='status2'><h2>Status</h2></th><th class='status1'><h2>Not controlled</h2></th><th class='status2'><h2>Failed to Parse</h2></th></tr>
-<tr><td class='status1'>{html_localfiles}</td><td class='status2'>{html_controlled}</td><td class='status1'>{html_notcontrolled}</td><td class='status2'>{html_failedtoparse}</td></tr>
-</table></p>
-
 <table class='status'>
-<tr><td class='status1'><h2>Remotes</h2>
-<table>
-<tr><th>name</th><th>fetch</th><th>push</th></tr>
-{html_remoteurls}
-</table>
-</td>
+<tr><th class='status1'><h2>Public Files</h2></th><th class='status2'><h2>Status</h2></th><th class='status1'><h2>Not controlled</h2></th><th class='status2'><h2>Failed to Parse</h2></th></tr>
 
-<td class='status2'><h2>Branches</h2>
-<table>
-{html_branches}
+<tr><td class='status1'>{html_localfiles}</td><td class='status2'>{html_controlled}</td><td class='status1'>{html_notcontrolled}</td><td class='status2'>{html_failedtoparse}</td></tr>
+
+<tr><td>&nbsp;</td></tr>
+
+<tr><td class='status1'><h2>Remotes</h2>
+    <table>
+    <tr><th>name</th><th>fetch</th><th>push</th></tr>
+    {html_remoteurls}
+    </table></td>
+    <td class='status2'><h2>Branches</h2>
+    <table>
+    {html_branches}
+    </table></td></tr>
 </table>
-</td></tr></table>
 </body></html>
