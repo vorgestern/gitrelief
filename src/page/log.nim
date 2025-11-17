@@ -6,29 +6,7 @@ import git/processes
 
 func htmlescape(s: string): string=replace(s, "<", "&lt;")
 
-const html_template="""
-<html>
-<head>
-<meta charset="utf-8">
-<title>{htmlescape title}</title>
-<link rel="stylesheet" href="{cssurl}">
-</head>
-<body>
-<table>
-<a id='top'/>
-<tr><th>Navigate</th><th>Command</th><th>Modify</th></tr>
-<tr><td><a href='/'>Start</a></td><td>{htmlescape cmd}</td>{add100_top}</tr>
-</table>
-<p/>
-{content}
-<p>
-<table>
-<tr><th>Navigate</th><th>Command</th><th>Modify</th></tr>
-<tr><td><a href='#top'>Top</a></td><td>{htmlescape cmd}</td>{add100_bottom}</tr>
-</table>
-</body>
-</html>
-"""
+const html_template_log=staticread "../public/log.html"
 
 proc format_html(L: seq[Commit]): string=
     let ynow=year(now())
@@ -81,6 +59,5 @@ proc page_log*(Args: Table[string,string]): string=
         title="log"
         add100_top=if L.len>=num: fmt"<td><a href='{url_log num+100}'>100 more</a></td>" else: ""
         add100_bottom=if L.len>=num: fmt"<td><a href='{url_log num+100, num}'>100 more</a></td>" else: ""
-        cssurl="/gitrelief.css"
         content=format_html(L)
-    return fmt html_template
+    return fmt html_template_log
