@@ -3,8 +3,6 @@ import std/[tables, strformat, strutils, paths, dirs]
 import git/processes
 import mehr/helper
 
-func htmlescape(s: string): string=replace(s, "<", "&lt;")
-
 const html_template_status=staticread "../public/status.html"
 
 proc walkpublicdir(dir: Path): string=
@@ -22,7 +20,6 @@ proc format_html(Status: RepoStatus): tuple[a,b: string]=
         let unstage="\n    <a href='" & url_unstage(entry.path) & "'>unstage</a>"
         Controlled.add "\n" & fmt"<tr><td>{entry.status}</td><td>{diff}{follow}{unstage}</td><td>{entry.path}</td></tr>"
     Controlled.add "</table>"
-
     Controlled.add "<h3>Not staged</h3><table class='nolines'>"
     for index,entry in Status.unstaged:
         let diff="\n    <a href='" & url_diff(shanull, shanull, false, entry.path) & "'>diff</a>"

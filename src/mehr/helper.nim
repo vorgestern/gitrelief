@@ -2,6 +2,8 @@
 import std/[strformat, strutils]
 import checksums/sha1
 
+func htmlescape*(s: string): string=replace(s, "<", "&lt;")
+
 func shamatch*(sha: SecureHash, h: string): bool=h.len>0 and h.len<=40 and cmpignorecase(substr($sha, 0, h.len-1), h)==0
 func shaform*(sha: SecureHash): string=substr($sha, 0, 9)
 const shanull* =parsesecurehash "0000000000000000000000000000000000000000"

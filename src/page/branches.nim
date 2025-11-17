@@ -3,8 +3,6 @@ import std/[tables, strformat, strutils, times, paths, dirs, sequtils, sugar]
 import git/processes
 import mehr/helper
 
-func htmlescape(s: string): string=replace(s, "<", "&lt;")
-
 const html_template_branches=staticread "../public/branches.html"
 
 proc resolvecommits(SB: ShowBranch): seq[tuple[tags: string, commit: Commit]]=

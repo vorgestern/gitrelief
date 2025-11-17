@@ -4,8 +4,6 @@ import npeg
 import mehr/helper
 import git/processes
 
-func htmlescape(s: string): string=replace(s, "<", "&lt;")
-
 const html_template_log=staticread "../public/log.html"
 
 proc format_html(L: seq[Commit]): string=

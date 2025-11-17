@@ -7,8 +7,6 @@ import npeg
 import mehr/helper
 import git/processes
 
-func htmlescape(s: string): string=replace(s, "<", "&lt;")
-
 const html_template_follow=staticread "../public/follow.html"
 
 let TMonat {.used.}={"01": "Jan", "02": "Feb", "03": "Mär", "04": "Apr", "05": "Mai", "06": "Jun",

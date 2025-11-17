@@ -3,8 +3,6 @@ import std/[tables, strformat, strutils, times]
 import mehr/helper
 import git/processes
 
-func htmlescape(s: string): string=replace(s, "<", "&lt;")
-
 const html_template_diff=staticread "../public/diff.html"
 
 proc format_html_toc(Patches: seq[FileDiff], staged: bool, ahash, bhash: SecureHash): string=
