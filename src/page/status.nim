@@ -31,7 +31,7 @@ proc format_html(Status: RepoStatus): tuple[a,b,c: string]=
         Controlled.add "\n" & fmt"<tr><td>{entry.status}</td><td>{diff}{follow}{stage}</td><td>{entry.path}</td></tr>"
     Controlled.add "</table>"
 
-    var NotControlled="<table>"
+    var NotControlled="<table class='nolines'>"
     for index,entry in Status.notcontrolled:
         let stage="<a href='" & url_stage(entry) & "'>stage</a>"
         NotControlled.add "\n" & fmt"<tr><td>{entry}</td><td>{stage}</td></tr>"
