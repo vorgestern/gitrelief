@@ -10,7 +10,7 @@ proc walkpublicdir(dir: Path): string=
                 let p=replace(string path, string dir1, "")
                 result.add fmt"{'\n'}<tr><td></td><td><a href='{p}'>{p}</a></td></tr>"
 
-proc format_html(Status: RepoStatus): tuple[a,b: string]=
+proc format_repostatus(Status: RepoStatus): tuple[a,b: string]=
         var Controlled="<h3>Staged</h3><table class='nolines'>"
         for index,entry in Status.staged:
                 let diff="\n    <a href='" & url_diff(shanull, shanull, true, entry.path) & "'>diff</a>"
@@ -56,7 +56,7 @@ proc page_status*(Args: Table[string,string], publicdir: string): string=
         let
                 html_title= $servertitle & " status"
                 html_publicfiles="<table class='nolines'>" & walkpublicdir(Path publicdir) & "</table>"
-                (html_controlled,html_notcontrolled)=format_html(Status)
+                (html_controlled,html_notcontrolled)=format_repostatus Status
                 html_remoteurls=block:
                         var X=""
                         for (name,urls) in pairs(R):
