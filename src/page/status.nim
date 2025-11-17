@@ -26,10 +26,12 @@ proc format_html(Status: RepoStatus): tuple[a,b: string]=
                 Controlled.add "\n" & fmt"<tr><td>{entry.status}</td><td>{diff}{follow}{stage}</td><td>{entry.path}</td></tr>"
         Controlled.add "</table>"
 
-        var NotControlled="<h3>Parse Errors</h3><table class='nolines'>"
-        for index,entry in Status.unparsed: NotControlled.add fmt"<tr><td>{entry}</td></tr>"
-        NotControlled.add "</table>"
-        NotControlled.add "<h3>Not controlled</h3><table class='nolines'>"
+        var NotControlled=""
+        if Status.unparsed.len>0:
+                NotControlled.add "<h3 class='error'>Parse Errors</h3><table class='nolines'>"
+                for index,entry in Status.unparsed: NotControlled.add fmt"<tr><td>{entry}</td></tr>"
+                NotControlled.add "</table>"
+        NotControlled.add "<h3>Not ignored</h3><table class='nolines'>"
         for index,entry in Status.notcontrolled:
                 let stage="<a href='" & url_stage(entry) & "'>stage</a>"
                 NotControlled.add "\n" & fmt"<tr><td>{entry}</td><td>{stage}</td></tr>"
