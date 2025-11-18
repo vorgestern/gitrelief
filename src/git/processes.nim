@@ -1,5 +1,5 @@
 
-import std/[osproc, strformat, streams]
+import std/[osproc, strformat, streams, paths]
 import checksums/sha1
 import mehr/helper
 import parsers
@@ -45,12 +45,12 @@ proc gitstatus*(): tuple[status: RepoStatus, cmd: string] =
     let args= @["status", "--porcelain", "-uall"]
     (parse_status(exec_path("git", args)), "git" & concat(args))
 
-proc gitfollow*(path: string, num: int): tuple[result: seq[Commit], cmd: string]=
+proc gitfollow*(path: Path, num: int): tuple[result: seq[Commit], cmd: string]=
     let args=block:
         var X= @["log", "--follow", "--name-status", "--parents", "--date=iso-local"]
         X.add if num>0: "-" & $num else: "-100"
         X.add "--"
-        X.add path
+        X.add $path
         X
     (parse_log exec_path("git", args), "git" & concat(args))
 

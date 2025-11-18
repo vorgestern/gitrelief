@@ -38,6 +38,10 @@ func url_follow*(path: string, highlightcommit: SecureHash=shanull): string=
     if highlightcommit==shanull: fmt"/git/follow?path={path}"
     else:                        fmt"/git/follow?path={path}&highlight={highlightcommit}#tr_{shaform highlightcommit}"
 
+func url_follow*(path: string, highlightcommit=""): string=
+    if highlightcommit=="": fmt"/git/follow?path={path}"
+    else:                   fmt"/git/follow?path={path}&highlight={highlightcommit}#tr_{highlightcommit}"
+
 func url_unstage*(path: string):string =
     "/git/unstage?a=1&path=" & path
 

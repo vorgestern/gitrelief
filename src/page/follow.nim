@@ -1,8 +1,26 @@
 
-import std/[tables, strformat, strutils, strtabs, times]
+import std/[tables, strformat, strutils, strtabs, times, paths]
 import npeg
 import mehr/helper
 import git/processes
+
+type
+    dirinfo=tuple[name, path: string]
+
+proc pathparts(p: Path): tuple[dirs: seq[dirinfo], file: string]=
+    let X {.used.}=splitfile(p)
+    result.file= $X.name & X.ext
+    var dir99=X.dir
+    while $dir99!="" and $dir99!="/":
+        let (h,t)=splitpath dir99
+        if $t=="" or $t=="/": break
+        result.dirs.insert (name: $t, path: $dir99)
+        dir99=h
+
+proc format_pathtofollow(p: Path, highlight=""): string=
+    let (Diri,File)=pathparts(p)
+    for (name,path) in Diri: result.add fmt"<a href='{url_follow path, highlight}'>{name}</a>/"
+    result.add File
 
 proc format_html(L: seq[Commit], highlight=""): string=
     result="<table class='diff'>"
@@ -31,20 +49,27 @@ proc format_html(L: seq[Commit], highlight=""): string=
 
 proc page_follow*(Args: Table[string,string]): string=
     let
-        pathtofollow=Args.getordefault("path", "???")
+        pathtofollow=Path Args.getordefault("path", "???")
         num=parseint Args.getordefault("num", "100")
         commithash=Args.getordefault("highlight", "")
-    let (L,html_cmd)=gitfollow(pathtofollow, num)
     let
+        (L,html_cmd)=gitfollow(pathtofollow, num)
         html_title= $servertitle & " follow"
-        html_pathtofollow=htmlescape pathtofollow
+        html_pathtofollow=format_pathtofollow(pathtofollow, commithash)
         html_content=format_html(L, commithash)
     return fmt staticread "../public/follow.html"
 
 # =====================================================================
 
 when ismainmodule:
-    # let ts="2025-11-10T17:39:33+01:00"
-    let ts="2025-11-10T17:39:33"
-    let dt=times.parse(ts, "yyyy-MM-dd'T'HH:mm:ss")
-    echo "dt=",$dt
+    echo "=================="
+    if false:
+        # let ts="2025-11-10T17:39:33+01:00"
+        let ts="2025-11-10T17:39:33"
+        let dt=times.parse(ts, "yyyy-MM-dd'T'HH:mm:ss")
+        echo "dt=",$dt
+    if true:
+        let P=Path "src/Tabellen/Gruppen/Sonstiges.lua"
+        echo "P=",$P
+        echo "X=",$pathparts(P)
+        echo "X1=",$pathparts1(P)
