@@ -1,14 +1,8 @@
 
-import std/[tables, strformat]
-import std/[strutils, times]
-import std/strtabs
+import std/[tables, strformat, strutils, strtabs, times]
 import npeg
-
 import mehr/helper
 import git/processes
-
-let TMonat {.used.}={"01": "Jan", "02": "Feb", "03": "Mär", "04": "Apr", "05": "Mai", "06": "Jun",
-            "07": "Jul", "08": "Aug", "09": "Sep", "10": "Okt", "11": "Nov", "12": "Dez"}.newstringtable
 
 proc format_html(L: seq[Commit], highlight=""): string=
     result="<table class='diff'>"
