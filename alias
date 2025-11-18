@@ -1,5 +1,5 @@
 
-alias rr="clear && nim c -d:release -o:$ROBINSON/userbin/ src/gitrelief.nim && gitrelief"
+alias rr="clear && nim c -d:release -o:$ROBINSON/userbin/ src/gitrelief.nim && gitrelief --name develop"
 alias bb="clear && nim c -d:release -o:$ROBINSON/userbin/ src/gitrelief.nim"
 
 alias dd="clear && nim c -d:release -o:ttdiff src/gitrelief/diff.nim && ./ttdiff"

@@ -1,6 +1,7 @@
 
 import jesterfork
 import page/[log,diff,follow,status,branches]
+import mehr/helper
 import action/[stage]
 import std/[cmdline,strutils,paths]
 
@@ -52,6 +53,7 @@ let args=commandlineparams()
 for k in 0..<args.len:
         if args[k]=="--port"and k+1<args.len: port=parseint args[k+1]
         if args[k]=="--public" and k+1<args.len: publicdir=cstring args[k+1]
+        if args[k]=="--name" and k+1<args.len: servertitle=cstring args[k+1]
 
 settings:
         # appname="gitrelief" Dieser Name wird am Anfang von urls entfernt, er ist kein hostname.
