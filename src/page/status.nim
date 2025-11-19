@@ -10,7 +10,7 @@ proc walkpublicdir(dir: Path): string=
                 let p=replace(string path, string dir1, "")
                 result.add fmt"{'\n'}<tr><td></td><td><a href='{p}'>{p}</a></td></tr>"
 
-proc format_repostatus(Status: RepoStatus): tuple[a,b: string]=
+func format_repostatus(Status: RepoStatus): tuple[a,b: string]=
         var Controlled="<h3>Staged</h3><table class='nolines'>"
         for index,entry in Status.staged:
                 let diff="\n    <a href='" & url_diff(shanull, shanull, true, entry.path) & "'>diff</a>"

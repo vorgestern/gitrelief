@@ -3,7 +3,7 @@ import std/[tables, strformat, strutils, times]
 import mehr/helper
 import git/processes
 
-proc format_html_toc(Patches: seq[FileDiff], staged: bool, ahash, bhash: SecureHash): string=
+func format_html_toc(Patches: seq[FileDiff], staged: bool, ahash, bhash: SecureHash): string=
         result.add "<p><table>"
         for index,entry in Patches:
                 let path=case entry.op
@@ -16,7 +16,7 @@ proc format_html_toc(Patches: seq[FileDiff], staged: bool, ahash, bhash: SecureH
                 result.add fmt"<tr><td>{entry.op}</td><td><a href='{url}'>{tag}</a></td><td><a href='{url_follow path}'>Follow</a></td></tr>"
         result.add "</table></p>"
 
-proc format_html_head(fileentry: FileDiff, hash: SecureHash): string=
+func format_html_head(fileentry: FileDiff, hash: SecureHash): string=
         let followurl=case fileentry.op
         of Modified: fmt"{url_follow fileentry.bpath, hash}"
         of Added:    fmt"{url_follow fileentry.bpath, hash}"
@@ -30,7 +30,7 @@ proc format_html_head(fileentry: FileDiff, hash: SecureHash): string=
         of Renamed:  result.add fmt"{'\n'}<p>Renamed {fileentry.apath} to {fileentry.bpath} <span><a href='{followurl}'>Follow</a></span></p>"
         of Other:    result.add fmt"{'\n'}<p>Unknown operation {fileentry.apath} <span><a href='{followurl}'>Follow</a></span></p>"
 
-proc format_html_patch(fileentry: FileDiff, staged: bool, ahash, bhash: SecureHash): string=
+func format_html_patch(fileentry: FileDiff, staged: bool, ahash, bhash: SecureHash): string=
         if fileentry.op!=Other:
                 result.add "<p><table class='diff'>"
                 case fileentry.op:

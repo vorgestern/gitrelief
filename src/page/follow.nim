@@ -7,7 +7,7 @@ import git/processes
 type
     dirinfo=tuple[name, path: string]
 
-proc pathparts(p: Path): tuple[dirs: seq[dirinfo], file: string]=
+func pathparts(p: Path): tuple[dirs: seq[dirinfo], file: string]=
     let X {.used.}=splitfile(p)
     result.file= $X.name & X.ext
     var dir99=X.dir
@@ -17,19 +17,19 @@ proc pathparts(p: Path): tuple[dirs: seq[dirinfo], file: string]=
         result.dirs.insert (name: $t, path: $dir99 & "/")
         dir99=h
 
-proc format_pathtofollow(p: Path, highlight=""): string=
+func format_pathtofollow(p: Path, highlight=""): string=
     if $p=="": return "<i>Missing query ?path=...</i>"
     let (Diri,File)=pathparts(p)
     result="Following &nbsp;&nbsp;&nbsp;&nbsp;<b>"
     for (name,path) in Diri: result.add fmt"<a href='{url_follow path, highlight}'>{name}</a>/"
     result.add File & "</b>"
 
-proc path_short(path, leading: string, followfile: bool): string=
+func path_short(path, leading: string, followfile: bool): string=
     if followfile: return ""
     if leading.len>0 and path.startswith(leading): " " & path.substr(leading.len)
     else: " " & path
 
-proc format_html(L: seq[Commit], leading: string, followfile: bool, highlight=""): string=
+func format_html(L: seq[Commit], leading: string, followfile: bool, highlight=""): string=
     result="<table class='diff'>"
     for commitindex,commit in L:
         var comments=htmlescape(commit.subject)
@@ -60,12 +60,12 @@ proc page_follow*(Args: Table[string,string]): string=
         num=parseint Args.getordefault("num", "100")
         commithash=Args.getordefault("highlight", "")
         (leading, isfile)=block:
-            let (P,F,E)=splitfile(pathtofollow)
-            echo "compute leading: ", P, " ", F, " ", E
+            let (P,F,_)=splitfile(pathtofollow)
+            # echo "compute leading: ", P, " ", F, " ", E
             if $F!="": ($P&"/", true)
             else: ($P&"/", false)
-    echo "leading: ", leading
-    echo "isfile: ", isfile
+    # echo "leading: ", leading
+    # echo "isfile: ", isfile
     let
         (L,html_cmd)=gitfollow(pathtofollow, num)
         html_title= $servertitle & " follow"

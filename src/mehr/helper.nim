@@ -48,7 +48,7 @@ func url_unstage*(path: string):string =
 func url_stage*(path: string):string =
     "/git/stage?z=1&path=" & path
 
-proc url_branches*(m, b: string):string =
+func url_branches*(m, b: string):string =
     if m!="" and b!="": fmt"/git/branches?m={m}&b={b}"
     elif m!="":         fmt"/git/branches?m={m}"
     elif b!="":         fmt"/git/branches?b={b}"
