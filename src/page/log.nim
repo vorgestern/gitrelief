@@ -36,8 +36,8 @@ proc page_log*(Args: Table[string,string]): string=
                                         if index>0: files.add "<br/>"
                                         let url=url_diff(parent, commit.hash, false, op)
                                         case op.status
-                                        of Renamed: files.add fmt"{op.status} <a href='{url}'>{op.newpath}<br/>&nbsp;&nbsp;from {op.oldpath}</a>"
-                                        else:       files.add fmt"{op.status} <a href='{url}'>{op.path}</a>"
+                                        of Renamed, Copied: files.add fmt"{op.status} <a href='{url}'>{op.newpath}<br/>&nbsp;&nbsp;from {op.oldpath}</a>"
+                                        else:               files.add fmt"{op.status} <a href='{url}'>{op.path}</a>"
                                 let yage=ynow-year(commit.date)
                                 if yage>yage_merk:
                                         let yclass=if yage mod 2==0: "yeven" else: "yodd"

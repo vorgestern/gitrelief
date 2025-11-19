@@ -40,6 +40,7 @@ func format_table(L: seq[Commit], leading: string, followfile: bool, highlight="
             if fileindex>0: files.add "<br/>"
             let url=url_diff(parent, commit.hash, false, op)
             if op.status==Renamed:  files.add fmt"<a href='{url}'>{op.status}</a> to {path_short op.newpath, leading, false}<br/>from {path_short op.oldpath, leading, false}"
+            elif op.status==Copied: files.add fmt"<a href='{url}'>{op.status}</a> to {path_short op.newpath, leading, false}<br/>from {path_short op.oldpath, leading, false}"
             elif op.status==Added:  files.add fmt"<a href='{url}'>{op.status}</a>{path_short op.path, leading, false}"
             elif commitindex==0:    files.add fmt"<a href='{url}'>{op.status}</a>{path_short op.path, leading, false}"
             else:                   files.add fmt"<a href='{url}'>{op.status}</a>{path_short op.path, leading, followfile}"

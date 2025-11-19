@@ -5,10 +5,10 @@ import npeg
 import mehr/helper
 
 type
-    FileCommitStatus* =enum Other, Modified, Deleted, Added, Renamed
+    FileCommitStatus* =enum Other, Modified, Deleted, Added, Renamed, Copied
     CommittedOperation* =object
         case status*: FileCommitStatus
-        of Renamed:
+        of Renamed, Copied:
             oldpath*, newpath*: string
         else:
             path*: string
@@ -34,7 +34,7 @@ func url_diff*(parent, commit: SecureHash, staged: bool, op: CommittedOperation)
     if staged:
         X.add "staged"
     case op.status
-    of Renamed:
+    of Renamed, Copied:
         X.add "path="&op.newpath
         X.add "oldpath="&op.oldpath
     else:
@@ -253,8 +253,9 @@ proc parse_log*(L: seq[string]): seq[Commit]=
         filestatus_modified <- 'M' * +{' ','\t'} * >+1: e.was[^1].files.add CommittedOperation(status: Modified, path: $1)
         filestatus_deleted <- 'D' * +{' ','\t'} * >+1: e.was[^1].files.add CommittedOperation(status: Deleted, path: $1)
         filestatus_renamed <- 'R' * >{'0'..'9'}[3] * @>path * @>path: e.was[^1].files.add CommittedOperation(status: Renamed, newpath: $3, oldpath: $2)
+        filestatus_copied <- 'C' * >{'0'..'9'}[3] * @>path * @>path: e.was[^1].files.add CommittedOperation(status: Copied, newpath: $3, oldpath: $2)
         sonst <- >(*1) * !1: echo "Nicht erwartet: ", $1
-        line <- commit | merge | author | date | empty | comment | filestatus_added | filestatus_modified | filestatus_deleted | filestatus_renamed | sonst
+        line <- commit | merge | author | date | empty | comment | filestatus_added | filestatus_modified | filestatus_deleted | filestatus_renamed | filestatus_copied | sonst
     var e=parsercontext(st: None, was: addr result)
     for z in L:
         {.gcsafe.}:

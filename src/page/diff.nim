@@ -7,12 +7,12 @@ func format_html_toc(Patches: seq[FileDiff], staged: bool, ahash, bhash: SecureH
         result.add "<p><table>"
         for index,entry in Patches:
                 let path=case entry.op
-                of Modified,Added,Renamed: entry.bpath
+                of Modified,Added,Renamed,Copied: entry.bpath
                 of Deleted,Other:  entry.apath
                 let (url,tag)=case entry.op
                 of Modified,Added: (url_diff(ahash, bhash, staged, path), path)
                 of Deleted,Other:  (url_diff(ahash, bhash, staged, path), path)
-                of Renamed:        (url_diff(ahash, bhash, staged, path, entry.bpath), path)
+                of Renamed,Copied: (url_diff(ahash, bhash, staged, path, entry.bpath), path)
                 result.add fmt"<tr><td>{entry.op}</td><td><a href='{url}'>{tag}</a></td><td><a href='{url_follow path}'>Follow</a></td></tr>"
         result.add "</table></p>"
 
@@ -22,12 +22,14 @@ func format_html_head(fileentry: FileDiff, hash: SecureHash): string=
         of Added:    fmt"{url_follow fileentry.bpath, 100, hash}"
         of Deleted:  fmt"{url_follow fileentry.apath, 100, hash}"
         of Renamed:  fmt"{url_follow fileentry.bpath, 100, hash}"
+        of Copied:   fmt"{url_follow fileentry.bpath, 100, hash}"
         of Other:    fmt"{url_follow fileentry.apath}"
         case fileentry.op:
         of Modified: result.add fmt"{'\n'}<p>Modified {fileentry.apath} <span><a href='{followurl}'>Follow</a></span></p>"
         of Deleted:  result.add fmt"{'\n'}<p>Deleted {fileentry.apath} <span><a href='{followurl}'>Follow</a></span></p>"
         of Added:    result.add fmt"{'\n'}<p>Added {fileentry.bpath} <span><a href='{followurl}'>Follow</a></span></p>"
         of Renamed:  result.add fmt"{'\n'}<p>Renamed {fileentry.apath} to {fileentry.bpath} <span><a href='{followurl}'>Follow</a></span></p>"
+        of Copied:   result.add fmt"{'\n'}<p>Copied {fileentry.apath} to {fileentry.bpath} <span><a href='{followurl}'>Follow</a></span></p>"
         of Other:    result.add fmt"{'\n'}<p>Unknown operation {fileentry.apath} <span><a href='{followurl}'>Follow</a></span></p>"
 
 func format_html_patch(fileentry: FileDiff, staged: bool, ahash, bhash: SecureHash): string=
@@ -41,6 +43,8 @@ func format_html_patch(fileentry: FileDiff, staged: bool, ahash, bhash: SecureHa
                 of Added: result.add    "\n<tr><th/><th>" & fileentry.bpath & "</th></tr>" &
                                         "\n<tr><th/><th>" & shaform(bhash) & "</th></tr>"
                 of Renamed: result.add  "\n<tr><th>" & fileentry.apath & "</th><th>" & fileentry.bpath & "</th></tr>" &
+                                        "\n<tr><th>" & shaform(ahash) & "</th><th>" & shaform(bhash) & "</th></tr>"
+                of Copied: result.add   "\n<tr><th>" & fileentry.apath & "</th><th>" & fileentry.bpath & "</th></tr>" &
                                         "\n<tr><th>" & shaform(ahash) & "</th><th>" & shaform(bhash) & "</th></tr>"
                 of Other: result.add    "\n<tr><th>" & fileentry.apath & "</th><th>" & fileentry.bpath & "</th></tr>" &
                                         "\n<tr><th>" & shaform(ahash) & "</th><th>" & shaform(bhash) & "</th></tr>"
