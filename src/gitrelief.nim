@@ -25,6 +25,7 @@ import std/[cmdline,strutils,paths]
 # 12.    Verwendung von Cookies:
 #        Setzen durch den Server: setcookie("follow", "eins", daysforward(1))
 #        Abfragen durch den Server: request.cookies.getordefault("follow", "null")
+# 13.    Erlaube ahash und bhash auch in git/log.
 
 proc parsequery(query: string): Table[string,string]=
         var
