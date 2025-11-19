@@ -13,7 +13,7 @@ import std/[cmdline,strutils,paths]
 # 3.  ok Nenne git_follow um in git/follow, weitere sinngemäß.
 # 4.  ok Stelle in git_follow immer die vollständige Entwicklung bis zum letzten commit dar.
 #        Hebe den in a=hash übergebenen commit einfach durch Fettdruck hervor.
-# 5.     Follow braucht ebenfalls 'next 100' Links.
+# 5.  ok Follow braucht ebenfalls 'next 100' Links.
 # 6.  ok Gib in Logs die Jahreszahl sparsam aus.
 # 7.  ok Fasse die Commit-Typen Commit und LogCommit zusammen.
 # 8.     Biete bei Commits mit mehr als einem Elternknoten die Alternative an.
