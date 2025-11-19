@@ -14,15 +14,22 @@ proc pathparts(p: Path): tuple[dirs: seq[dirinfo], file: string]=
     while $dir99!="" and $dir99!="/":
         let (h,t)=splitpath dir99
         if $t=="" or $t=="/": break
-        result.dirs.insert (name: $t, path: $dir99)
+        result.dirs.insert (name: $t, path: $dir99 & "/")
         dir99=h
 
 proc format_pathtofollow(p: Path, highlight=""): string=
+    if $p=="": return "<i>Missing query ?path=...</i>"
     let (Diri,File)=pathparts(p)
+    result="Following &nbsp;&nbsp;&nbsp;&nbsp;<b>"
     for (name,path) in Diri: result.add fmt"<a href='{url_follow path, highlight}'>{name}</a>/"
-    result.add File
+    result.add File & "</b>"
 
-proc format_html(L: seq[Commit], highlight=""): string=
+proc path_short(path, leading: string, followfile: bool): string=
+    if followfile: return ""
+    if leading.len>0 and path.startswith(leading): " " & path.substr(leading.len)
+    else: " " & path
+
+proc format_html(L: seq[Commit], leading: string, followfile: bool, highlight=""): string=
     result="<table class='diff'>"
     for commitindex,commit in L:
         var comments=htmlescape(commit.subject)
@@ -32,10 +39,10 @@ proc format_html(L: seq[Commit], highlight=""): string=
         for fileindex,op in commit.files:
             if fileindex>0: files.add "<br/>"
             let url=url_diff(parent, commit.hash, false, op)
-            if op.status==Renamed:  files.add fmt"<a href='{url}'>{op.status}</a><br/>to {op.newpath}<br/>from {op.oldpath}"
-            elif op.status==Added:  files.add fmt"<a href='{url}'>{op.status}</a><br/>{op.path}"
-            elif commitindex==0:    files.add fmt"<a href='{url}'>{op.status}</a><br/>{op.path}"
-            else:                   files.add fmt"<a href='{url}'>{op.status}</a>"
+            if op.status==Renamed:  files.add fmt"<a href='{url}'>{op.status}</a> to {path_short op.newpath, leading, false}<br/>from {path_short op.oldpath, leading, false}"
+            elif op.status==Added:  files.add fmt"<a href='{url}'>{op.status}</a>{path_short op.path, leading, false}"
+            elif commitindex==0:    files.add fmt"<a href='{url}'>{op.status}</a>{path_short op.path, leading, false}"
+            else:                   files.add fmt"<a href='{url}'>{op.status}</a>{path_short op.path, leading, followfile}"
         let hx=shaform commit.hash
         let
             tr=if shamatch(commit.hash, highlight): "\n<tr class='highlight'>" else: "\n<tr>"
@@ -49,14 +56,21 @@ proc format_html(L: seq[Commit], highlight=""): string=
 
 proc page_follow*(Args: Table[string,string]): string=
     let
-        pathtofollow=Path Args.getordefault("path", "???")
+        pathtofollow=Path Args.getordefault("path", "")
         num=parseint Args.getordefault("num", "100")
         commithash=Args.getordefault("highlight", "")
+        (leading, isfile)=block:
+            let (P,F,E)=splitfile(pathtofollow)
+            echo "compute leading: ", P, " ", F, " ", E
+            if $F!="": ($P&"/", true)
+            else: ($P&"/", false)
+    echo "leading: ", leading
+    echo "isfile: ", isfile
     let
         (L,html_cmd)=gitfollow(pathtofollow, num)
         html_title= $servertitle & " follow"
         html_pathtofollow=format_pathtofollow(pathtofollow, commithash)
-        html_content=format_html(L, commithash)
+        html_content=format_html(L, leading, isfile, commithash)
     return fmt staticread "../public/follow.html"
 
 # =====================================================================
