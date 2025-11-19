@@ -34,13 +34,13 @@ func url_diff*(parent, commit: SecureHash, staged: bool, path:string, oldpath:st
         url.add q
     url
 
-func url_follow*(path: string, highlightcommit: SecureHash=shanull): string=
-    if highlightcommit==shanull: fmt"/git/follow?path={path}"
-    else:                        fmt"/git/follow?path={path}&highlight={highlightcommit}#tr_{shaform highlightcommit}"
+func url_follow*(path: string, num=100, highlightcommit: SecureHash=shanull): string=
+    if highlightcommit==shanull: fmt"/git/follow?path={path}&num={num}"
+    else:                        fmt"/git/follow?path={path}&num={num}&highlight={highlightcommit}#tr_{shaform highlightcommit}"
 
-func url_follow*(path: string, highlightcommit=""): string=
-    if highlightcommit=="": fmt"/git/follow?path={path}"
-    else:                   fmt"/git/follow?path={path}&highlight={highlightcommit}#tr_{highlightcommit}"
+func url_follow*(path: string, num=100, highlightcommit=""): string=
+    if highlightcommit=="": fmt"/git/follow?path={path}&num={num}"
+    else:                   fmt"/git/follow?path={path}&num={num}&highlight={highlightcommit}#tr_{highlightcommit}"
 
 func url_unstage*(path: string):string =
     "/git/unstage?a=1&path=" & path

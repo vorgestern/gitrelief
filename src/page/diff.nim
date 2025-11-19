@@ -18,10 +18,10 @@ func format_html_toc(Patches: seq[FileDiff], staged: bool, ahash, bhash: SecureH
 
 func format_html_head(fileentry: FileDiff, hash: SecureHash): string=
         let followurl=case fileentry.op
-        of Modified: fmt"{url_follow fileentry.bpath, hash}"
-        of Added:    fmt"{url_follow fileentry.bpath, hash}"
-        of Deleted:  fmt"{url_follow fileentry.apath, hash}"
-        of Renamed:  fmt"{url_follow fileentry.bpath, hash}"
+        of Modified: fmt"{url_follow fileentry.bpath, 100, hash}"
+        of Added:    fmt"{url_follow fileentry.bpath, 100, hash}"
+        of Deleted:  fmt"{url_follow fileentry.apath, 100, hash}"
+        of Renamed:  fmt"{url_follow fileentry.bpath, 100, hash}"
         of Other:    fmt"{url_follow fileentry.apath}"
         case fileentry.op:
         of Modified: result.add fmt"{'\n'}<p>Modified {fileentry.apath} <span><a href='{followurl}'>Follow</a></span></p>"

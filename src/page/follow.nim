@@ -17,11 +17,11 @@ func pathparts(p: Path): tuple[dirs: seq[dirinfo], file: string]=
         result.dirs.insert (name: $t, path: $dir99 & "/")
         dir99=h
 
-func format_pathtofollow(p: Path, highlight=""): string=
+func format_pathtofollow(p: Path, num: int, highlight=""): string=
     if $p=="": return "<i>Missing query ?path=...</i>"
     let (Diri,File)=pathparts(p)
     result="Following &nbsp;&nbsp;&nbsp;&nbsp;<b>"
-    for (name,path) in Diri: result.add fmt"<a href='{url_follow path, highlight}'>{name}</a>/"
+    for (name,path) in Diri: result.add fmt"<a href='{url_follow path, num, highlight}'>{name}</a>/"
     result.add File & "</b>"
 
 func path_short(path, leading: string, followfile: bool): string=
@@ -29,7 +29,7 @@ func path_short(path, leading: string, followfile: bool): string=
     if leading.len>0 and path.startswith(leading): " " & path.substr(leading.len)
     else: " " & path
 
-func format_html(L: seq[Commit], leading: string, followfile: bool, highlight=""): string=
+func format_table(L: seq[Commit], leading: string, followfile: bool, highlight=""): string=
     result="<table class='diff'>"
     for commitindex,commit in L:
         var comments=htmlescape(commit.subject)
@@ -68,9 +68,12 @@ proc page_follow*(Args: Table[string,string]): string=
     # echo "isfile: ", isfile
     let
         (L,html_cmd)=gitfollow(pathtofollow, num)
+        thereismore=if L.len<num: false else: true
         html_title= $servertitle & " follow"
-        html_pathtofollow=format_pathtofollow(pathtofollow, commithash)
-        html_content=format_html(L, leading, isfile, commithash)
+        html_pathtofollow=format_pathtofollow(pathtofollow, num, commithash)
+        html_plus100_top=if thereismore: fmt"<a href='{url_follow $pathtofollow, num+100, commithash}'>100 more</a>" else: ""
+        html_plus100_bottom=html_plus100_top
+        html_content=format_table(L, leading, isfile, commithash)
     return fmt staticread "../public/follow.html"
 
 # =====================================================================
