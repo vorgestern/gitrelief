@@ -22,6 +22,9 @@ import std/[cmdline,strutils,paths]
 #        dem Neustart des Servers mit Http302 zu tun haben.
 # 11.    Finde den ältesten commit aus Zweig xy, der nicht in master liegt:
 #        git rev-list --topo-order --reverse xy ^master | head -1
+# 12.    Verwendung von Cookies:
+#        Setzen durch den Server: setcookie("follow", "eins", daysforward(1))
+#        Abfragen durch den Server: request.cookies.getordefault("follow", "null")
 
 proc parsequery(query: string): Table[string,string]=
         var
