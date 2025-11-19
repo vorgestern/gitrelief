@@ -9,6 +9,7 @@ func shaform*(sha: SecureHash): string=substr($sha, 0, 9)
 const shanull* =parsesecurehash "0000000000000000000000000000000000000000"
 
 var servertitle*: cstring="gitrelief"
+const html_serverinfo* ="<hr/><p class='versioninfo'>gitrelief 0.5.0</p>"
 
 func url_log*(num: int, top: int= -1): string=
     if top<0: "/git/log?num=" & $num
