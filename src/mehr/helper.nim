@@ -2,6 +2,8 @@
 import std/[strformat, strutils]
 import checksums/sha1
 
+const gitrelief_version="0.5.0"
+
 func htmlescape*(s: string): string=replace(s, "<", "&lt;")
 
 func shamatch*(sha: SecureHash, h: string): bool=h.len>0 and h.len<=40 and cmpignorecase(substr($sha, 0, h.len-1), h)==0
@@ -9,7 +11,7 @@ func shaform*(sha: SecureHash): string=substr($sha, 0, 9)
 const shanull* =parsesecurehash "0000000000000000000000000000000000000000"
 
 var servertitle*: cstring="gitrelief"
-const html_serverinfo* ="<hr/><p class='versioninfo'>gitrelief 0.5.0</p>"
+const html_serverinfo* ="<hr/><p class='versioninfo'>gitrelief " & gitrelief_version & "</p>"
 
 func url_log*(num: int, top: int= -1): string=
     if top<0: "/git/log?num=" & $num
