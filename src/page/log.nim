@@ -26,6 +26,11 @@ proc page_log*(Args: Table[string,string]): string=
                         for index,commit in L:
                                 # Vielfache von 100 erhalten eine Hinweiszeile, die auch als Sprungziel dient.
                                 if index>0 and index mod 100==0: res.add "\n" & fmt"<tr><td><a id='top{index}'>{index}</a></td></tr>"
+                                let tdcommit=block:
+                                        var X="<td>" & shaform(commit.hash)
+                                        for p in 0..<commit.parents.len: X.add "<br/>" & $p & ": " & shaform(commit.parents[p])
+                                        X.add "</td>"
+                                        X
                                 let comments=block:
                                         var s=htmlescape(commit.subject)
                                         for d in commit.details: s.add "<br/>"&htmlescape(d)
@@ -48,7 +53,7 @@ proc page_log*(Args: Table[string,string]): string=
                                         if yage==0:             "<td>" & df & "</td>"
                                         elif yage mod 2==0:     "<td class='yeven'>" & df & "</td>"
                                         else:                   "<td class='yodd'>" & df & "</td>"
-                                res.add "\n<tr><td>" & shaform(commit.hash) & "</td><td>" & commit.author & "</td>" & tddate & "<td>" & files & "</td><td>" & comments & "</td></tr>"
+                                res.add "\n<tr>" & tdcommit & "<td>" & commit.author & " " & $commit.parents.len & "</td>" & tddate & "<td>" & files & "</td><td>" & comments & "</td></tr>"
                         res.add "\n" & fmt"<tr><td><a id='top{L.len}'>{L.len}</a></td></tr>"
                         res.add "</table>"
                         res
