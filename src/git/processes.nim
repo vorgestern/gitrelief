@@ -51,7 +51,7 @@ proc gitstatus_v2*(): tuple[status: RepoStatus_v2, cmd: string] =
 
 proc gitfollow*(path: Path, num: int): tuple[result: seq[Commit], cmd: string]=
     let args=block:
-        var X= @["log", "--follow", "--name-status", "--parents", "--date=iso-local"]
+        var X= @["log", "--follow", "--name-status", "--parents", "--first-parent", "--date=iso-local"]
         X.add if num>0: "-" & $num else: "-100"
         X.add "--"
         X.add $path
