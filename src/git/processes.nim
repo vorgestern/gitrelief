@@ -45,6 +45,10 @@ proc gitstatus*(): tuple[status: RepoStatus, cmd: string] =
     let args= @["status", "--porcelain", "-uall"]
     (parse_status(exec_path("git", args)), "git" & concat(args))
 
+proc gitstatus_v2*(): tuple[status: RepoStatus_v2, cmd: string] =
+    let args= @["status", "-b", "--porcelain=v2", "-uall"]
+    (parse_status_v2(exec_path("git", args)), "git" & concat(args))
+
 proc gitfollow*(path: Path, num: int): tuple[result: seq[Commit], cmd: string]=
     let args=block:
         var X= @["log", "--follow", "--name-status", "--parents", "--date=iso-local"]

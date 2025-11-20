@@ -209,6 +209,91 @@ proc parse_status*(Lines: seq[string]): RepoStatus=
             if not mr.ok:
                 echo "failed to parse: ", z
 
+# ---------------------------------------------------------------------
+
+type
+    RepoStatus_v2* =object
+        currentcommit*: SecureHash
+        currentbranch*: string
+        staged*, unstaged*: seq[tuple[status: FileCommitStatus, path: string]]
+        notcontrolled*: seq[string]
+        unparsed*: seq[string]
+
+proc parse_status_v2*(Lines: seq[string]): RepoStatus_v2=
+    type
+        parsercontext=object
+            res: ptr RepoStatus_v2
+    const statuslineparser=peg("entry", e: parsercontext):
+        path <- +{1..31, 33..255}
+        name <- +{1..31, 33..255}
+        nosp <- {1..31, 33..255}
+        nosp2 <- {1..31, 33..255}[2]
+        nosp4 <- {1..31, 33..255}[4]
+        sub <- nosp[4]
+        octalmode <- nosp[6]
+        flags <- +{'0'..'9'}
+        num <- +{'0'..'9'}
+        hash <- +{'0'..'9', 'a'..'f'}
+        xscore <- +nosp
+        # ===============================
+        oid <- "# branch.oid " * >hash * !1: e.res[].currentcommit=parsesecurehash $1
+        oid_initial <- "# branch.oid (initial)" * !1: e.res[].currentcommit=shanull
+        head <- "# branch.head " * >name * !1: e.res[].currentbranch= $1
+        head_detached <- "# branch.head (detached)" * !1: e.res[].currentbranch=""
+        branch_upstream <- "# branch.upstream ": discard
+        branch_ab <- "# branch.ab ": discard
+        xM <- "1 .M " * sub * (@octalmode[3]) * (@hash[2]) * @>path:
+            echo "xM '", $1, "'"
+            e.res.unstaged.add (status: Modified, path: strip $1)
+        Mx <- "1 M. " * sub * (@octalmode[3]) * (@hash[2]) * @>path:
+            echo "Mx '", $1, "'"
+            e.res.staged.add (status: Modified, path: strip $1)
+        MM <- "1 MM " * sub * (@octalmode[3]) * (@hash[2]) * @>path:
+            # echo "MM '", $1, "'"
+            e.res.staged.add (status: Modified, path: strip $1)
+            e.res.unstaged.add (status: Modified, path: strip $1)
+        Ax <- "1 A. " * sub * (@octalmode[3]) * (@hash[2]) * @>path:
+            # echo "Ax '", $1, "'"
+            e.res.staged.add (status: Added, path: strip $1)
+        AM <- "1 AM " * sub * (@octalmode[3]) * (@hash[2]) * @>path:
+            # echo "AM '", $1, "'"
+            e.res.staged.add (status: Added, path: strip $1)
+        xD <- "1 .D " * sub * (@octalmode[3]) * (@hash[2]) * @>path:
+            # echo "xD '", $1, "'"
+            e.res.staged.add (status: Deleted, path: strip $1)
+        Dx <- "1 D. " * sub * (@octalmode[3]) * (@hash[2]) * @>path:
+            # echo "Dx '", $1, "'"
+            e.res.unstaged.add (status: Deleted, path: strip $1)
+        U <- "u >nosp2 " * sub * (@octalmode[4]) * (@hash[3]) * @>path:
+            echo "u '", $1, "'"
+
+        xR <- "2 .R " * sub * (@octalmode[3]) * (@hash[2]) * @xscore * @>path * '\t' * >path:
+            echo "xR '", $1, "'"
+            e.res.unstaged.add (status: Renamed, path: strip $2)
+        Rx <- "2 R. " * sub * (@octalmode[3]) * (@hash[2]) * @xscore * @>path * '\t' * >path:
+            echo "Rx '", $1, "'"
+            e.res.staged.add (status: Renamed, path: strip $2)
+        xC <- "2 .C " * sub * (@octalmode[3]) * (@hash[2]) * @xscore * @>path * '\t' * >path:
+            echo "xC '", $1, "'"
+            e.res.unstaged.add (status: Copied, path: strip $2)
+        Cx <- "2 C. " * sub * (@octalmode[3]) * (@hash[2]) * @xscore * @>path * '\t' * >path:
+            echo "Cx '", $1, "'"
+            e.res.staged.add (status: Copied, path: strip $2)
+        zwei <- "2" * @>nosp2 * @nosp4 * (@octalmode[3]) * (@hash[2]) * @xscore * @>path * '\t' * >path:
+            echo "2 ", $1, " ", $2, "->", $3
+        untracked <- "? " * @>path:
+            echo "untracked '", $1, "'"
+        ignored <- "! " * @>path:
+            echo "ignored '", $1, "'"
+        sonst <- >(*1) * !1: e.res.unparsed.add $1
+        # ===============================
+        entry <- oid | oid_initial | head | head_detached | branch_upstream | branch_ab | xM | Mx | MM | Ax | AM | xD | Dx | xR | Rx | xC | Cx | U | zwei | untracked | ignored | sonst
+    var e=parsercontext(res: addr result)
+    for z in Lines:
+        {.gcsafe.}:
+            let mr=statuslineparser.match(z, e)
+            if not mr.ok: echo "failed to parse: ", z
+
 # =====================================================================
 
 proc parse_log*(L: seq[string]): seq[Commit]=
@@ -384,6 +469,20 @@ when ismainmodule:
   + [83a17beca] Alias repariert
 --- [4fcfc498a] Merge pull request #902 from solvis-bs/Translate3236
     """
-    let X=parse_show_branch(demo1.split('\n'))
-    echo "Zweige: ", X.branches
-    echo "Commits: ", X.commits
+    if false:
+        let X=parse_show_branches(demo1.split('\n'))
+        echo "Zweige: ", X.branches
+        echo "Commits: ", X.commits
+
+    const demo2="""
+# branch.oid dc17a5335e4137b1fd3c6f9cd13662d84466a710
+# branch.head master
+1 .M N... 100644 100644 100644 d8a49c2f1739e7571648a025ad12df4b5351c8e3 d8a49c2f1739e7571648a025ad12df4b5351c8e3 src/git/parsers.nim
+1 .M N... 100644 100644 100644 83192ca64e572eb66a38d63387e799e0206462ac 83192ca64e572eb66a38d63387e799e0206462ac src/git/processes.nim
+1 .M N... 100644 100644 100644 7ce235a1e0dbb8efae3d42adfbe8d92b7abb2c24 7ce235a1e0dbb8efae3d42adfbe8d92b7abb2c24 src/page/status.nim
+    """
+    if true:
+        echo "parse_status_v2:"
+        let X=parse_status_v2(demo2.split '\n')
+        echo "currentcommit: ", X.currentcommit
+        echo "currentbranch: ", X.currentbranch

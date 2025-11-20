@@ -10,7 +10,7 @@ proc walkpublicdir(dir: Path): string=
                 let p=replace(string path, string dir1, "")
                 result.add fmt"{'\n'}<tr><td></td><td><a href='{p}'>{p}</a></td></tr>"
 
-func format_repostatus(Status: RepoStatus): tuple[a,b: string]=
+func format_repostatus(Status: RepoStatus_v2): tuple[a,b: string]=
         var Controlled="<h3>Staged</h3><table class='nolines'>"
         for index,entry in Status.staged:
                 let diff="\n    <a href='" & url_diff(shanull, shanull, true, entry.path) & "'>diff</a>"
@@ -43,7 +43,7 @@ func format_repostatus(Status: RepoStatus): tuple[a,b: string]=
 
 proc page_status*(Args: Table[string,string], publicdir: string): string=
         let
-                (Status,_)=gitstatus()
+                (Status,_)=gitstatus_v2()
                 R=gitremotes()
                 pwd=block:
                         var X=getcurrentdir()
@@ -55,6 +55,8 @@ proc page_status*(Args: Table[string,string], publicdir: string): string=
                         X
         let
                 html_title= $servertitle & " status"
+                html_currentbranch=htmlescape Status.currentbranch
+                html_currentcommit=shaform Status.currentcommit
                 html_publicfiles="<table class='nolines'>" & walkpublicdir(Path publicdir) & "</table>"
                 (html_controlled,html_notcontrolled)=format_repostatus Status
                 html_remoteurls=block:
