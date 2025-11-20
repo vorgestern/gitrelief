@@ -217,6 +217,7 @@ type
         currentbranch*: string
         staged*, unstaged*: seq[tuple[status: FileCommitStatus, path: string]]
         notcontrolled*: seq[string]
+        unmerged*: seq[string]
         unparsed*: seq[string]
 
 proc parse_status_v2*(Lines: seq[string]): RepoStatus_v2=
@@ -243,10 +244,10 @@ proc parse_status_v2*(Lines: seq[string]): RepoStatus_v2=
         branch_upstream <- "# branch.upstream ": discard
         branch_ab <- "# branch.ab ": discard
         xM <- "1 .M " * sub * (@octalmode[3]) * (@hash[2]) * @>path:
-            echo "xM '", $1, "'"
+            # echo "xM '", $1, "'"
             e.res.unstaged.add (status: Modified, path: strip $1)
         Mx <- "1 M. " * sub * (@octalmode[3]) * (@hash[2]) * @>path:
-            echo "Mx '", $1, "'"
+            # echo "Mx '", $1, "'"
             e.res.staged.add (status: Modified, path: strip $1)
         MM <- "1 MM " * sub * (@octalmode[3]) * (@hash[2]) * @>path:
             # echo "MM '", $1, "'"
@@ -264,27 +265,31 @@ proc parse_status_v2*(Lines: seq[string]): RepoStatus_v2=
         Dx <- "1 D. " * sub * (@octalmode[3]) * (@hash[2]) * @>path:
             # echo "Dx '", $1, "'"
             e.res.unstaged.add (status: Deleted, path: strip $1)
+        ignored <- "1 !! " * @>path:
+            # echo "ignored '", $1, "'"
+            discard
+        untracked <- "1 ?? " * @>path:
+            # echo "untracked '", $1, "'"
+            discard
         U <- "u >nosp2 " * sub * (@octalmode[4]) * (@hash[3]) * @>path:
-            echo "u '", $1, "'"
+            echo "unmerged ", $1, " '", $2, "'"
+            e.res.unmerged.add ($1 & " " & strip($2))
 
         xR <- "2 .R " * sub * (@octalmode[3]) * (@hash[2]) * @xscore * @>path * '\t' * >path:
-            echo "xR '", $1, "'"
+            # echo "xR '", $1, "'"
             e.res.unstaged.add (status: Renamed, path: strip $2)
         Rx <- "2 R. " * sub * (@octalmode[3]) * (@hash[2]) * @xscore * @>path * '\t' * >path:
-            echo "Rx '", $1, "'"
+            # echo "Rx '", $1, "'"
             e.res.staged.add (status: Renamed, path: strip $2)
         xC <- "2 .C " * sub * (@octalmode[3]) * (@hash[2]) * @xscore * @>path * '\t' * >path:
-            echo "xC '", $1, "'"
+            # echo "xC '", $1, "'"
             e.res.unstaged.add (status: Copied, path: strip $2)
         Cx <- "2 C. " * sub * (@octalmode[3]) * (@hash[2]) * @xscore * @>path * '\t' * >path:
-            echo "Cx '", $1, "'"
+            # echo "Cx '", $1, "'"
             e.res.staged.add (status: Copied, path: strip $2)
         zwei <- "2" * @>nosp2 * @nosp4 * (@octalmode[3]) * (@hash[2]) * @xscore * @>path * '\t' * >path:
-            echo "2 ", $1, " ", $2, "->", $3
-        untracked <- "? " * @>path:
-            echo "untracked '", $1, "'"
-        ignored <- "! " * @>path:
-            echo "ignored '", $1, "'"
+            # echo "2 ", $1, " ", $2, "->", $3
+            discard
         sonst <- >(*1) * !1: e.res.unparsed.add $1
         # ===============================
         entry <- oid | oid_initial | head | head_detached | branch_upstream | branch_ab | xM | Mx | MM | Ax | AM | xD | Dx | xR | Rx | xC | Cx | U | zwei | untracked | ignored | sonst
