@@ -53,7 +53,7 @@ proc page_log*(Args: Table[string,string]): string=
                                         if yage==0:             "<td>" & df & "</td>"
                                         elif yage mod 2==0:     "<td class='yeven'>" & df & "</td>"
                                         else:                   "<td class='yodd'>" & df & "</td>"
-                                res.add "\n<tr>" & tdcommit & "<td>" & commit.author & " " & $commit.parents.len & "</td>" & tddate & "<td>" & files & "</td><td>" & comments & "</td></tr>"
+                                res.add "\n<tr>" & tdcommit & "<td>" & commit.author & "</td>" & tddate & "<td>" & files & "</td><td>" & comments & "</td></tr>"
                         res.add "\n" & fmt"<tr><td><a id='top{L.len}'>{L.len}</a></td></tr>"
                         res.add "</table>"
                         res
