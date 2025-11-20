@@ -60,7 +60,7 @@ proc gitfollow*(path: Path, num: int): tuple[result: seq[Commit], cmd: string]=
 
 proc gitlog*(num: int): tuple[commits: seq[Commit], cmd: string]=
     let args=block:
-        var A= @["log", "--name-status", "--parents", "--date=iso-local"]
+        var A= @["log", "--name-status", "--parents", "--first-parent", "--date=iso-local"]
         if num>0: A.add fmt"-{num}"
         A
     (parse_log exec_path("git", args), "git" & concat(args))
