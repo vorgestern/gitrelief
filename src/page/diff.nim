@@ -82,7 +82,7 @@ func format_html_toc(Patches: seq[FileDiff], staged: bool, ahash, bhash: SecureH
                 result.add fmt"<tr><td>{entry.op}</td><td><a href='{url}'>{tag}</a></td><td><a href='{url_follow path}'>Follow</a></td></tr>"
         result.add "</table></p>"
 
-func format_html_head(fileentry: FileDiff, hash: SecureHash): string=
+func format_html_heading(fileentry: FileDiff, hash: SecureHash): string=
         let followurl=case fileentry.op
         of Modified: fmt"{url_follow fileentry.bpath, 100, hash}"
         of Added:    fmt"{url_follow fileentry.bpath, 100, hash}"
@@ -181,7 +181,7 @@ proc page_diff*(Args: Table[string,string]): string=
                                         h.add "</table>"
                                         h
                                 else: ""
-                                format_html_head(Diffs[0], bhash) & ci & format_html_patch(Diffs[0], staged, ahash, bhash)
+                                format_html_heading(Diffs[0], bhash) & ci & format_html_patch(Diffs[0], staged, ahash, bhash)
                         else: "<p>No Modifications</p>"
         return fmt staticread "../public/diff.html"
 
