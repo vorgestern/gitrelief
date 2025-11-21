@@ -24,15 +24,15 @@ import git/processes
 # proc url_diff_B(path, oldpath: string, b: SecureHash) # B3
 # proc url_diff_C(path, oldpath: string, b, a: SecureHash) # C3
 
-func format_html_toc(Patches: seq[FileDiff], staged, merged: bool, ahash, bhash: SecureHash): string=
+func format_html_toc(Patches: seq[FileDiff], staged, listparents: bool, ahash, bhash: SecureHash): string=
         for index,entry in Patches:
                 let path=case entry.op
                 of Modified,Added,Renamed,Copied: entry.bpath
                 of Deleted,Other:  entry.apath
                 let (url,tag)=case entry.op
-                of Modified,Added: (url_diff(ahash, bhash, staged, merged, path), path)
-                of Deleted,Other:  (url_diff(ahash, bhash, staged, merged, path), path)
-                of Renamed,Copied: (url_diff(ahash, bhash, staged, merged, path, entry.bpath), path)
+                of Modified,Added: (url_diff(ahash, bhash, staged, listparents, path), path)
+                of Deleted,Other:  (url_diff(ahash, bhash, staged, listparents, path), path)
+                of Renamed,Copied: (url_diff(ahash, bhash, staged, listparents, path, entry.bpath), path)
                 result.add fmt"<tr><td>{entry.op}</td><td><a href='{url}'>{tag}</a></td><td><a href='{url_follow path}'>Follow</a></td></tr>"
         result.add "</table></p>"
 
@@ -125,11 +125,6 @@ func parent(X: DiffArgs): SecureHash=
         of C12, C3: X.a
         else: shanull
 
-func staged(X: DiffArgs): bool=
-        case X.uc
-        of A12, A3: X.staged
-        else: false
-
 func paths(X: DiffArgs): seq[string]=
         case X.uc
         of A12, B12, C12: @[X.path]
@@ -196,25 +191,29 @@ proc page_diff*(Args: Table[string,string]): string=
         let html_title= $servertitle & " diff"
         let
                 A=parseargs Args
+                staged=case A.uc
+                of A12, A3: A.staged
+                else: false
+                listparents=A.merged
                 Info=case A.uc
                 of B12, B3: gitcommit commit(A)
                 of C12, C3:
-                        if A.merged: gitcommit commit(A)
+                        if listparents: gitcommit commit(A)
                         else: Commit()
                 else: Commit()
                 parent=block:
                         if parent(A)!=shanull: parent A
                         elif Info.parents.len>0: Info.parents[0]
                         else: shanull
-                (Diffs,cmd)=gitdiff(parent, commit A, staged A, paths A)
+                (Diffs,cmd)=gitdiff(parent, commit A, staged, paths A)
                 html_cmd=htmlescape cmd
 
         let html_content = if Diffs.len>1:
-                format_html_toc(Diffs, staged A, A.merged, parent, commit A)
+                format_html_toc(Diffs, staged, listparents, parent, commit A)
         elif Diffs.len==1:
                 format_html_heading(Diffs[0], commit A) &
                 format_commitinfo(Info, Diffs[0], parent) &
-                format_html_patch(Diffs[0], staged A, parent, commit A)
+                format_html_patch(Diffs[0], staged, parent, commit A)
         else: ""
         return fmt staticread "../public/diff.html"
 
