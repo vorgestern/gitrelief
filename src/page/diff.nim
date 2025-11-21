@@ -17,16 +17,20 @@ import git/processes
 #       C Display diff between commit b and given ancestor a.                           B and a are given in url (a=...&b=...)
 #         Commits a and b are given in url.
 
-# func url_diff*(staged: bool, path:string): string= # url_diff_A12
-#         if staged: "/git/diff?path=" & path & "&staged"
-#         else:      "/git/diff?path=" & path
-# func url_diff*(commit: SecureHash, path:string): string= "/git/diff?b=" & $commit & "&path=" & path # url_diff_B12
-# func url_diff*(parent, commit: SecureHash, path:string): string="/git/diff?path=" & path & "&a=" & shaform(parent) & "&b=" & shaform(commit) # url_diff_C12
-# func url_diff*(staged: bool, path:string, oldpath:string): string= # url_diff_A3
-#         if staged: "/git/diff&path=" & path & "&oldpath=" & oldpath & "&staged"
-#         else:      "/git/diff&path=" & path & "&oldpath=" & oldpath
-# func url_diff*(commit: SecureHash, path:string, oldpath:string): string="/git/diff?b=" & shaform(commit) & "&path=" & path & "&oldpath=" & oldpath # url_diff_B3
-# func url_diff*(parent, commit: SecureHash, path, oldpath:string): string="/git/diff?a=" & shaform(parent) & "&b=" & shaform(commit) & "&path=" & path & "&oldpath=" & oldpath # url_diff_C3
+func url_diff*(staged: bool, path:string): string= # url_diff_A12
+        if staged: "/git/diff?path=" & path & "&staged"
+        else:      "/git/diff?path=" & path
+func url_diff*(commit: SecureHash, path:string): string= "/git/diff?b=" & $commit & "&path=" & path # url_diff_B12
+func url_diff*(parent, commit: SecureHash, path:string, merged: bool): string=  # url_diff_C12
+        if merged: "/git/diff?path=" & path & "&merged&a=" & shaform(parent) & "&b=" & shaform(commit)
+        else:      "/git/diff?path=" & path & "&a=" & shaform(parent) & "&b=" & shaform(commit)
+func url_diff*(staged: bool, path:string, oldpath:string): string= # url_diff_A3
+        if staged: "/git/diff&path=" & path & "&oldpath=" & oldpath & "&staged"
+        else:      "/git/diff&path=" & path & "&oldpath=" & oldpath
+func url_diff*(commit: SecureHash, path:string, oldpath:string): string="/git/diff?b=" & shaform(commit) & "&path=" & path & "&oldpath=" & oldpath # url_diff_B3
+func url_diff*(parent, commit: SecureHash, path, oldpath:string, merged: bool): string= # url_diff_C3
+        if merged: "/git/diff?merged&a=" & shaform(parent) & "&b=" & shaform(commit) & "&path=" & path & "&oldpath=" & oldpath
+        else:      "/git/diff?a=" & shaform(parent) & "&b=" & shaform(commit) & "&path=" & path & "&oldpath=" & oldpath
 
 # proc url_diff_A(path: string, staged: bool) # A1, A2
 # proc url_diff_B(path: string, b: SecureHash) # B1, B2
@@ -187,14 +191,17 @@ proc parseargs(Args: Table[string, string]): DiffArgs=
                         else:
                                 result.uc=A12
 
-proc format_commitinfo(X: Commit, current_parent: SecureHash): string=
+proc format_commitinfo(X: Commit, fileentry: FileDiff, current_parent: SecureHash): string=
         if X.hash==shanull: return ""
         result="<table>"
         result.add "<tr><td>" & X.author & "</td><td>parents</td><th>" & htmlescape(X.subject) & "</th></tr>"
         result.add "<tr><td>" & X.date.format("d. MMM yyyy HH:mm") & "</td><td>"
         if X.parents.len>0: result.add shaform(current_parent)
         for k in X.parents:
-                if k!=current_parent: result.add "<br/>xx " & shaform(k)
+                if k!=current_parent:
+                        case fileentry.op
+                        of Renamed, Copied: result.add fmt"<br/><a href='{url_diff k, X.hash, fileentry.bpath, fileentry.apath, true}'>{shaform k}</a>"
+                        else:  result.add fmt"<br/><a href='{url_diff k, X.hash, fileentry.bpath, true}'>{shaform k}</a>"
         result.add "</td><td>"
         for k in X.details: result.add htmlescape(k) & "<br/>"
         result.add "</td></tr>"
@@ -221,7 +228,7 @@ proc page_diff*(Args: Table[string,string]): string=
                 format_html_toc(Diffs, staged A, parent, commit A)
         elif Diffs.len==1:
                 format_html_heading(Diffs[0], commit A) &
-                format_commitinfo(Info, parent) &
+                format_commitinfo(Info, Diffs[0], parent) &
                 format_html_patch(Diffs[0], staged A, parent, commit A)
         else: ""
         return fmt staticread "../public/diff.html"
