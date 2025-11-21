@@ -17,26 +17,6 @@ import git/processes
 #       C Display diff between commit b and given ancestor a.                           B and a are given in url (a=...&b=...)
 #         Commits a and b are given in url.
 
-# type
-#         Usecase=enum None, A12, B12, C12, A3, B3, C3
-#         xy=object
-#                 path: string
-#
-#                 case usecase: Usecase
-#                 of A3, B3, C3:
-#                         oldpath: string
-#
-#                 case usecase:
-#                         of A12, A3:
-#                                 staged: bool
-#                         of C12, C3:
-#                                 a: SecureHash
-#
-#                 case usecase:
-#                         of B12, B3, C12, C3:
-#                                 b: SecureHash
-#
-#
 # func url_diff*(staged: bool, path:string): string= # url_diff_A12
 #         if staged: "/git/diff?path=" & path & "&staged"
 #         else:      "/git/diff?path=" & path
@@ -55,22 +35,7 @@ import git/processes
 # proc url_diff_B(path, oldpath: string, b: SecureHash) # B3
 # proc url_diff_C(path, oldpath: string, b, a: SecureHash) # C3
 
-# proc usecase(Args: Table[string,string]): Usecase=
-#         if not Args.contains "path":
-#                 return None
-#         if Args.contains "oldpath":
-#                 if Args.contains "staged": return A3
-#                 elif Args.contains "b" and Args.contains "a": return C3
-#                 elif Args.contains "b": return B3
-#                 else: return None
-#         else:
-#                 if Args.contains "staged": return A12
-#                 elif Args.contains "b" and Args.contains "a": return C12
-#                 elif Args.contains "b": return B12
-#                 else: return None
-
 func format_html_toc(Patches: seq[FileDiff], staged: bool, ahash, bhash: SecureHash): string=
-        result.add "<p><table>"
         for index,entry in Patches:
                 let path=case entry.op
                 of Modified,Added,Renamed,Copied: entry.bpath
@@ -153,36 +118,98 @@ func format_html_patch(fileentry: FileDiff, staged: bool, ahash, bhash: SecureHa
                                 result.add fmt"{'\n'}<tr><td class='Acmp'>{A}</td><td class='Bcmp'>{B}</td></tr>"
                 result.add "</table></p>"
 
+type
+        DiffUsecase=enum None, A12, B12, C12, A3, B3, C3
+        DiffArgs=object
+                uc: DiffUsecase
+                path, oldpath: string
+                staged: bool
+                a, b: SecureHash
+
+func commit(X: DiffArgs): SecureHash=
+        case X.uc
+        of A12, A3: shanull
+        else: X.b
+
+func parent(X: DiffArgs): SecureHash=
+        case X.uc
+        of C12, C3: X.a
+        else: shanull
+
+func staged(X: DiffArgs): bool=
+        case X.uc
+        of A12, A3: X.staged
+        else: false
+
+func paths(X: DiffArgs): seq[string]=
+        case X.uc
+        of A12, B12, C12: @[X.path]
+        else: @[X.oldpath, X.path]
+
+proc mkhash(x: string): SecureHash=
+        if x.len>40: shanull
+        elif x.len==40: parsesecurehash x
+        else: gitcompletehash x
+
+proc parseargs(Args: Table[string, string]): DiffArgs=
+        result.uc=None
+        result.path=Args.getordefault("path", "")
+        if result.path=="": return
+        if Args.contains "staged":
+                result.staged=true
+                if Args.contains("oldpath") and Args.contains "path":
+                        result.uc=A3
+                        result.oldpath=Args["oldpath"]
+                else:
+                        result.uc=A12
+        else:
+                result.staged=false
+                if Args.contains("oldpath") and Args.contains "path":
+                        result.oldpath=Args["oldpath"]
+                        if Args.contains("b") and Args.contains "a":
+                                result.uc=C3
+                                result.a=mkhash Args["a"]
+                                result.b=mkhash Args["b"]
+                        elif Args.contains "b":
+                                result.uc=B3
+                                result.b=mkhash Args["b"]
+                        else:
+                                result.uc=A3
+                else:
+                        if Args.contains("b") and Args.contains "a":
+                                result.uc=C12
+                                result.a=mkhash Args["a"]
+                                result.b=mkhash Args["b"]
+                        elif Args.contains "b":
+                                result.uc=B12
+                                result.b=mkhash Args["b"]
+                        else:
+                                result.uc=A12
+
+proc format_commitinfo(X: Commit): string=
+        echo "format_commitinfo"
+        result="<table>"
+        result.add "<tr><td>" & X.author & "</td><th>" & htmlescape(X.subject) & "</th></tr>"
+        result.add "<tr><td>" & X.date.format("d. MMM yyyy HH:mm") & "</td><td>"
+        for k in X.details: result.add htmlescape(k) & "<br/>"
+        result.add "</td></tr>"
+        result.add "</table>"
+
 proc page_diff*(Args: Table[string,string]): string=
         let
-                paths=block:
-                        var X: seq[string]
-                        if Args.contains "path": X.add Args["path"]
-                        if Args.contains "oldpath": X.add Args["oldpath"]
-                        X
-                staged=Args.contains "staged"
-                ahash=if Args.contains "a": gitcompletehash Args["a"] else: shanull
-                bhash=if Args.contains "b": gitcompletehash Args["b"] else: shanull
-                (Diffs,cmd)=    if staged: gitdiff_staged(ahash, bhash, paths)
-                                else:      gitdiff(       ahash, bhash, paths)
-        let
+                A=parseargs Args
                 html_title= $servertitle & " diff"
+                (Diffs,cmd)=gitdiff(parent A, commit A, staged A, paths A)
                 html_cmd=htmlescape cmd
-                html_content=block:
-                        if Diffs.len>1: format_html_toc(Diffs, staged, ahash, bhash)
-                        elif Diffs.len==1:
-                                let ci=if bhash!=shanull:
-                                        let X=gitcommit(bhash)
-                                        var h="<table>"
-                                        h.add "<tr><td>" & X.author & "</td><th>" & htmlescape(X.subject) & "</th></tr>"
-                                        h.add "<tr><td>" & X.date.format("d. MMM yyyy HH:mm") & "</td><td>"
-                                        for k in X.details: h.add htmlescape(k) & "<br/>"
-                                        h.add "</td></tr>"
-                                        h.add "</table>"
-                                        h
-                                else: ""
-                                format_html_heading(Diffs[0], bhash) & ci & format_html_patch(Diffs[0], staged, ahash, bhash)
-                        else: "<p>No Modifications</p>"
+
+        let html_content = if Diffs.len>1:
+                format_html_toc(Diffs, staged A, parent A, commit A)
+        elif Diffs.len==1:
+                echo "commit: ", commit A
+                format_html_heading(Diffs[0], commit A) &
+                (if commit(A)!=shanull: format_commitinfo(gitcommit(commit A)) else: "") &
+                format_html_patch(Diffs[0], staged A, parent A, commit A)
+        else: ""
         return fmt staticread "../public/diff.html"
 
 # =====================================================================

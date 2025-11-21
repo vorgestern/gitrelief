@@ -23,17 +23,9 @@ proc exec_path_text(command: string, args: openarray[string]): string=
 
 # =====================================================================
 
-proc gitdiff*(a, b: SecureHash, paths: openarray[string]): tuple[diffs: seq[FileDiff], cmd: string] =
+proc gitdiff*(a, b: SecureHash, staged: bool, paths: openarray[string]): tuple[diffs: seq[FileDiff], cmd: string] =
     var args= @["diff", "-U999999"]
-    if a!=shanull and b!=shanull: args.add shaform(a) & ".." & shaform(b)
-    elif a!=shanull: args.add shaform a
-    if paths.len>0:
-        args.add "--"
-        for p in paths: args.add p
-    (parse_diff(exec_path("git", args)), "git" & concat(args))
-
-proc gitdiff_staged*(a, b: SecureHash, paths: openarray[string]): tuple[diffs: seq[FileDiff], cmd: string] =
-    var args= @["diff", "-U999999", "--staged"]
+    if staged: args.add "--staged"
     if a!=shanull and b!=shanull: args.add shaform(a) & ".." & shaform(b)
     elif a!=shanull: args.add shaform a
     if paths.len>0:
