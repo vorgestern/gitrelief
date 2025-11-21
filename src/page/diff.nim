@@ -3,6 +3,72 @@ import std/[tables, strformat, strutils, times]
 import mehr/helper
 import git/processes
 
+# Usecases for page 'diff'
+# What to compare
+#       1 filepath                                                                      Show diff immediately. If several references are available, use the first and offer the others via links.
+#       2 pattern oder folder                                                           Show a table of filepaths. Each row offers a link to a filepath (1).
+#                                                                                       A folder is specified with a trailing /.
+#                                                                                       A pattern includes wildcards recognised by git.
+#       3 filepath, oldfilepath                                                         Display diff between filepath before and after rename or copy.
+# Compare between what states
+#       A Display diff between working copy (staged or unstaged) and HEAD.              Filepath, pattern or folder given in url (path=...). If staged, url contains query param staged.
+#       B Display diff between commit b and one of its parent commits.                  B given in url (b=...)
+#         Commit b is given in url, parents are not specified but queried here.
+#       C Display diff between commit b and given ancestor a.                           B and a are given in url (a=...&b=...)
+#         Commits a and b are given in url.
+
+# type
+#         Usecase=enum None, A12, B12, C12, A3, B3, C3
+#         xy=object
+#                 path: string
+#
+#                 case usecase: Usecase
+#                 of A3, B3, C3:
+#                         oldpath: string
+#
+#                 case usecase:
+#                         of A12, A3:
+#                                 staged: bool
+#                         of C12, C3:
+#                                 a: SecureHash
+#
+#                 case usecase:
+#                         of B12, B3, C12, C3:
+#                                 b: SecureHash
+#
+#
+# func url_diff*(staged: bool, path:string): string= # url_diff_A12
+#         if staged: "/git/diff?path=" & path & "&staged"
+#         else:      "/git/diff?path=" & path
+# func url_diff*(commit: SecureHash, path:string): string= "/git/diff?b=" & $commit & "&path=" & path # url_diff_B12
+# func url_diff*(parent, commit: SecureHash, path:string): string="/git/diff?path=" & path & "&a=" & shaform(parent) & "&b=" & shaform(commit) # url_diff_C12
+# func url_diff*(staged: bool, path:string, oldpath:string): string= # url_diff_A3
+#         if staged: "/git/diff&path=" & path & "&oldpath=" & oldpath & "&staged"
+#         else:      "/git/diff&path=" & path & "&oldpath=" & oldpath
+# func url_diff*(commit: SecureHash, path:string, oldpath:string): string="/git/diff?b=" & shaform(commit) & "&path=" & path & "&oldpath=" & oldpath # url_diff_B3
+# func url_diff*(parent, commit: SecureHash, path, oldpath:string): string="/git/diff?a=" & shaform(parent) & "&b=" & shaform(commit) & "&path=" & path & "&oldpath=" & oldpath # url_diff_C3
+
+# proc url_diff_A(path: string, staged: bool) # A1, A2
+# proc url_diff_B(path: string, b: SecureHash) # B1, B2
+# proc url_diff_C(path: string, b, a: SecureHash) # C1, C2
+# proc url_diff_A(path, oldpath: string, staged: bool) # A3
+# proc url_diff_B(path, oldpath: string, b: SecureHash) # B3
+# proc url_diff_C(path, oldpath: string, b, a: SecureHash) # C3
+
+# proc usecase(Args: Table[string,string]): Usecase=
+#         if not Args.contains "path":
+#                 return None
+#         if Args.contains "oldpath":
+#                 if Args.contains "staged": return A3
+#                 elif Args.contains "b" and Args.contains "a": return C3
+#                 elif Args.contains "b": return B3
+#                 else: return None
+#         else:
+#                 if Args.contains "staged": return A12
+#                 elif Args.contains "b" and Args.contains "a": return C12
+#                 elif Args.contains "b": return B12
+#                 else: return None
+
 func format_html_toc(Patches: seq[FileDiff], staged: bool, ahash, bhash: SecureHash): string=
         result.add "<p><table>"
         for index,entry in Patches:
