@@ -17,21 +17,6 @@ import git/processes
 #       C Display diff between commit b and given ancestor a.                           B and a are given in url (a=...&b=...)
 #         Commits a and b are given in url.
 
-func url_diff*(staged: bool, path:string): string= # url_diff_A12
-        if staged: "/git/diff?path=" & path & "&staged"
-        else:      "/git/diff?path=" & path
-func url_diff*(commit: SecureHash, path:string): string= "/git/diff?b=" & $commit & "&path=" & path # url_diff_B12
-func url_diff*(parent, commit: SecureHash, path:string, merged: bool): string=  # url_diff_C12
-        if merged: "/git/diff?path=" & path & "&merged&a=" & shaform(parent) & "&b=" & shaform(commit)
-        else:      "/git/diff?path=" & path & "&a=" & shaform(parent) & "&b=" & shaform(commit)
-func url_diff*(staged: bool, path:string, oldpath:string): string= # url_diff_A3
-        if staged: "/git/diff&path=" & path & "&oldpath=" & oldpath & "&staged"
-        else:      "/git/diff&path=" & path & "&oldpath=" & oldpath
-func url_diff*(commit: SecureHash, path:string, oldpath:string): string="/git/diff?b=" & shaform(commit) & "&path=" & path & "&oldpath=" & oldpath # url_diff_B3
-func url_diff*(parent, commit: SecureHash, path, oldpath:string, merged: bool): string= # url_diff_C3
-        if merged: "/git/diff?merged&a=" & shaform(parent) & "&b=" & shaform(commit) & "&path=" & path & "&oldpath=" & oldpath
-        else:      "/git/diff?a=" & shaform(parent) & "&b=" & shaform(commit) & "&path=" & path & "&oldpath=" & oldpath
-
 # proc url_diff_A(path: string, staged: bool) # A1, A2
 # proc url_diff_B(path: string, b: SecureHash) # B1, B2
 # proc url_diff_C(path: string, b, a: SecureHash) # C1, C2
@@ -39,15 +24,15 @@ func url_diff*(parent, commit: SecureHash, path, oldpath:string, merged: bool): 
 # proc url_diff_B(path, oldpath: string, b: SecureHash) # B3
 # proc url_diff_C(path, oldpath: string, b, a: SecureHash) # C3
 
-func format_html_toc(Patches: seq[FileDiff], staged: bool, ahash, bhash: SecureHash): string=
+func format_html_toc(Patches: seq[FileDiff], staged, merged: bool, ahash, bhash: SecureHash): string=
         for index,entry in Patches:
                 let path=case entry.op
                 of Modified,Added,Renamed,Copied: entry.bpath
                 of Deleted,Other:  entry.apath
                 let (url,tag)=case entry.op
-                of Modified,Added: (url_diff(ahash, bhash, staged, path), path)
-                of Deleted,Other:  (url_diff(ahash, bhash, staged, path), path)
-                of Renamed,Copied: (url_diff(ahash, bhash, staged, path, entry.bpath), path)
+                of Modified,Added: (url_diff(ahash, bhash, staged, merged, path), path)
+                of Deleted,Other:  (url_diff(ahash, bhash, staged, merged, path), path)
+                of Renamed,Copied: (url_diff(ahash, bhash, staged, merged, path, entry.bpath), path)
                 result.add fmt"<tr><td>{entry.op}</td><td><a href='{url}'>{tag}</a></td><td><a href='{url_follow path}'>Follow</a></td></tr>"
         result.add "</table></p>"
 
@@ -200,8 +185,8 @@ proc format_commitinfo(X: Commit, fileentry: FileDiff, current_parent: SecureHas
         for k in X.parents:
                 if k!=current_parent:
                         case fileentry.op
-                        of Renamed, Copied: result.add fmt"<br/><a href='{url_diff k, X.hash, fileentry.bpath, fileentry.apath, true}'>{shaform k}</a>"
-                        else:  result.add fmt"<br/><a href='{url_diff k, X.hash, fileentry.bpath, true}'>{shaform k}</a>"
+                        of Renamed, Copied: result.add fmt"<br/><a href='{url_diff k, X.hash, false, true, fileentry.bpath, fileentry.apath}'>{shaform k}</a>"
+                        else:  result.add fmt"<br/><a href='{url_diff k, X.hash, false, true, fileentry.bpath}'>{shaform k}</a>"
         result.add "</td><td>"
         for k in X.details: result.add htmlescape(k) & "<br/>"
         result.add "</td></tr>"
@@ -225,7 +210,7 @@ proc page_diff*(Args: Table[string,string]): string=
                 html_cmd=htmlescape cmd
 
         let html_content = if Diffs.len>1:
-                format_html_toc(Diffs, staged A, parent, commit A)
+                format_html_toc(Diffs, staged A, A.merged, parent, commit A)
         elif Diffs.len==1:
                 format_html_heading(Diffs[0], commit A) &
                 format_commitinfo(Info, Diffs[0], parent) &
