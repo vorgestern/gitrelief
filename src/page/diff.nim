@@ -107,10 +107,13 @@ proc page_diff*(Args: Table[string,string]): string=
                         elif Diffs.len==1:
                                 let ci=if bhash!=shanull:
                                         let X=gitcommit(bhash)
-                                        var h="<p><table><tr><td>" & X.author & "</td><th>" & htmlescape(X.subject) & "</th></tr>"
+                                        var h="<table>"
+                                        h.add "<tr><td>" & X.author & "</td><th>" & htmlescape(X.subject) & "</th></tr>"
                                         h.add "<tr><td>" & X.date.format("d. MMM yyyy HH:mm") & "</td><td>"
                                         for k in X.details: h.add htmlescape(k) & "<br/>"
-                                        h & "</td></tr></table>"
+                                        h.add "</td></tr>"
+                                        h.add "</table>"
+                                        h
                                 else: ""
                                 format_html_head(Diffs[0], bhash) & ci & format_html_patch(Diffs[0], staged, ahash, bhash)
                         else: "<p>No Modifications</p>"
