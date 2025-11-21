@@ -123,7 +123,7 @@ type
         DiffArgs=object
                 uc: DiffUsecase
                 path, oldpath: string
-                staged: bool
+                staged, merged: bool
                 a, b: SecureHash
 
 func commit(X: DiffArgs): SecureHash=
@@ -153,6 +153,7 @@ proc mkhash(x: string): SecureHash=
 
 proc parseargs(Args: Table[string, string]): DiffArgs=
         result.uc=None
+        result.merged=Args.contains "merged"
         result.path=Args.getordefault("path", "")
         if result.path=="": return
         if Args.contains "staged":
@@ -186,29 +187,42 @@ proc parseargs(Args: Table[string, string]): DiffArgs=
                         else:
                                 result.uc=A12
 
-proc format_commitinfo(X: Commit): string=
-        echo "format_commitinfo"
+proc format_commitinfo(X: Commit, current_parent: SecureHash): string=
+        if X.hash==shanull: return ""
         result="<table>"
-        result.add "<tr><td>" & X.author & "</td><th>" & htmlescape(X.subject) & "</th></tr>"
+        result.add "<tr><td>" & X.author & "</td><td>parents</td><th>" & htmlescape(X.subject) & "</th></tr>"
         result.add "<tr><td>" & X.date.format("d. MMM yyyy HH:mm") & "</td><td>"
+        if X.parents.len>0: result.add shaform(current_parent)
+        for k in X.parents:
+                if k!=current_parent: result.add "<br/>xx " & shaform(k)
+        result.add "</td><td>"
         for k in X.details: result.add htmlescape(k) & "<br/>"
         result.add "</td></tr>"
         result.add "</table>"
 
 proc page_diff*(Args: Table[string,string]): string=
+        let html_title= $servertitle & " diff"
         let
                 A=parseargs Args
-                html_title= $servertitle & " diff"
-                (Diffs,cmd)=gitdiff(parent A, commit A, staged A, paths A)
+                Info=case A.uc
+                of B12, B3: gitcommit commit(A)
+                of C12, C3:
+                        if A.merged: gitcommit commit(A)
+                        else: Commit()
+                else: Commit()
+                parent=block:
+                        if parent(A)!=shanull: parent A
+                        elif Info.parents.len>0: Info.parents[0]
+                        else: shanull
+                (Diffs,cmd)=gitdiff(parent, commit A, staged A, paths A)
                 html_cmd=htmlescape cmd
 
         let html_content = if Diffs.len>1:
-                format_html_toc(Diffs, staged A, parent A, commit A)
+                format_html_toc(Diffs, staged A, parent, commit A)
         elif Diffs.len==1:
-                echo "commit: ", commit A
                 format_html_heading(Diffs[0], commit A) &
-                (if commit(A)!=shanull: format_commitinfo(gitcommit(commit A)) else: "") &
-                format_html_patch(Diffs[0], staged A, parent A, commit A)
+                format_commitinfo(Info, parent) &
+                format_html_patch(Diffs[0], staged A, parent, commit A)
         else: ""
         return fmt staticread "../public/diff.html"
 
