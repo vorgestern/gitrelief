@@ -17,7 +17,7 @@ func url_log*(num: int, top: int= -1): string=
     if top<0: "/git/log?num=" & $num
     else:     "/git/log?num=" & $num & "#top" & $top
 
-func url_diff*(parent, commit: SecureHash, staged, listparents: bool, path:string, oldpath:string=""): string=
+func url_diff*(parent, commit: SecureHash, staged: bool, path:string, oldpath:string=""): string=
     var X: seq[string]
     if parent!=shanull and commit!=shanull:
         X.add "a="&shaform parent
@@ -26,8 +26,6 @@ func url_diff*(parent, commit: SecureHash, staged, listparents: bool, path:strin
         X.add "a="&shaform parent
     if staged:
         X.add "staged"
-    if listparents:
-        X.add "listparents"
     if oldpath!="" and path!="":
         X.add "path="&path
         X.add "oldpath="&oldpath
@@ -39,20 +37,16 @@ func url_diff*(parent, commit: SecureHash, staged, listparents: bool, path:strin
         url.add q
     url
 
-# func url_diff_A12*(staged: bool, path:string): string= # url_diff_A12
+# func url_diff_A12*(staged: bool, path:string): string=
 #         if staged: "/git/diff?path=" & path & "&staged"
 #         else:      "/git/diff?path=" & path
 # func url_diff_B12*(commit: SecureHash, path:string): string= "/git/diff?b=" & $commit & "&path=" & path # url_diff_B12
-# func url_diff_C12*(parent, commit: SecureHash, path:string, listparents: bool): string=  # url_diff_C12
-#         if listparents: "/git/diff?path=" & path & "&listparents&a=" & shaform(parent) & "&b=" & shaform(commit)
-#         else:           "/git/diff?path=" & path & "&a=" & shaform(parent) & "&b=" & shaform(commit)
-# func url_diff_A3*(staged: bool, path:string, oldpath:string): string= # url_diff_A3
+# func url_diff_C12*(parent, commit: SecureHash, path:string): string="/git/diff?path=" & path & "&a=" & shaform(parent) & "&b=" & shaform(commit)
+# func url_diff_A3*(staged: bool, path:string, oldpath:string): string=
 #         if staged: "/git/diff&path=" & path & "&oldpath=" & oldpath & "&staged"
 #         else:      "/git/diff&path=" & path & "&oldpath=" & oldpath
 # func url_diff_B3*(commit: SecureHash, path:string, oldpath:string): string="/git/diff?b=" & shaform(commit) & "&path=" & path & "&oldpath=" & oldpath # url_diff_B3
-# func url_diff_C3*(parent, commit: SecureHash, path, oldpath:string, listparents: bool): string= # url_diff_C3
-#         if listparents: "/git/diff?listparents&a=" & shaform(parent) & "&b=" & shaform(commit) & "&path=" & path & "&oldpath=" & oldpath
-#         else:           "/git/diff?a=" & shaform(parent) & "&b=" & shaform(commit) & "&path=" & path & "&oldpath=" & oldpath
+# func url_diff_C3*(parent, commit: SecureHash, path, oldpath:string): string="/git/diff?a=" & shaform(parent) & "&b=" & shaform(commit) & "&path=" & path & "&oldpath=" & oldpath
 
 func url_follow*(path: string, num=100, highlightcommit: SecureHash=shanull): string=
     if highlightcommit==shanull: fmt"/git/follow?path={path}&num={num}"

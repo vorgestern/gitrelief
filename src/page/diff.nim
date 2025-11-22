@@ -17,15 +17,15 @@ import git/processes
 #       C Display diff between commit b and given ancestor a.                           B and a are given in url (a=...&b=...)
 #         Commits a and b are given in url.
 
-func format_html_toc(Patches: seq[FileDiff], staged, listparents: bool, ahash, bhash: SecureHash): string=
+func format_html_toc(Patches: seq[FileDiff], staged: bool, ahash, bhash: SecureHash): string=
         for index,entry in Patches:
                 let path=case entry.op
                 of Modified,Added,Renamed,Copied: entry.bpath
                 of Deleted,Other:  entry.apath
                 let (url,tag)=case entry.op
-                of Modified,Added: (url_diff(ahash, bhash, staged, listparents, path), path)
-                of Deleted,Other:  (url_diff(ahash, bhash, staged, listparents, path), path)
-                of Renamed,Copied: (url_diff(ahash, bhash, staged, listparents, path, entry.bpath), path)
+                of Modified,Added: (url_diff(ahash, bhash, staged, path), path)
+                of Deleted,Other:  (url_diff(ahash, bhash, staged, path), path)
+                of Renamed,Copied: (url_diff(ahash, bhash, staged, path, entry.bpath), path)
                 result.add fmt"<tr><td>{entry.op}</td><td><a href='{url}'>{tag}</a></td><td><a href='{url_follow path}'>Follow</a></td></tr>"
         result.add "</table></p>"
 
@@ -105,7 +105,7 @@ type
         DiffArgs=object
                 uc: DiffUsecase
                 path, oldpath: string
-                staged, listparents: bool
+                staged: bool
                 a, b: SecureHash
 
 func paths(X: DiffArgs): seq[string]=
@@ -120,7 +120,6 @@ proc mkhash(x: string): SecureHash=
 
 proc parseargs(Args: Table[string, string]): DiffArgs=
         result.uc=None
-        result.listparents=Args.contains "listparents"
         result.path=Args.getordefault("path", "")
         if result.path=="": return
         if Args.contains "staged":
@@ -167,8 +166,8 @@ proc format_commitinfo(X: Commit, fileentry: FileDiff, current_parent: SecureHas
         for phash in X.parents:
                 if phash!=current_parent:
                         case fileentry.op
-                        of Renamed, Copied: result.add fmt"<br/><a href='{url_diff phash, X.hash, false, true, fileentry.bpath, fileentry.apath}'>{shaform phash}</a>"
-                        else:  result.add fmt"<br/><a href='{url_diff              phash, X.hash, false, true, fileentry.bpath}'>{shaform phash}</a>"
+                        of Renamed, Copied: result.add fmt"<br/><a href='{url_diff phash, X.hash, false, fileentry.bpath, fileentry.apath}'>{shaform phash}</a>"
+                        else:  result.add fmt"<br/><a href='{url_diff              phash, X.hash, false, fileentry.bpath}'>{shaform phash}</a>"
         result.add "</td><td>"
         for k in X.details: result.add htmlescape(k) & "<br/>"
         result.add "</td></tr>"
@@ -181,7 +180,6 @@ proc page_diff*(Args: Table[string,string]): string=
                 staged=case A.uc
                 of A12, A3: A.staged
                 else: false
-                listparents=A.listparents
                 commit=A.b
                 Info=case A.uc
                 of B12, B3, C12, C3: gitcommit commit
@@ -193,7 +191,7 @@ proc page_diff*(Args: Table[string,string]): string=
                 (Diffs,cmd)=gitdiff(parent, commit, staged, paths A)
                 html_cmd=htmlescape cmd
                 html_content = if Diffs.len>1:
-                        format_html_toc(Diffs, staged, listparents, parent, commit)
+                        format_html_toc(Diffs, staged, parent, commit)
                 elif Diffs.len==1:
                         format_html_heading(Diffs[0], commit) &
                         format_commitinfo(Info, Diffs[0], parent) &
