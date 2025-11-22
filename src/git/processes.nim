@@ -24,7 +24,7 @@ proc exec_path_text(command: string, args: openarray[string]): string=
 # =====================================================================
 
 proc gitdiff*(a, b: SecureHash, staged: bool, paths: openarray[string]): tuple[diffs: seq[FileDiff], cmd: string] =
-    var args= @["diff", "-U999999"]
+    var args= @["diff", "-U999999", "--full-history"]
     if staged: args.add "--staged"
     if a!=shanull and b!=shanull: args.add shaform(a) & ".." & shaform(b)
     elif a!=shanull: args.add shaform a
