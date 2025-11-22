@@ -17,13 +17,6 @@ import git/processes
 #       C Display diff between commit b and given ancestor a.                           B and a are given in url (a=...&b=...)
 #         Commits a and b are given in url.
 
-# proc url_diff_A(path: string, staged: bool) # A1, A2
-# proc url_diff_B(path: string, b: SecureHash) # B1, B2
-# proc url_diff_C(path: string, b, a: SecureHash) # C1, C2
-# proc url_diff_A(path, oldpath: string, staged: bool) # A3
-# proc url_diff_B(path, oldpath: string, b: SecureHash) # B3
-# proc url_diff_C(path, oldpath: string, b, a: SecureHash) # C3
-
 func format_html_toc(Patches: seq[FileDiff], staged, listparents: bool, ahash, bhash: SecureHash): string=
         for index,entry in Patches:
                 let path=case entry.op
@@ -52,7 +45,7 @@ func format_html_heading(fileentry: FileDiff, hash: SecureHash): string=
         of Copied:   result.add fmt"{'\n'}<p>Copied {fileentry.apath} to {fileentry.bpath} <span><a href='{followurl}'>Follow</a></span></p>"
         of Other:    result.add fmt"{'\n'}<p>Unknown operation {fileentry.apath} <span><a href='{followurl}'>Follow</a></span></p>"
 
-func format_html_patch(fileentry: FileDiff, staged: bool, ahash, bhash: SecureHash): string=
+func format_html_diff(fileentry: FileDiff, staged: bool, ahash, bhash: SecureHash): string=
         if fileentry.op!=Other:
                 result.add "<p><table class='diff'>"
                 case fileentry.op:
@@ -213,7 +206,7 @@ proc page_diff*(Args: Table[string,string]): string=
         elif Diffs.len==1:
                 format_html_heading(Diffs[0], commit A) &
                 format_commitinfo(Info, Diffs[0], parent) &
-                format_html_patch(Diffs[0], staged, parent, commit A)
+                format_html_diff(Diffs[0], staged, parent, commit A)
         else: ""
         return fmt staticread "../public/diff.html"
 
