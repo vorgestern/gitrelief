@@ -108,16 +108,6 @@ type
                 staged, listparents: bool
                 a, b: SecureHash
 
-func commit(X: DiffArgs): SecureHash=
-        case X.uc
-        of A12, A3: shanull
-        else: X.b
-
-func parent(X: DiffArgs): SecureHash=
-        case X.uc
-        of C12, C3: X.a
-        else: shanull
-
 func paths(X: DiffArgs): seq[string]=
         case X.uc
         of A12, B12, C12: @[X.path]
@@ -170,44 +160,46 @@ proc format_commitinfo(X: Commit, fileentry: FileDiff, current_parent: SecureHas
         result.add "<tr><td>" & X.author & "</td><td>parents</td><th>" & htmlescape(X.subject) & "</th></tr>"
         result.add "<tr><td>" & X.date.format("d. MMM yyyy HH:mm") & "</td><td>"
         if X.parents.len>0: result.add shaform(current_parent)
-        for k in X.parents:
-                if k!=current_parent:
+        for phash in X.parents:
+                if phash!=current_parent:
                         case fileentry.op
-                        of Renamed, Copied: result.add fmt"<br/><a href='{url_diff k, X.hash, false, true, fileentry.bpath, fileentry.apath}'>{shaform k}</a>"
-                        else:  result.add fmt"<br/><a href='{url_diff k, X.hash, false, true, fileentry.bpath}'>{shaform k}</a>"
+                        of Renamed, Copied: result.add fmt"<br/><a href='{url_diff phash, X.hash, false, true, fileentry.bpath, fileentry.apath}'>{shaform phash}</a>"
+                        else:  result.add fmt"<br/><a href='{url_diff              phash, X.hash, false, true, fileentry.bpath}'>{shaform phash}</a>"
         result.add "</td><td>"
         for k in X.details: result.add htmlescape(k) & "<br/>"
         result.add "</td></tr>"
         result.add "</table>"
 
 proc page_diff*(Args: Table[string,string]): string=
-        let html_title= $servertitle & " diff"
         let
+                html_title= $servertitle & " diff"
                 A=parseargs Args
                 staged=case A.uc
                 of A12, A3: A.staged
                 else: false
                 listparents=A.listparents
+                commit=case A.uc
+                        of A12, A3: shanull
+                        else: A.b
                 Info=case A.uc
-                of B12, B3: gitcommit commit(A)
+                of B12, B3: gitcommit commit
                 of C12, C3:
-                        if listparents: gitcommit commit(A)
+                        if listparents: gitcommit commit
                         else: Commit()
                 else: Commit()
-                parent=block:
-                        if parent(A)!=shanull: parent A
-                        elif Info.parents.len>0: Info.parents[0]
-                        else: shanull
-                (Diffs,cmd)=gitdiff(parent, commit A, staged, paths A)
+                parent=case A.uc
+                        of C12, C3: A.a
+                        else:
+                                if Info.parents.len>0: Info.parents[0] else: shanull
+                (Diffs,cmd)=gitdiff(parent, commit, staged, paths A)
                 html_cmd=htmlescape cmd
-
-        let html_content = if Diffs.len>1:
-                format_html_toc(Diffs, staged, listparents, parent, commit A)
-        elif Diffs.len==1:
-                format_html_heading(Diffs[0], commit A) &
-                format_commitinfo(Info, Diffs[0], parent) &
-                format_html_diff(Diffs[0], staged, parent, commit A)
-        else: ""
+                html_content = if Diffs.len>1:
+                        format_html_toc(Diffs, staged, listparents, parent, commit)
+                elif Diffs.len==1:
+                        format_html_heading(Diffs[0], commit) &
+                        format_commitinfo(Info, Diffs[0], parent) &
+                        format_html_diff(Diffs[0], staged, parent, commit)
+                else: "<p>No modifications found</p>" & format_commitinfo(Info, FileDiff(bpath: Args["path"]), parent)
         return fmt staticread "../public/diff.html"
 
 # =====================================================================
