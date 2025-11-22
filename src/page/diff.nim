@@ -199,7 +199,10 @@ proc page_diff*(Args: Table[string,string]): string=
                         format_html_heading(Diffs[0], commit) &
                         format_commitinfo(Info, Diffs[0], parent) &
                         format_html_diff(Diffs[0], staged, parent, commit)
-                else: "<p>No modifications found</p>" & format_commitinfo(Info, FileDiff(bpath: Args["path"]), parent)
+                else:
+                        let Diff=FileDiff(op: Other, bpath: Args["path"])
+                        fmt"<p>Not Modified: {Diff.bpath}</p>" &
+                        format_commitinfo(Info, Diff, parent)
         return fmt staticread "../public/diff.html"
 
 # =====================================================================
