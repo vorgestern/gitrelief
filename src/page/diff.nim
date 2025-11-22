@@ -125,6 +125,8 @@ proc parseargs(Args: Table[string, string]): DiffArgs=
         if result.path=="": return
         if Args.contains "staged":
                 result.staged=true
+                result.a=shanull
+                result.b=shanull
                 if Args.contains("oldpath") and Args.contains "path":
                         result.uc=A3
                         result.oldpath=Args["oldpath"]
@@ -143,6 +145,8 @@ proc parseargs(Args: Table[string, string]): DiffArgs=
                                 result.b=mkhash Args["b"]
                         else:
                                 result.uc=A3
+                                result.a=shanull;
+                                result.b=shanull;
                 else:
                         if Args.contains("b") and Args.contains "a":
                                 result.uc=C12
@@ -178,14 +182,9 @@ proc page_diff*(Args: Table[string,string]): string=
                 of A12, A3: A.staged
                 else: false
                 listparents=A.listparents
-                commit=case A.uc
-                        of A12, A3: shanull
-                        else: A.b
+                commit=A.b
                 Info=case A.uc
-                of B12, B3: gitcommit commit
-                of C12, C3:
-                        if listparents: gitcommit commit
-                        else: Commit()
+                of B12, B3, C12, C3: gitcommit commit
                 else: Commit()
                 parent=case A.uc
                         of C12, C3: A.a
