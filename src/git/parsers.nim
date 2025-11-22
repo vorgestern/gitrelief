@@ -24,7 +24,7 @@ type
 
 func datestring*(C: Commit): string=C.date.format("d. MMM HH:mm")
 
-func url_diff*(parent, commit: SecureHash, staged, merged: bool, op: CommittedOperation): string=
+func url_diff*(parent, commit: SecureHash, staged, listparents: bool, op: CommittedOperation): string=
     var X: seq[string]
     if parent!=shanull and commit!=shanull:
         X.add "a="&shaform parent
@@ -33,8 +33,8 @@ func url_diff*(parent, commit: SecureHash, staged, merged: bool, op: CommittedOp
         X.add "a="&shaform parent
     if staged:
         X.add "staged"
-    if merged:
-        X.add "merged"
+    if listparents:
+        X.add "listparents"
     case op.status
     of Renamed, Copied:
         X.add "path="&op.newpath

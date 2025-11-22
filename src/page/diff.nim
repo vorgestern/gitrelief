@@ -112,7 +112,7 @@ type
         DiffArgs=object
                 uc: DiffUsecase
                 path, oldpath: string
-                staged, merged: bool
+                staged, listparents: bool
                 a, b: SecureHash
 
 func commit(X: DiffArgs): SecureHash=
@@ -137,7 +137,7 @@ proc mkhash(x: string): SecureHash=
 
 proc parseargs(Args: Table[string, string]): DiffArgs=
         result.uc=None
-        result.merged=Args.contains "merged"
+        result.listparents=Args.contains "listparents"
         result.path=Args.getordefault("path", "")
         if result.path=="": return
         if Args.contains "staged":
@@ -194,7 +194,7 @@ proc page_diff*(Args: Table[string,string]): string=
                 staged=case A.uc
                 of A12, A3: A.staged
                 else: false
-                listparents=A.merged
+                listparents=A.listparents
                 Info=case A.uc
                 of B12, B3: gitcommit commit(A)
                 of C12, C3:

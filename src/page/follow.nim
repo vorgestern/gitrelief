@@ -36,11 +36,11 @@ func format_table(L: seq[Commit], leading: string, followfile: bool, highlight="
         for d in commit.details: comments.add "<br/>"&htmlescape(d)
         let
             parent=if commit.parents.len>0: commit.parents[0] else: shanull
-            merged=if commit.parents.len>1: true else: false
+            listparents=if commit.parents.len>1: true else: false
         var files=""
         for fileindex,op in commit.files:
             if fileindex>0: files.add "<br/>"
-            let url=url_diff(parent, commit.hash, false, merged, op)
+            let url=url_diff(parent, commit.hash, false, listparents, op)
             if op.status==Renamed:  files.add fmt"<a href='{url}'>{op.status}</a> to {path_short op.newpath, leading, false}<br/>from {path_short op.oldpath, leading, false}"
             elif op.status==Copied: files.add fmt"<a href='{url}'>{op.status}</a> to {path_short op.newpath, leading, false}<br/>from {path_short op.oldpath, leading, false}"
             elif op.status==Added:  files.add fmt"<a href='{url}'>{op.status}</a>{path_short op.path, leading, false}"

@@ -37,11 +37,11 @@ proc page_log*(Args: Table[string,string]): string=
                                         s
                                 let
                                         parent=if commit.parents.len>0: commit.parents[0] else: shanull
-                                        merged=if commit.parents.len>1: true else: false
+                                        listparents=if commit.parents.len>1: true else: false
                                 var files=""
                                 for index,op in commit.files:
                                         if index>0: files.add "<br/>"
-                                        let url=url_diff(parent, commit.hash, false, merged, op)
+                                        let url=url_diff(parent, commit.hash, false, listparents, op)
                                         case op.status
                                         of Renamed, Copied: files.add fmt"{op.status} <a href='{url}'>{op.newpath}<br/>&nbsp;&nbsp;from {op.oldpath}</a>"
                                         else:               files.add fmt"{op.status} <a href='{url}'>{op.path}</a>"
