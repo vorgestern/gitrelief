@@ -1,8 +1,7 @@
 
 import jesterfork
 import page/[log,diff,follow,status,branches]
-import helper
-import action/[stage]
+import helper, gitstage
 import std/[cmdline,strutils,paths]
 
 # asyncdispatch
