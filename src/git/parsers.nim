@@ -225,7 +225,7 @@ proc parse_status_v2*(Lines: seq[string]): RepoStatus_v2=
         parsercontext=object
             res: ptr RepoStatus_v2
     const statuslineparser=peg("entry", e: parsercontext):
-        path <- +{1..31, 33..255}
+        path <- +{33..255}
         name <- +{1..31, 33..255}
         nosp <- {1..31, 33..255}
         nosp2 <- {1..31, 33..255}[2]
@@ -486,8 +486,18 @@ when ismainmodule:
 1 .M N... 100644 100644 100644 83192ca64e572eb66a38d63387e799e0206462ac 83192ca64e572eb66a38d63387e799e0206462ac src/git/processes.nim
 1 .M N... 100644 100644 100644 7ce235a1e0dbb8efae3d42adfbe8d92b7abb2c24 7ce235a1e0dbb8efae3d42adfbe8d92b7abb2c24 src/page/status.nim
     """
-    if true:
+    if false:
         echo "parse_status_v2:"
         let X=parse_status_v2(demo2.split '\n')
         echo "currentcommit: ", X.currentcommit
         echo "currentbranch: ", X.currentbranch
+
+    const demo3="""
+2 R. N... 100644 100644 100644 3d9668b87c829ec87818a3940fee3f5130fc561b 3d9668b87c829ec87818a3940fee3f5130fc561b R100 src/helper.nim	src/mehr/helper.nim
+"""
+    if true:
+        echo "parse_status_v2:"
+        let X=parse_status_v2(demo3.split '\n')
+        echo "currentcommit: ", X.currentcommit
+        echo "currentbranch: ", X.currentbranch
+        echo "unparsed: ", X.unparsed
