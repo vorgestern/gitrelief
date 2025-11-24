@@ -29,7 +29,7 @@ func path_short(path, leading: string, followfile: bool): string=
     else: " " & path
 
 func format_table(L: seq[Commit], leading: string, followfile: bool, highlight=""): string=
-    result="<table class='diff'>"
+    result="<table class='diff'>\n<tr><th>commit</th><th>who</th><th>when</th><th>affected</th><th>subject/details</th></tr>"
     for commitindex,commit in L:
         var comments=htmlescape(commit.subject)
         for d in commit.details: comments.add "<br/>"&htmlescape(d)
