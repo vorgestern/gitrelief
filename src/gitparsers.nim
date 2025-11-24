@@ -412,13 +412,15 @@ proc format_commits*(L: seq[Commit]): string=
                     for d in commit.details: s.add "<br/>"&htmlescape(d)
                     "<td>" & s & "</td>"
                 parent=if commit.parents.len>0: commit.parents[0] else: shanull
-            var files=""
-            for fileindex,op in commit.files:
-                    if fileindex>0: files.add "<br/>"
-                    let url=url_diff(parent, commit.hash, false, op)
-                    case op.status
-                    of Renamed, Copied: files.add fmt"{op.status} <a href='{url}'>{op.newpath}<br/>&nbsp;&nbsp;from {op.oldpath}</a>"
-                    else:               files.add fmt"{op.status} <a href='{url}'>{op.path}</a>"
+                tdaffected=block:
+                    var files=""
+                    for fileindex,op in commit.files:
+                            if fileindex>0: files.add "<br/>"
+                            let url=url_diff(parent, commit.hash, false, op)
+                            case op.status
+                            of Renamed, Copied: files.add fmt"{op.status} <a href='{url}'>{op.newpath}<br/>&nbsp;&nbsp;from {op.oldpath}</a>"
+                            else:               files.add fmt"{op.status} <a href='{url}'>{op.path}</a>"
+                    "<td>" & files & "</td>"
             let yage=ynow-year(commit.date)
             if yage>yage_merk:
                     let yclass=if yage mod 2==0: "yeven" else: "yodd"
@@ -429,7 +431,7 @@ proc format_commits*(L: seq[Commit]): string=
                     if yage==0:             "<td>" & df & "</td>"
                     elif yage mod 2==0:     "<td class='yeven'>" & df & "</td>"
                     else:                   "<td class='yodd'>" & df & "</td>"
-            result.add "\n<tr>" & tdcommit & tdauthor & tddate & "<td>" & files & "</td>" & tdcomments & "</tr>"
+            result.add "\n<tr>" & tdcommit & tdauthor & tddate & tdaffected & tdcomments & "</tr>"
     result.add "\n" & fmt"<tr><td><a id='top{L.len}'>{L.len}</a></td></tr>"
     result.add "</table>"
 
