@@ -22,9 +22,9 @@ proc page_log*(Args: Table[string,string]): string=
                         let ynow=year(now())
                         var yage_merk=0
                         var res="<table class='diff'>\n<tr><th>commit</th><th>who</th><th>when</th><th>affected</th><th>subject/details</th></tr>"
-                        for index,commit in L:
+                        for commitindex,commit in L:
                                 # Vielfache von 100 erhalten eine Hinweiszeile, die auch als Sprungziel dient.
-                                if index>0 and index mod 100==0: res.add "\n" & fmt"<tr><td><a id='top{index}'>{index}</a></td></tr>"
+                                if commitindex>0 and commitindex mod 100==0: res.add "\n" & fmt"<tr><td><a id='top{commitindex}'>{commitindex}</a></td></tr>"
                                 let tdcommit=block:
                                         var X="<td>" & shaform(commit.hash)
                                         for p in 0..<commit.parents.len: X.add "<br/>" & $p & ": " & shaform(commit.parents[p])
@@ -36,8 +36,8 @@ proc page_log*(Args: Table[string,string]): string=
                                         s
                                 let     parent=if commit.parents.len>0: commit.parents[0] else: shanull
                                 var files=""
-                                for index,op in commit.files:
-                                        if index>0: files.add "<br/>"
+                                for fileindex,op in commit.files:
+                                        if fileindex>0: files.add "<br/>"
                                         let url=url_diff(parent, commit.hash, false, op)
                                         case op.status
                                         of Renamed, Copied: files.add fmt"{op.status} <a href='{url}'>{op.newpath}<br/>&nbsp;&nbsp;from {op.oldpath}</a>"
