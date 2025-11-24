@@ -393,7 +393,12 @@ proc parse_show_branches*(Lines: openarray[string]): ShowBranch=
             echo "'", Lines[k], "'"
             inc k
 
-proc format_commits*(L: seq[Commit], highlight=""): string=
+func path_short(path, leading: string, followfile: bool): string=
+        if followfile: return ""
+        if leading.len>0 and path.startswith(leading): " " & path.substr(leading.len)
+        else: " " & path
+
+proc format_commits*(L: seq[Commit], leading: string, followfile=false, highlight=""): string=
     let ynow=year(now())
     var yage_merk=0
     result="<table class='diff'>\n<tr><th>commit</th><th>who</th><th>when</th><th>affected</th><th>subject/details</th></tr>"
@@ -420,8 +425,9 @@ proc format_commits*(L: seq[Commit], highlight=""): string=
                             if fileindex>0: files.add "<br/>"
                             let url=url_diff(parent, commit.hash, false, op)
                             case op.status
-                            of Renamed, Copied: files.add fmt"{op.status} <a href='{url}'>{op.newpath}<br/>&nbsp;&nbsp;from {op.oldpath}</a>"
-                            else:               files.add fmt"{op.status} <a href='{url}'>{op.path}</a>"
+                            of Renamed, Copied: files.add fmt"<a href='{url}'>{op.status}</a> to {path_short op.newpath, leading, false}<br/>from {path_short op.oldpath, leading, false}"
+                            of Added:           files.add fmt"<a href='{url}'>{op.status}</a>{path_short op.path, leading, false}"
+                            else:               files.add fmt"<a href='{url}'>{op.status}</a>{path_short op.path, leading, followfile and commitindex>0}"
                     "<td>" & files & "</td>"
             let yage=ynow-year(commit.date)
             if yage>yage_merk:

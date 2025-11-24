@@ -18,7 +18,7 @@ proc page_log*(Args: Table[string,string]): string=
                 html_add100_bottom=     if L.len>=num: fmt"<td><a href='{url_log num+100, num}'>100 more</a></td>"
                                         else: ""
                 html_cmd=               htmlescape cmd
-                html_content=format_commits(L)
+                html_content=format_commits(L, Args.getordefault("path", ""))
         fmt staticread "../public/log.html"
 
                                 # if commit.mergeinfo.len>0:
