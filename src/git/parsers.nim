@@ -215,7 +215,7 @@ type
     RepoStatus_v2* =object
         currentcommit*: SecureHash
         currentbranch*: string
-        staged*, unstaged*: seq[tuple[status: FileCommitStatus, path: string]]
+        staged*, unstaged*: seq[tuple[status: FileCommitStatus, path, oldpath: string]]
         notcontrolled*: seq[string]
         unmerged*: seq[string]
         unparsed*: seq[string]
@@ -245,26 +245,26 @@ proc parse_status_v2*(Lines: seq[string]): RepoStatus_v2=
         branch_ab <- "# branch.ab ": discard
         xM <- "1 .M " * sub * (@octalmode[3]) * (@hash[2]) * @>path:
             # echo "xM '", $1, "'"
-            e.res.unstaged.add (status: Modified, path: strip $1)
+            e.res.unstaged.add (status: Modified, path: strip $1, oldpath: "")
         Mx <- "1 M. " * sub * (@octalmode[3]) * (@hash[2]) * @>path:
             # echo "Mx '", $1, "'"
-            e.res.staged.add (status: Modified, path: strip $1)
+            e.res.staged.add (status: Modified, path: strip $1, oldpath: "")
         MM <- "1 MM " * sub * (@octalmode[3]) * (@hash[2]) * @>path:
             # echo "MM '", $1, "'"
-            e.res.staged.add (status: Modified, path: strip $1)
-            e.res.unstaged.add (status: Modified, path: strip $1)
+            e.res.staged.add (status: Modified, path: strip $1, oldpath: "")
+            e.res.unstaged.add (status: Modified, path: strip $1, oldpath: "")
         Ax <- "1 A. " * sub * (@octalmode[3]) * (@hash[2]) * @>path:
             # echo "Ax '", $1, "'"
-            e.res.staged.add (status: Added, path: strip $1)
+            e.res.staged.add (status: Added, path: strip $1, oldpath: "")
         AM <- "1 AM " * sub * (@octalmode[3]) * (@hash[2]) * @>path:
             # echo "AM '", $1, "'"
-            e.res.staged.add (status: Added, path: strip $1)
+            e.res.staged.add (status: Added, path: strip $1, oldpath: "")
         xD <- "1 .D " * sub * (@octalmode[3]) * (@hash[2]) * @>path:
             # echo "xD '", $1, "'"
-            e.res.staged.add (status: Deleted, path: strip $1)
+            e.res.staged.add (status: Deleted, path: strip $1, oldpath: "")
         Dx <- "1 D. " * sub * (@octalmode[3]) * (@hash[2]) * @>path:
             # echo "Dx '", $1, "'"
-            e.res.unstaged.add (status: Deleted, path: strip $1)
+            e.res.unstaged.add (status: Deleted, path: strip $1, oldpath: "")
         ignored <- "1 !! " * @>path:
             # echo "ignored '", $1, "'"
             discard
@@ -277,22 +277,19 @@ proc parse_status_v2*(Lines: seq[string]): RepoStatus_v2=
 
         xR <- "2 .R " * sub * (@octalmode[3]) * (@hash[2]) * @xscore * @>path * '\t' * >path:
             # echo "xR '", $1, "'"
-            e.res.unstaged.add (status: Renamed, path: strip $2)
+            e.res.unstaged.add (status: Renamed, path: strip $2, oldpath: strip $1)
         Rx <- "2 R. " * sub * (@octalmode[3]) * (@hash[2]) * @xscore * @>path * '\t' * >path:
             # echo "Rx '", $1, "'"
-            e.res.staged.add (status: Renamed, path: strip $2)
+            e.res.staged.add (status: Renamed, path: strip $2, oldpath: strip $1)
         xC <- "2 .C " * sub * (@octalmode[3]) * (@hash[2]) * @xscore * @>path * '\t' * >path:
             # echo "xC '", $1, "'"
-            e.res.unstaged.add (status: Copied, path: strip $2)
+            e.res.unstaged.add (status: Copied, path: strip $2, oldpath: strip $1)
         Cx <- "2 C. " * sub * (@octalmode[3]) * (@hash[2]) * @xscore * @>path * '\t' * >path:
             # echo "Cx '", $1, "'"
-            e.res.staged.add (status: Copied, path: strip $2)
-        zwei <- "2" * @>nosp2 * @nosp4 * (@octalmode[3]) * (@hash[2]) * @xscore * @>path * '\t' * >path:
-            # echo "2 ", $1, " ", $2, "->", $3
-            discard
+            e.res.staged.add (status: Copied, path: strip $2, oldpath: strip $1)
         sonst <- >(*1) * !1: e.res.unparsed.add $1
         # ===============================
-        entry <- oid | oid_initial | head | head_detached | branch_upstream | branch_ab | xM | Mx | MM | Ax | AM | xD | Dx | xR | Rx | xC | Cx | U | zwei | untracked | ignored | sonst
+        entry <- oid | oid_initial | head | head_detached | branch_upstream | branch_ab | xM | Mx | MM | Ax | AM | xD | Dx | xR | Rx | xC | Cx | U | untracked | ignored | sonst
     var e=parsercontext(res: addr result)
     for z in Lines:
         {.gcsafe.}:

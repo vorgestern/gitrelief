@@ -13,14 +13,14 @@ proc walkpublicdir(dir: Path): string=
 func format_repostatus(Status: RepoStatus_v2): tuple[a,b: string]=
         var Controlled="<h3>Staged</h3><table class='nolines'>"
         for index,entry in Status.staged:
-                let diff="\n    <a href='" & url_diff(shanull, shanull, true, entry.path) & "'>diff</a>"
+                let diff="\n    <a href='" & url_diff(shanull, shanull, true, entry.path, entry.oldpath) & "'>diff</a>"
                 let follow="\n    <a href='" & url_follow(entry.path) & "'>follow</a>"
                 let unstage="\n    <a href='" & url_unstage(entry.path) & "'>unstage</a>"
                 Controlled.add "\n" & fmt"<tr><td>{entry.status}</td><td>{diff}{follow}{unstage}</td><td>{entry.path}</td></tr>"
         Controlled.add "</table>"
         Controlled.add "<h3>Not staged</h3><table class='nolines'>"
         for index,entry in Status.unstaged:
-                let diff="\n    <a href='" & url_diff(shanull, shanull, false, entry.path) & "'>diff</a>"
+                let diff="\n    <a href='" & url_diff(shanull, shanull, false, entry.path, entry.oldpath) & "'>diff</a>"
                 let follow="\n    <a href='" & url_follow(entry.path) & "'>follow</a>"
                 let stage="\n    <a href='" & url_stage(entry.path) & "'>stage</a>"
                 Controlled.add "\n" & fmt"<tr><td>{entry.status}</td><td>{diff}{follow}{stage}</td><td>{entry.path}</td></tr>"
