@@ -1,5 +1,5 @@
 
-import std/[strutils, tables, times]
+import std/[strutils, strformat, tables, times]
 import checksums/sha1
 import npeg
 import helper
@@ -392,6 +392,44 @@ proc parse_show_branches*(Lines: openarray[string]): ShowBranch=
         while k<Lines.len:
             echo "'", Lines[k], "'"
             inc k
+
+proc format_commits*(L: seq[Commit]): string=
+    let ynow=year(now())
+    var yage_merk=0
+    result="<table class='diff'>\n<tr><th>commit</th><th>who</th><th>when</th><th>affected</th><th>subject/details</th></tr>"
+    for commitindex,commit in L:
+            # Vielfache von 100 erhalten eine Hinweiszeile, die auch als Sprungziel dient.
+            if commitindex>0 and commitindex mod 100==0: result.add "\n" & fmt"<tr><td><a id='top{commitindex}'>{commitindex}</a></td></tr>"
+            let tdcommit=block:
+                    var X="<td>" & shaform(commit.hash)
+                    for p in 0..<commit.parents.len: X.add "<br/>" & $p & ": " & shaform(commit.parents[p])
+                    X.add "</td>"
+                    X
+            let comments=block:
+                    var s=htmlescape(commit.subject)
+                    for d in commit.details: s.add "<br/>"&htmlescape(d)
+                    s
+            let     parent=if commit.parents.len>0: commit.parents[0] else: shanull
+            var files=""
+            for fileindex,op in commit.files:
+                    if fileindex>0: files.add "<br/>"
+                    let url=url_diff(parent, commit.hash, false, op)
+                    case op.status
+                    of Renamed, Copied: files.add fmt"{op.status} <a href='{url}'>{op.newpath}<br/>&nbsp;&nbsp;from {op.oldpath}</a>"
+                    else:               files.add fmt"{op.status} <a href='{url}'>{op.path}</a>"
+            let yage=ynow-year(commit.date)
+            if yage>yage_merk:
+                    let yclass=if yage mod 2==0: "yeven" else: "yodd"
+                    result.add "\n<tr class='newyear'><td/><td/><td class='" & yclass & "'><b>" & $year(commit.date) & "</b></td><td/><td/></tr>"
+                    yage_merk=yage
+            let df=commit.date.format("d. MMM HH:mm")
+            let tddate=block:
+                    if yage==0:             "<td>" & df & "</td>"
+                    elif yage mod 2==0:     "<td class='yeven'>" & df & "</td>"
+                    else:                   "<td class='yodd'>" & df & "</td>"
+            result.add "\n<tr>" & tdcommit & "<td>" & commit.author & "</td>" & tddate & "<td>" & files & "</td><td>" & comments & "</td></tr>"
+    result.add "\n" & fmt"<tr><td><a id='top{L.len}'>{L.len}</a></td></tr>"
+    result.add "</table>"
 
 when ismainmodule:
     # git show-branch --date-order --color=never --sha1-name master zv Zustandsvariable
