@@ -393,7 +393,7 @@ proc parse_show_branches*(Lines: openarray[string]): ShowBranch=
             echo "'", Lines[k], "'"
             inc k
 
-proc format_commits*(L: seq[Commit]): string=
+proc format_commits*(L: seq[Commit], highlight=""): string=
     let ynow=year(now())
     var yage_merk=0
     result="<table class='diff'>\n<tr><th>commit</th><th>who</th><th>when</th><th>affected</th><th>subject/details</th></tr>"
@@ -401,8 +401,10 @@ proc format_commits*(L: seq[Commit]): string=
             # Vielfache von 100 erhalten eine Hinweiszeile, die auch als Sprungziel dient.
             if commitindex>0 and commitindex mod 100==0: result.add "\n" & fmt"<tr><td><a id='top{commitindex}'>{commitindex}</a></td></tr>"
             let
+                tr=if shamatch(commit.hash, highlight): "\n<tr class='highlight'>" else: "\n<tr>"
                 tdcommit=block:
-                    var X="<td>" & shaform(commit.hash)
+                    let hx=shaform commit.hash
+                    var X="<td>" & hx
                     for p in 0..<commit.parents.len: X.add "<br/>" & $p & ": " & shaform(commit.parents[p])
                     X.add "</td>"
                     X
@@ -431,7 +433,7 @@ proc format_commits*(L: seq[Commit]): string=
                     if yage==0:             "<td>" & df & "</td>"
                     elif yage mod 2==0:     "<td class='yeven'>" & df & "</td>"
                     else:                   "<td class='yodd'>" & df & "</td>"
-            result.add "\n<tr>" & tdcommit & tdauthor & tddate & tdaffected & tdcomments & "</tr>"
+            result.add tr & tdcommit & tdauthor & tddate & tdaffected & tdcomments & "</tr>"
     result.add "\n" & fmt"<tr><td><a id='top{L.len}'>{L.len}</a></td></tr>"
     result.add "</table>"
 
