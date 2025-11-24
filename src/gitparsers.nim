@@ -406,6 +406,7 @@ proc format_commits*(L: seq[Commit]): string=
                     for p in 0..<commit.parents.len: X.add "<br/>" & $p & ": " & shaform(commit.parents[p])
                     X.add "</td>"
                     X
+                tdauthor="<td>" & commit.author & "</td>"
                 tdcomments=block:
                     var s=htmlescape(commit.subject)
                     for d in commit.details: s.add "<br/>"&htmlescape(d)
@@ -428,7 +429,7 @@ proc format_commits*(L: seq[Commit]): string=
                     if yage==0:             "<td>" & df & "</td>"
                     elif yage mod 2==0:     "<td class='yeven'>" & df & "</td>"
                     else:                   "<td class='yodd'>" & df & "</td>"
-            result.add "\n<tr>" & tdcommit & "<td>" & commit.author & "</td>" & tddate & "<td>" & files & "</td>" & tdcomments & "</tr>"
+            result.add "\n<tr>" & tdcommit & tdauthor & tddate & "<td>" & files & "</td>" & tdcomments & "</tr>"
     result.add "\n" & fmt"<tr><td><a id='top{L.len}'>{L.len}</a></td></tr>"
     result.add "</table>"
 
