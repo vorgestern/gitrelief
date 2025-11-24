@@ -15,7 +15,7 @@ import std/[cmdline,strutils,paths]
 # 5.  ok Follow braucht ebenfalls 'next 100' Links.
 # 6.  ok Gib in Logs die Jahreszahl sparsam aus.
 # 7.  ok Fasse die Commit-Typen Commit und LogCommit zusammen.
-# 8.     Biete bei Commits mit mehr als einem Elternknoten die Alternative an.
+# 8.  ok Biete bei Commits mit mehr als einem Elternknoten die Alternative an.
 # 9.     Recherchiere den Zugang zum locale in Nim.
 # 10.    Untersuche, ob gelegentliche Probleme beim Auffrischen einer Seite nach
 #        dem Neustart des Servers mit Http302 zu tun haben.
