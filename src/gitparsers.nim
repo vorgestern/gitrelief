@@ -177,41 +177,6 @@ proc parse_diff*(patch: seq[string]): seq[FileDiff]=
 # =====================================================================
 
 type
-    RepoStatus* =object
-        staged*, unstaged*: seq[tuple[status: FileCommitStatus, path: string]]
-        notcontrolled*: seq[string]
-        unparsed*: seq[string]
-
-proc parse_status*(Lines: seq[string]): RepoStatus=
-    type
-        parsercontext=object
-            res: ptr RepoStatus
-    const statuslineparser=peg("entry", e: parsercontext):
-        path <- +{1..31, 33..255}
-        flags <- +{'0'..'9'}
-        num <- +{'0'..'9'}
-        XM <- " M " * >path: e.res.unstaged.add (status: Modified, path: strip $1)
-        MX <- "M  " * >path: e.res.staged.add (status: Modified, path: strip $1)
-        MM <- "MM " * >path:
-            e.res.staged.add (status: Modified, path: strip $1)
-            e.res.unstaged.add (status: Modified, path: strip $1)
-        AX <- "A  " * >path: e.res.staged.add (status: Added, path: strip $1)
-        AM <- "AM " * >path: e.res.staged.add (status: Added, path: strip $1)
-        DX <- "D  " * >path: e.res.unstaged.add (status: Deleted, path: strip $1)
-        XD <- " D " * >path: e.res.staged.add (status: Deleted, path: strip $1)
-        uncontrolled <- "?? " * >path: e.res.notcontrolled.add (strip $1)
-        sonst <- >(*1) * !1: e.res.unparsed.add $1
-        entry <- XM | MX | MM | AX | AM | DX | XD | uncontrolled | sonst
-    var e=parsercontext(res: addr result)
-    for z in Lines:
-        {.gcsafe.}:
-            let mr=statuslineparser.match(z, e)
-            if not mr.ok:
-                echo "failed to parse: ", z
-
-# ---------------------------------------------------------------------
-
-type
     RepoStatus_v2* =object
         currentcommit*: SecureHash
         currentbranch*: string
