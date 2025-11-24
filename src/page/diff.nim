@@ -1,6 +1,6 @@
 
 import std/[tables, strformat, strutils, times]
-import mehr/helper
+import helper
 import git/processes
 
 # Usecases for page 'diff'

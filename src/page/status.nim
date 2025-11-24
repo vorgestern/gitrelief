@@ -1,7 +1,7 @@
 
 import std/[tables, strformat, strutils, paths, dirs]
 import git/processes
-import mehr/helper
+import helper
 
 proc walkpublicdir(dir: Path): string=
         var dir1=dir

@@ -2,7 +2,7 @@
 import std/[strutils, tables, times]
 import checksums/sha1
 import npeg
-import mehr/helper
+import helper
 
 type
     FileCommitStatus* =enum Other, Modified, Deleted, Added, Renamed, Copied

@@ -1,7 +1,7 @@
 
 import std/[tables, strutils, strformat, parseutils, times]
 import npeg
-import mehr/helper
+import helper
 import git/processes
 
 proc page_log*(Args: Table[string,string]): string=

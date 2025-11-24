@@ -1,7 +1,7 @@
 
 import jesterfork
 import page/[log,diff,follow,status,branches]
-import mehr/helper
+import helper
 import action/[stage]
 import std/[cmdline,strutils,paths]
 

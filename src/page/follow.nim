@@ -1,7 +1,7 @@
 
 import std/[tables, strformat, strutils, strtabs, times, paths]
 import npeg
-import mehr/helper
+import helper
 import git/processes
 
 type

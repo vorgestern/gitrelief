@@ -1,8 +1,7 @@
 
 import std/[osproc, strformat, streams, paths]
 import checksums/sha1
-import mehr/helper
-import parsers
+import helper, parsers
 
 export sha1
 export parsers
