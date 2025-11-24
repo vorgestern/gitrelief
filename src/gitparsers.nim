@@ -268,9 +268,8 @@ proc parse_status_v2*(Lines: seq[string]): RepoStatus_v2=
         ignored <- "1 !! " * @>path:
             # echo "ignored '", $1, "'"
             discard
-        untracked <- "1 ?? " * @>path:
-            # echo "untracked '", $1, "'"
-            discard
+        untracked <- "? " * @>path:
+            e.res.notcontrolled.add strip $1
         U <- "u >nosp2 " * sub * (@octalmode[4]) * (@hash[3]) * @>path:
             echo "unmerged ", $1, " '", $2, "'"
             e.res.unmerged.add ($1 & " " & strip($2))

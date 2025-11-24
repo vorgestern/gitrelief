@@ -32,9 +32,9 @@ proc gitdiff*(a, b: SecureHash, staged: bool, paths: openarray[string]): tuple[d
         for p in paths: args.add p
     (parse_diff(exec_path("git", args)), "git" & concat(args))
 
-proc gitstatus*(): tuple[status: RepoStatus, cmd: string] =
+proc gitstatus*(): tuple[status: RepoStatus_v2, cmd: string] =
     let args= @["status", "--porcelain", "-uall"]
-    (parse_status(exec_path("git", args)), "git" & concat(args))
+    (parse_status_v2(exec_path("git", args)), "git" & concat(args))
 
 proc gitstatus_v2*(): tuple[status: RepoStatus_v2, cmd: string] =
     let args= @["status", "-b", "--porcelain=v2", "-uall"]
