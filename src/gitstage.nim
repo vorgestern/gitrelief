@@ -1,6 +1,6 @@
 
 import std/tables
-import git/processes
+import gitqueries
 
 proc action_stage*(Args: Table[string,string]): string=
     if not Args.contains "path": return "Error"

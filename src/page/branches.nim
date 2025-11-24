@@ -1,7 +1,6 @@
 
 import std/[tables, strformat, strutils, times, paths, dirs, sequtils, sugar]
-import git/processes
-import helper
+import gitqueries, helper
 
 proc resolvecommits(SB: ShowBranch): seq[tuple[tags: string, commit: Commit]]=
     collect(newseq()):

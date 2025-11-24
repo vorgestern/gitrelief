@@ -1,7 +1,6 @@
 
 import std/[tables, strformat, strutils, times]
-import helper
-import git/processes
+import gitqueries, helper
 
 # Usecases for page 'diff'
 # What to compare

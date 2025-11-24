@@ -1,8 +1,7 @@
 
 import std/[tables, strformat, strutils, strtabs, times, paths]
 import npeg
-import helper
-import git/processes
+import gitqueries, helper
 
 type
     dirinfo=tuple[name, path: string]

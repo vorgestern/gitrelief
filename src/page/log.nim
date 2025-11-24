@@ -1,8 +1,7 @@
 
 import std/[tables, strutils, strformat, parseutils, times]
 import npeg
-import helper
-import git/processes
+import gitqueries, helper
 
 proc page_log*(Args: Table[string,string]): string=
         let
