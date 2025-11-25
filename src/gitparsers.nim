@@ -410,7 +410,8 @@ proc format_commits*(L: seq[Commit], leading: string, followfile=false, highligh
                 tdcommit=block:
                     let hx=shaform commit.hash
                     var X="<td>" & hx
-                    for p in 0..<commit.parents.len: X.add "<br/>" & $p & ": " & shaform(commit.parents[p])
+                    when false:
+                        for p in 0..<commit.parents.len: X.add "<br/>" & $p & ": " & shaform(commit.parents[p])
                     X.add "</td>"
                     X
                 tdauthor="<td>" & commit.author & "</td>"
