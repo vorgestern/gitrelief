@@ -7,3 +7,6 @@
 [submodule "npeg"]
 	path = npeg
 	url = https://github.com/zevv/npeg.git
+[submodule "checksums"]
+	path = checksums
+	url = https://github.com/nim-lang/checksums
