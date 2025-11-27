@@ -235,9 +235,8 @@ proc parse_status_v2*(Lines: seq[string]): RepoStatus_v2=
             discard
         untracked <- "? " * @>path:
             e.res.notcontrolled.add strip $1
-        U <- "u >nosp2 " * sub * (@octalmode[4]) * (@hash[3]) * @>path:
-            echo "unmerged ", $1, " '", $2, "'"
-            e.res.unmerged.add ($1 & " " & strip($2))
+        unmerged <- "u " * >nosp2 * @sub * (@octalmode[4]) * (@hash[3]) * @>path:
+            e.res.unmerged.add (strip $2)
 
         xR <- "2 .R " * sub * (@octalmode[3]) * (@hash[2]) * @xscore * @>path * '\t' * >path:
             # echo "xR '", $1, "'"
@@ -253,7 +252,7 @@ proc parse_status_v2*(Lines: seq[string]): RepoStatus_v2=
             e.res.staged.add (status: Copied, path: strip $2, oldpath: strip $1)
         sonst <- >(*1) * !1: e.res.unparsed.add $1
         # ===============================
-        entry <- oid | oid_initial | head | head_detached | branch_upstream | branch_ab | xM | Mx | MM | Ax | AM | xD | Dx | xR | Rx | xC | Cx | U | untracked | ignored | sonst
+        entry <- oid | oid_initial | head | head_detached | branch_upstream | branch_ab | xM | Mx | MM | Ax | AM | xD | Dx | xR | Rx | xC | Cx | unmerged | untracked | ignored | sonst
     var e=parsercontext(res: addr result)
     for z in Lines:
         {.gcsafe.}:
@@ -507,9 +506,20 @@ when ismainmodule:
     const demo3="""
 2 R. N... 100644 100644 100644 3d9668b87c829ec87818a3940fee3f5130fc561b 3d9668b87c829ec87818a3940fee3f5130fc561b R100 src/helper.nim	src/mehr/helper.nim
 """
-    if true:
+    if false:
         echo "parse_status_v2:"
         let X=parse_status_v2(demo3.split '\n')
         echo "currentcommit: ", X.currentcommit
         echo "currentbranch: ", X.currentbranch
         echo "unparsed: ", X.unparsed
+
+    const demo4="""
+u UU N... 100644 100644 100644 100644 b1367440191d3abc86bb46f955d140fec7eef42a 9595f08c09630c8af2b1ff1d44ba68446417f5bd 5926753b7903e722e00da6fdf8e8ae592408123c hoppla.txt
+"""
+    if true:
+        echo "parse_status_v2:"
+        let X=parse_status_v2(demo4.split '\n')
+        echo "currentcommit: ", X.currentcommit
+        echo "currentbranch: ", X.currentbranch
+        echo "unparsed: ", X.unparsed
+        echo "unmerged: ", X.unmerged

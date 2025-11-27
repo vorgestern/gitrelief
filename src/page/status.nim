@@ -24,7 +24,13 @@ func format_repostatus(Status: RepoStatus_v2): tuple[a,b: string]=
                 let stage="\n    <a href='" & url_stage(entry.path) & "'>stage</a>"
                 Controlled.add "\n" & fmt"<tr><td>{entry.status}</td><td>{diff}{follow}{stage}</td><td>{entry.path}</td></tr>"
         Controlled.add "</table>"
-
+        if Status.unmerged.len>0:
+                Controlled.add "<h3>Not merged</h3><table class='nolines'>"
+                for index,entry in Status.unmerged:
+                        let path=entry
+                        let follow="\n    <a href='" & url_follow(path) & "'>follow</a>"
+                        Controlled.add "\n" & fmt"<tr><td>Unmerged</td><td>{follow}</td><td>{path}</td></tr>"
+                Controlled.add "</table>"
         var NotControlled=""
         if Status.unparsed.len>0:
                 NotControlled.add "<h3 class='error'>Parse Errors</h3><table class='nolines'>"
