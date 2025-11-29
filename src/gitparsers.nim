@@ -105,32 +105,32 @@ proc parse_diff*(patch: seq[string]): seq[FileDiff]=
     type
         parsercontext=object
             na, nb: int
-            fe: ptr seq[FileDiff]
+            FE: ptr seq[FileDiff]
     const diffentryparser=peg("entry", e: parsercontext):
         path <- +{1..31, 33..255}
         hash <- +{'0'..'9', 'a'..'f'}
         flags <- +{'0'..'9'}
         num <- +{'0'..'9'}
         diff_git <- "diff --git" * @>path * @>path:
-            add(e.fe[], FileDiff())
-            e.fe[^1].apath= substr($1, 2)
-            e.fe[^1].bpath= substr($2, 2)
+            add(e.FE[], FileDiff())
+            e.FE[^1].apath= substr($1, 2)
+            e.FE[^1].bpath= substr($2, 2)
         diff_cc <- "diff --cc" * @>path:
-            add(e.fe[], FileDiff())
-            e.fe[^1].apath=substr($1, 2)
-            e.fe[^1].bpath=substr($1, 2)
+            add(e.FE[], FileDiff())
+            e.FE[^1].apath=substr($1, 2)
+            e.FE[^1].bpath=substr($1, 2)
         index <- "index" * @>hash * ".." * @>hash * @flags:
             # Beachte: Die Hashes sind keine Commit-Hashes, sondern bezeichnen Blobs im Index.
             discard
-        aaa <- "---" * @>path: e.fe[^1].apath= substr($1, 2)
+        aaa <- "---" * @>path: e.FE[^1].apath= substr($1, 2)
         bbb <- "+++" * @>path:
-            e.fe[^1].bpath= substr($1, 2)
-            if e.fe[^1].op==Other: e.fe[^1].op=Modified
-        newfile <- "new file mode" * @>flags: e.fe[^1].op=Added
-        deletedfile <- "deleted file mode" * @>flags: e.fe[^1].op=Deleted
+            e.FE[^1].bpath= substr($1, 2)
+            if e.FE[^1].op==Other: e.FE[^1].op=Modified
+        newfile <- "new file mode" * @>flags: e.FE[^1].op=Added
+        deletedfile <- "deleted file mode" * @>flags: e.FE[^1].op=Deleted
         similarity <- "similarity index" * @>num * '%': discard
-        rename_from <- "rename from" * @>path: e.fe[^1].op=Renamed
-        rename_to <- "rename to" * @>path: e.fe[^1].op=Renamed
+        rename_from <- "rename from" * @>path: e.FE[^1].op=Renamed
+        rename_to <- "rename to" * @>path: e.FE[^1].op=Renamed
         atat <- "@@" * @'-' * >num * ',' * >num * @'+' * >num * ',' * >num * @"@@":
             e.na=parseint $2
             e.nb=parseint $4
@@ -168,7 +168,7 @@ proc parse_diff*(patch: seq[string]): seq[FileDiff]=
                 dec nb
         else:
             {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
-                var e=parsercontext(fe: addr result)
+                var e=parsercontext(FE: addr result)
                 if diffentryparser.match(strip z, e).ok:
                     if e.na>0 or e.nb>0:
                         na=e.na
