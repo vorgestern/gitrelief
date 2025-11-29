@@ -106,7 +106,7 @@ proc parse_diff*(patch: seq[string]): seq[FileDiff]=
         parsercontext=object
             na, nb: int
             FE: ptr seq[FileDiff]
-    const diffentryparser=peg("entry", e: parsercontext):
+    const diffcontrolparserparser=peg("entry", e: parsercontext):
         path <- +{1..31, 33..255}
         hash <- +{'0'..'9', 'a'..'f'}
         flags <- +{'0'..'9'}
@@ -169,7 +169,7 @@ proc parse_diff*(patch: seq[string]): seq[FileDiff]=
         else:
             {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
                 var e=parsercontext(FE: addr result)
-                if diffentryparser.match(strip z, e).ok:
+                if diffcontrolparserparser.match(strip z, e).ok:
                     if e.na>0 or e.nb>0:
                         na=e.na
                         nb=e.nb
