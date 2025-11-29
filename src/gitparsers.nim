@@ -111,10 +111,14 @@ proc parse_diff*(patch: seq[string]): seq[FileDiff]=
         hash <- +{'0'..'9', 'a'..'f'}
         flags <- +{'0'..'9'}
         num <- +{'0'..'9'}
-        diff <- "diff --git" * @>path * @>path:
+        diff_git <- "diff --git" * @>path * @>path:
             add(e.fe[], FileDiff())
             e.fe[^1].apath= substr($1, 2)
             e.fe[^1].bpath= substr($2, 2)
+        diff_cc <- "diff --cc" * @>path:
+            add(e.fe[], FileDiff())
+            e.fe[^1].apath=substr($1, 2)
+            e.fe[^1].bpath=substr($1, 2)
         index <- "index" * @>hash * ".." * @>hash * @flags:
             # Beachte: Die Hashes sind keine Commit-Hashes, sondern bezeichnen Blobs im Index.
             discard
@@ -137,7 +141,7 @@ proc parse_diff*(patch: seq[string]): seq[FileDiff]=
             e.na=1
             e.nb=1
         sonst <- >(*1) * !1: discard
-        entry <- diff | index | newfile | deletedfile | aaa | bbb | rename_from | rename_to | similarity | atat | atat1 | atat2 | sonst
+        entry <- diff_git | diff_cc | index | newfile | deletedfile | aaa | bbb | rename_from | rename_to | similarity | atat | atat1 | atat2 | sonst
 
     var
         na=0
@@ -516,10 +520,40 @@ when ismainmodule:
     const demo4="""
 u UU N... 100644 100644 100644 100644 b1367440191d3abc86bb46f955d140fec7eef42a 9595f08c09630c8af2b1ff1d44ba68446417f5bd 5926753b7903e722e00da6fdf8e8ae592408123c hoppla.txt
 """
-    if true:
+    if false:
         echo "parse_status_v2:"
         let X=parse_status_v2(demo4.split '\n')
         echo "currentcommit: ", X.currentcommit
         echo "currentbranch: ", X.currentbranch
         echo "unparsed: ", X.unparsed
         echo "unmerged: ", X.unmerged
+
+    if true:
+        const demo="""
+diff --cc hoppla.txt
+index 0cd6007,b0f9840..0000000
+--- a/hoppla.txt
++++ b/hoppla.txt
+@@@ -1,4 -1,4 +1,15 @@@
+  Zeile 1
+++<<<<<<< HEAD
+ +Zeile 2 (master)
+++||||||| 8b4d1a5
+++Zeile 2
+++=======
++ Zeile 2 (branch1)
+++>>>>>>> branch1
+  Zeile 3
+++<<<<<<< HEAD
+ +Add line in master.
+++||||||| 8b4d1a5
+++=======
++ Add line in branch 1.
+++>>>>>>> branch1
+"""
+        echo "parse_diff:"
+        let X=parse_diff(demo.split '\n')
+        echo "seq[FileDiff]: ", $X
+        for F in X:
+            echo "FileDiff ", F.apath, " ", F.bpath
+            for s in F.sections: echo "section ", s.kind, " ", $s
