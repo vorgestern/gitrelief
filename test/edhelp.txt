@@ -1,0 +1,19 @@
+
+Konzept: Der Editor hält eine aktuelle Zeilenummer als 'Zustand' vor.
+Kommandos beziehen sich auf diese aktuelle Zeile. Die Eingabe von
+Text erfolgt mit einem der dafür geeigneten Kommandos:
+a\n    Im Folgenden eingegebene Zeilen werden an den Text angehängt,
+       d.h. die aktuelle Zeilennummer springt ans Ende.
+i\n    Füge die folgenden Eingabezeilen vor der aktuellen Zeile ein.
+7\n    Springe zu Zeile 7. Erwarte eine Texteingabe, die dort eingefügt wird.
+       Der bisherige Inhalt von Zeile 7 wird überschrieben.
+c\n    Die folgende Texteingabe überschreibt die aktuelle Zeile.
+
+Beim Wechsel zur Texteingabe ist also die aktuelle Eingabezeile definiert.
+Eingaben können dann mehrzeilig erfolgen und werden sinngemäß interpretiert.
+Um die Eingabe zu beenden, braucht man dieses Kommando:
+.\n
+
+Ähnliche Kommandos:
+4t7\n    Kopiere Zeile 4 nach Zeile 7
+4m7\n    Verschiebe Zeile 4 nach Zeile 7
