@@ -2,6 +2,8 @@
 local alltag=require "alltag"
 local fpp=require "luafpp"
 
+local conflict_styles={merge="merge", diff3="diff3", zdiff3="zdiff3"}
+
 local function edproc(filename)
     local k=io.open(filename, "a")
     if not k then error(string.format("edproc: Kann %s nicht finden/anlegen.", filename)) end
@@ -57,16 +59,15 @@ local mkemptyfolder=function(name)
     end
 end
 
-local demo1=function()
-    mkemptyfolder "demo1"
+local mergedemo=function(conflictstyle)
+    local name="demo_"..conflictstyle
+    mkemptyfolder(name)
     if true then
-        fpp.cd "demo1"
+        fpp.cd(name)
         git.init()
         git.config("user.name", "relieftest")
         git.config("user.email", "test@relief")
-        local conflict_styles={"merge", "diff3", "zdiff3"}
-
-        print("Verwende conflict style:", git.config("merge.conflictStyle", conflict_styles[2]))
+        print("Verwende conflict style:", git.config("merge.conflictStyle", conflictstyle))
 
         local hoppla=edproc "hoppla.txt"
 
@@ -92,4 +93,9 @@ local demo1=function()
     end
 end
 
-demo1()
+local hier=fpp.pwd()
+mergedemo(conflict_styles.merge)
+fpp.cd(hier)
+mergedemo(conflict_styles.diff3)
+fpp.cd(hier)
+mergedemo(conflict_styles.zdiff3)
