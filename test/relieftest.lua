@@ -22,7 +22,10 @@ local function gitlines(cmd) local L={}; alltag.pipe_lines("git "..cmd, function
 
 local git={
     init=function(name) gitexec("init -q "..(name or "")) end,
-    config=function(key, value) gitexec("config "..key.." "..value) end,
+    config=function(key, value)
+        if value then gitexec("config "..key.." "..value) end
+        return gitlines("config "..key)
+    end,
     add=function(...) gitexec("add "..table.concat({...}, " ")) end,
     commit=function(message) gitexec(string.format("commit -m \"%s\"", message)) end,
     log=function(...) return gitlines "log" end,
@@ -62,7 +65,8 @@ local demo1=function()
         git.config("user.name", "relieftest")
         git.config("user.email", "test@relief")
         local conflict_styles={"merge", "diff3", "zdiff3"}
-        git.config("merge.conflictStyle", conflict_styles[3])
+        
+        print("Verwende conflict style:", git.config("merge.conflictStyle", conflict_styles[2]))
 
         local hoppla=edproc "hoppla.txt"
 
