@@ -65,7 +65,7 @@ local demo1=function()
         git.config("user.name", "relieftest")
         git.config("user.email", "test@relief")
         local conflict_styles={"merge", "diff3", "zdiff3"}
-        
+
         print("Verwende conflict style:", git.config("merge.conflictStyle", conflict_styles[2]))
 
         local hoppla=edproc "hoppla.txt"
