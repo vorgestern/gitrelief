@@ -10,20 +10,23 @@ proc walkpublicdir(dir: Path): string=
                 result.add fmt"{'\n'}<tr><td></td><td><a href='{p}'>{p}</a></td></tr>"
 
 func format_repostatus(Status: RepoStatus_v2): tuple[a,b: string]=
-        var Controlled="<h3>Staged</h3><table class='nolines'>"
-        for index,entry in Status.staged:
-                let diff="\n    <a href='" & url_diff(shanull, shanull, true, entry.path, entry.oldpath) & "'>diff</a>"
-                let follow="\n    <a href='" & url_follow(entry.path) & "'>follow</a>"
-                let unstage="\n    <a href='" & url_unstage(entry.path) & "'>unstage</a>"
-                Controlled.add "\n" & fmt"<tr><td>{entry.status}</td><td>{diff}{follow}{unstage}</td><td>{entry.path}</td></tr>"
-        Controlled.add "</table>"
-        Controlled.add "<h3>Not staged</h3><table class='nolines'>"
-        for index,entry in Status.unstaged:
-                let diff="\n    <a href='" & url_diff(shanull, shanull, false, entry.path, entry.oldpath) & "'>diff</a>"
-                let follow="\n    <a href='" & url_follow(entry.path) & "'>follow</a>"
-                let stage="\n    <a href='" & url_stage(entry.path) & "'>stage</a>"
-                Controlled.add "\n" & fmt"<tr><td>{entry.status}</td><td>{diff}{follow}{stage}</td><td>{entry.path}</td></tr>"
-        Controlled.add "</table>"
+        var Controlled=""
+        if Status.staged.len>0:
+                Controlled.add "<h3>Staged</h3><table class='nolines'>"
+                for index,entry in Status.staged:
+                        let diff="\n    <a href='" & url_diff(shanull, shanull, true, entry.path, entry.oldpath) & "'>diff</a>"
+                        let follow="\n    <a href='" & url_follow(entry.path) & "'>follow</a>"
+                        let unstage="\n    <a href='" & url_unstage(entry.path) & "'>unstage</a>"
+                        Controlled.add "\n" & fmt"<tr><td>{entry.status}</td><td>{diff}{follow}{unstage}</td><td>{entry.path}</td></tr>"
+                Controlled.add "</table>"
+        if Status.unstaged.len>0:
+                Controlled.add "<h3>Not staged</h3><table class='nolines'>"
+                for index,entry in Status.unstaged:
+                        let diff="\n    <a href='" & url_diff(shanull, shanull, false, entry.path, entry.oldpath) & "'>diff</a>"
+                        let follow="\n    <a href='" & url_follow(entry.path) & "'>follow</a>"
+                        let stage="\n    <a href='" & url_stage(entry.path) & "'>stage</a>"
+                        Controlled.add "\n" & fmt"<tr><td>{entry.status}</td><td>{diff}{follow}{stage}</td><td>{entry.path}</td></tr>"
+                Controlled.add "</table>"
         if Status.unmerged.len>0:
                 Controlled.add "<h3>Not merged</h3><table class='nolines'>"
                 for index,entry in Status.unmerged:
@@ -31,6 +34,7 @@ func format_repostatus(Status: RepoStatus_v2): tuple[a,b: string]=
                         let follow="\n    <a href='" & url_follow(path) & "'>follow</a>"
                         Controlled.add "\n" & fmt"<tr><td>Unmerged</td><td>{follow}</td><td>{path}</td></tr>"
                 Controlled.add "</table>"
+
         var NotControlled=""
         if Status.unparsed.len>0:
                 NotControlled.add "<h3 class='error'>Parse Errors</h3><table class='nolines'>"
