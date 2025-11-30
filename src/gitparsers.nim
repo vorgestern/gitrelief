@@ -521,111 +521,36 @@ proc format_commits*(L: seq[Commit], leading: string, followfile=false, highligh
     result.add "</table>"
 
 when ismainmodule:
-    # git show-branch --date-order --color=never --sha1-name master zv Zustandsvariable
-    const demo1="""
-* [master] Anpassung Hilfetext nach #944
- ! [zv] zv Start
-  ! [Zustandsvariable] Aktualisierung (26.9.)
----
--   [f41c19345] Anpassung Hilfetext nach #944
-*   [994535807] Anpassung Hilfetext nach #944
-*   [059005df7] Schreibende Transaktion im SunSpec-Modbus und EEBUS Anwendung Limit Power Consumption (#946)
-*   [fc6dbe86f] Externe Leistung von SC3 an SolvisTom (#942)
-*   [ffe50e903] fix: display correct version number of SolvisTim #925
-*   [e036b5af8] Enable multiple network interfaces (#939)
-*   [435257f65] Clever pv basic (#936)
-*   [fdda88e4e] Xtra tcp heap (#938)
-*   [eec760a9e] update min/max capacity curves
-*   [59a51dfe3] fix: display the correct charge pump value in Waermeerzeuger->Waermepumpe #879
- +  [c27972932] zv Start
-*+  [89db6131e] Nachtrag/ Bugfix 3.23 (#927)
-*+  [3aaf8a9ed] Behandlung der Watchdog-Semaphore bei idle-Jobs verbessert (#923)
-*+  [4f13226e5] #918 Bruno Influx-Logging aktiviert
-*+  [ca98c5104] annotations in s6-log #920
-*+  [e402cfc86] in Tabellen/SDKarte/ an Dateienden Zeilenenden entfernt; Typofix
-*+  [c9297f6ea] aus Branch cpp: einige Typo-Fixes und Umlautanpassungen
-*+  [1316699a9] aus Branch cpp: kleinere Fixes
-*+  [125a50581] aus Branch cpp: Generierung von ParamNames.h/.c zur Verwendung in der RegelungsAkademie
---  [577f48c8d] Merge pull request #916 from solvis-bs/Translate3237
-*+  [7bbefb802] Übersetzungen für 3.23.7 aktualisiert
-*+  [8f097c743] Vertausch VL/RL des Alsonic (#911)
-*+  [75c5fa22a] Dashboard Menü (#912)
-  - [b5f98a49d] Aktualisierung (26.9.)
-*+  [fe65eaa15] fix fan setting dialog for burner (#909)
-  + [26d4e4fb2] Nachtrag
-  + [a49cde2d4] Status: Aktualisierung
-*+  [5342595a2] Fehler im S6-Logging (#908)
-*+  [3fb016467] replace heatingrod_autoLevel() with heatingrod_outputLevel() (#907)
-*+  [c91c02a6f] rework IWS_getMessages, saves about 700 bytes (#897)
-*+  [50b82e256] text and parameter changes (#910)
-  + [177a0ecfa] Alias aktualisiert
-  + [83a17beca] Alias repariert
---- [4fcfc498a] Merge pull request #902 from solvis-bs/Translate3236
-    """
-    if false:
-        let X=parse_show_branches(demo1.split('\n'))
+    if true:
+        # git show-branch --date-order --color=never --sha1-name master zv Zustandsvariable
+        const X=parse_show_branches(staticread("testdata/show_branches_1.txt").split('\n'))
         echo "Zweige: ", X.branches
         echo "Commits: ", X.commits
 
-    const demo2="""
-# branch.oid dc17a5335e4137b1fd3c6f9cd13662d84466a710
-# branch.head master
-1 .M N... 100644 100644 100644 d8a49c2f1739e7571648a025ad12df4b5351c8e3 d8a49c2f1739e7571648a025ad12df4b5351c8e3 src/git/parsers.nim
-1 .M N... 100644 100644 100644 83192ca64e572eb66a38d63387e799e0206462ac 83192ca64e572eb66a38d63387e799e0206462ac src/git/processes.nim
-1 .M N... 100644 100644 100644 7ce235a1e0dbb8efae3d42adfbe8d92b7abb2c24 7ce235a1e0dbb8efae3d42adfbe8d92b7abb2c24 src/page/status.nim
-    """
-    if false:
+    if true:
         echo "parse_status_v2:"
-        let X=parse_status_v2(demo2.split '\n')
+        const X=parse_status_v2(staticread("testdata/status_v2_1.txt").split '\n')
         echo "currentcommit: ", X.currentcommit
         echo "currentbranch: ", X.currentbranch
 
-    const demo3="""
-2 R. N... 100644 100644 100644 3d9668b87c829ec87818a3940fee3f5130fc561b 3d9668b87c829ec87818a3940fee3f5130fc561b R100 src/helper.nim	src/mehr/helper.nim
-"""
-    if false:
+    if true:
         echo "parse_status_v2:"
-        let X=parse_status_v2(demo3.split '\n')
+        const X=parse_status_v2(staticread("testdata/status_v2_2.txt").split '\n')
         echo "currentcommit: ", X.currentcommit
         echo "currentbranch: ", X.currentbranch
         echo "unparsed: ", X.unparsed
 
-    const demo4="""
-u UU N... 100644 100644 100644 100644 b1367440191d3abc86bb46f955d140fec7eef42a 9595f08c09630c8af2b1ff1d44ba68446417f5bd 5926753b7903e722e00da6fdf8e8ae592408123c hoppla.txt
-"""
-    if false:
+    if true:
         echo "parse_status_v2:"
-        let X=parse_status_v2(demo4.split '\n')
+        const X=parse_status_v2(staticread("testdata/status_v2_3.txt").split '\n')
         echo "currentcommit: ", X.currentcommit
         echo "currentbranch: ", X.currentbranch
         echo "unparsed: ", X.unparsed
         echo "unmerged: ", X.unmerged
 
     if true:
-        const demo="""
-diff --cc hoppla.txt
-index 0cd6007,b0f9840..0000000
---- a/hoppla.txt
-+++ b/hoppla.txt
-@@@ -1,4 -1,4 +1,15 @@@
-  Zeile 1
-++<<<<<<< HEAD
- +Zeile 2 (master)
-++||||||| 8b4d1a5
-++Zeile 2
-++=======
-+ Zeile 2 (branch1)
-++>>>>>>> branch1
-  Zeile 3
-++<<<<<<< HEAD
- +Add line in master.
-++||||||| 8b4d1a5
-++=======
-+ Add line in branch 1.
-++>>>>>>> branch1"""
         echo "parse_diff:"
-        let X=parse_diff(demo.split '\n')
-        # echo "seq[FileDiff]: ", $X
+        let X=parse_diff(staticread("testdata/diff_1").split '\n')
         for F in X:
             echo "FileDiff ", F.apath, " ", F.bpath, " (", F.sections.len, " Abschnitte)"
             for s in F.sections:

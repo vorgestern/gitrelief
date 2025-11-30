@@ -1,0 +1,20 @@
+diff --cc hoppla.txt
+index 0cd6007,b0f9840..0000000
+--- a/hoppla.txt
++++ b/hoppla.txt
+@@@ -1,4 -1,4 +1,15 @@@
+  Zeile 1
+++<<<<<<< HEAD
+ +Zeile 2 (master)
+++||||||| 8b4d1a5
+++Zeile 2
+++=======
++ Zeile 2 (branch1)
+++>>>>>>> branch1
+  Zeile 3
+++<<<<<<< HEAD
+ +Add line in master.
+++||||||| 8b4d1a5
+++=======
++ Add line in branch 1.
+++>>>>>>> branch1
