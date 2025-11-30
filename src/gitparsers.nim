@@ -1,5 +1,5 @@
 
-import std/[strutils, strformat, tables, times]
+import std/[strutils, strformat, tables, times, assertions]
 import checksums/sha1
 import npeg
 import helper
@@ -116,26 +116,34 @@ proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
                 num <- +{'0'..'9'}
                 diff_git <- "diff --git" * @>path * @>path:
                         add(e.FE[], FileDiff())
+                        assert(e.FE[].len>0, "A")
                         e.FE[^1].apath= substr($1, 2)
                         e.FE[^1].bpath= substr($2, 2)
                 diff_cc <- "diff --cc" * @>path:
                         add(e.FE[], FileDiff())
+                        assert(e.FE[].len>0, "B")
                         e.FE[^1].apath=substr($1, 2)
                         e.FE[^1].bpath=substr($1, 2)
-                index1 <- "index" * @>hash * ".." * @>hash * @flags:
-                        # Beachte: Die Hashes sind keine Commit-Hashes, sondern bezeichnen Blobs im Index.
-                        discard
-                index2 <- "index" * @>hash * ',' * @>hash * ".." * @>hash:
-                        discard
-                aaa <- "---" * @>path: e.FE[^1].apath= substr($1, 2)
+                index1 <- "index" * @>hash * ".." * @>hash * @flags: discard # Beachte: Die Hashes sind keine Commit-Hashes, sondern bezeichnen Blobs im Index.
+                index2 <- "index" * @>hash * ',' * @>hash * ".." * @>hash: discard
+                aaa <- "---" * @>path: assert(e.FE[].len>0, "C"); e.FE[^1].apath= substr($1, 2)
                 bbb <- "+++" * @>path:
+                        assert(e.FE[].len>0, "D")
                         e.FE[^1].bpath= substr($1, 2)
                         if e.FE[^1].op==Other: e.FE[^1].op=Modified
-                newfile <- "new file mode" * @>flags: e.FE[^1].op=Added
-                deletedfile <- "deleted file mode" * @>flags: e.FE[^1].op=Deleted
+                newfile <- "new file mode" * @>flags:
+                        assert(e.FE[].len>0, "E")
+                        e.FE[^1].op=Added
+                deletedfile <- "deleted file mode" * @>flags:
+                        assert(e.FE[].len>0, "F")
+                        e.FE[^1].op=Deleted
                 similarity <- "similarity index" * @>num * '%': discard
-                rename_from <- "rename from" * @>path: e.FE[^1].op=Renamed
-                rename_to <- "rename to" * @>path: e.FE[^1].op=Renamed
+                rename_from <- "rename from" * @>path:
+                        assert(e.FE[].len>0, "G")
+                        e.FE[^1].op=Renamed
+                rename_to <- "rename to" * @>path:
+                        assert(e.FE[].len>0, "H")
+                        e.FE[^1].op=Renamed
                 atat <- "@@" * @'-' * >num * ',' * >num * @'+' * >num * ',' * >num * @"@@":
                         e.na=parseint $2
                         e.nb=parseint $4
@@ -152,7 +160,6 @@ proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
                         echo "atatat ", e.na, e.nb, e.nc
                 sonst <- >(*1) * !1:
                         echo "Sonst '", $1, "'"
-                        discard
                 entry <- diff_git | diff_cc | index1 | index2 | newfile | deletedfile | aaa | bbb | rename_from | rename_to | similarity | atatat | atat | atat1 | atat2 | sonst
 
         type
@@ -183,9 +190,10 @@ proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
                 mergeptr: ptr seq[DiffSection]
 
         for z in Difflines:
+                # echo "=====> ", z
                 if nc>0:
                         {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
-                                echo nc, " Merging '", z, "'"
+                                # echo nc, " Merging '", z, "'"
                                 var e=mparsercontext(transition: none)
                                 if MergeControlParser.match(strip z, e).ok:
                                         if e.transition==ours: result[^1].sections.add DiffSection(kind: M)
@@ -205,16 +213,12 @@ proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
                                                 of ' ': mergeptr[].add DiffSection(kind: N, zeilen: @[z1])
                                                 else: discard
                                 else:
-                                        result[^1].sections.add DiffSection(kind: N)
-                                        mergeptr=addr result[^1].sections
                                         let z1=substr(z, 2)
-                                        let added=mergeptr[^1].addline z1
-                                        if not added:
-                                                case z[1]
-                                                of '+': mergeptr[].add DiffSection(kind: B, zeilen: @[z1])
-                                                of '-': mergeptr[].add DiffSection(kind: A, zeilen: @[z1])
-                                                of ' ': mergeptr[].add DiffSection(kind: N, zeilen: @[z1])
-                                                else: discard
+                                        case z[1]
+                                        of '+': result[^1].sections.add DiffSection(kind: B, zeilen: @[z1])
+                                        of '-': result[^1].sections.add DiffSection(kind: A, zeilen: @[z1])
+                                        of ' ': result[^1].sections.add DiffSection(kind: N, zeilen: @[z1])
+                                        else: discard
                         dec nc
                         if nc==0:
                                 # Vorläufig
@@ -521,37 +525,36 @@ proc format_commits*(L: seq[Commit], leading: string, followfile=false, highligh
         result.add "</table>"
 
 when ismainmodule:
-        if true:
-                # git show-branch --date-order --color=never --sha1-name master zv Zustandsvariable
+        if false:
                 const X=parse_show_branches(staticread("testdata/show_branches_1.txt").split('\n'))
                 echo "Zweige: ", X.branches
                 echo "Commits: ", X.commits
 
-        if true:
-                echo "parse_status_v2:"
+        if false:
                 const X=parse_status_v2(staticread("testdata/status_v2_1.txt").split '\n')
                 echo "currentcommit: ", X.currentcommit
                 echo "currentbranch: ", X.currentbranch
 
-        if true:
-                echo "parse_status_v2:"
+        if false:
                 const X=parse_status_v2(staticread("testdata/status_v2_2.txt").split '\n')
                 echo "currentcommit: ", X.currentcommit
                 echo "currentbranch: ", X.currentbranch
                 echo "unparsed: ", X.unparsed
 
-        if true:
-                echo "parse_status_v2:"
+        if false:
                 const X=parse_status_v2(staticread("testdata/status_v2_3.txt").split '\n')
                 echo "currentcommit: ", X.currentcommit
                 echo "currentbranch: ", X.currentbranch
                 echo "unparsed: ", X.unparsed
                 echo "unmerged: ", X.unmerged
-
         if true:
-                const X=parse_diff(staticread("testdata/diff_1").split '\n')
+                # Wenn man diese Beispieldaten zur Compilezeit parst (const X=parse_diff(...)),
+                # erhält man eine unverstandene Fehlermeldung. Deshalb wird hier mit let X=parse_diff()
+                # ein Parsen zur Laufzeit zugelassen.
+                const data=staticread "testdata/diff_1.txt"
+                let X=parse_diff(data.split '\n')
                 for F in X:
-                        echo "FileDiff ", F.apath, " ", F.bpath, " (", F.sections.len, " Abschnitte)"
+                        # echo "FileDiff ", F.apath, " ", F.bpath, " (", F.sections.len, " Abschnitte)"
                         for s in F.sections:
                                 echo "section ", s.kind, "=========="
                                 if s.kind==M:
