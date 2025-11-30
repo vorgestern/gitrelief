@@ -46,8 +46,7 @@ func url_diff*(parent, commit: SecureHash, staged: bool, op: CommittedOperation)
     url
 
 # =====================================================================
-#               gitdiff
-#               gitdiff_staged
+# gitdiff
 
 type
     NABR* =enum N, A, B, R, M
@@ -114,12 +113,13 @@ proc addline(S: var DiffSection, z: string): bool=
         # error
         return false
 
-proc parse_diff*(patch: seq[string]): seq[FileDiff]=
+proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
     type
-        parsercontext=object
+        cparsercontext=object
             na, nb, nc: int
             FE: ptr seq[FileDiff]
-    const diffcontrolparser=peg("entry", e: parsercontext):
+
+    const DiffControlParser=peg("entry", e: cparsercontext):
         path <- +{1..31, 33..255}
         name <- +{1..31, 33..255}
         hash <- +{'0'..'9', 'a'..'f'}
@@ -172,7 +172,7 @@ proc parse_diff*(patch: seq[string]): seq[FileDiff]=
             transition: mergecontext
             name: string
 
-    const mergecontrolparser=peg("entry", e: mparsercontext):
+    const MergeControlParser=peg("entry", e: mparsercontext):
         name <- +{1..31, 33..255}
         ours <- "++<<<<<<<" * @>name:
             e.transition=ours
@@ -193,12 +193,12 @@ proc parse_diff*(patch: seq[string]): seq[FileDiff]=
         nc=0
         mergeptr: ptr seq[DiffSection]
 
-    for z in patch:
+    for z in Difflines:
         if nc>0:
             {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
                 echo nc, " Merging '", z, "'"
                 var e=mparsercontext(transition: none)
-                if mergecontrolparser.match(strip z, e).ok:
+                if MergeControlParser.match(strip z, e).ok:
                     if e.transition==ours: result[^1].sections.add DiffSection(kind: M)
                     mergeptr=case e.transition
                     of ours:     addr result[^1].sections[^1].ours
@@ -250,8 +250,8 @@ proc parse_diff*(patch: seq[string]): seq[FileDiff]=
                 dec nb
         else:
             {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
-                var e=parsercontext(FE: addr result)
-                if diffcontrolparser.match(strip z, e).ok:
+                var e=cparsercontext(FE: addr result)
+                if DiffControlParser.match(strip z, e).ok:
                     if e.nc>0:
                         na=e.na
                         nb=e.nb
@@ -265,6 +265,7 @@ proc parse_diff*(patch: seq[string]): seq[FileDiff]=
                     discard
 
 # =====================================================================
+# gitstatus_v2
 
 type
     RepoStatus_v2* =object
@@ -350,6 +351,7 @@ proc parse_status_v2*(Lines: seq[string]): RepoStatus_v2=
             if not mr.ok: echo "failed to parse: ", z
 
 # =====================================================================
+# gitlog
 
 proc parse_log*(L: seq[string]): seq[Commit]=
     type
@@ -402,6 +404,7 @@ proc parse_log*(L: seq[string]): seq[Commit]=
             discard lineparser.match(z, e)
 
 # =====================================================================
+# gitbranches_remote
 
 type
     remoteurls* =tuple[fetchurl, pushurl: string]
@@ -438,6 +441,7 @@ proc parse_branches_local*(L: seq[string]): seq[string]=
     for k in L: result.add k.substr(2)
 
 # =====================================================================
+# gitshowbranches
 
 type
     taggedcommit* =object
