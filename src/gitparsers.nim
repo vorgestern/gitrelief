@@ -549,8 +549,7 @@ when ismainmodule:
                 echo "unmerged: ", X.unmerged
 
         if true:
-                echo "parse_diff:"
-                let X=parse_diff(staticread("testdata/diff_1").split '\n')
+                const X=parse_diff(staticread("testdata/diff_1").split '\n')
                 for F in X:
                         echo "FileDiff ", F.apath, " ", F.bpath, " (", F.sections.len, " Abschnitte)"
                         for s in F.sections:
