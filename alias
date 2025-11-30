@@ -1,8 +1,8 @@
 
-alias rr="clear && nim c -d:release -o:$ROBINSON/userbin/ src/gitrelief.nim && gitrelief --name develop"
-alias bb="clear && nim c -d:release -o:$ROBINSON/userbin/ src/gitrelief.nim"
+alias rr="clear && nim c -o:$ROBINSON/userbin/ src/gitrelief.nim && gitrelief --name develop"
+alias bb="clear && nim c -o:$ROBINSON/userbin/ src/gitrelief.nim"
 
-alias dd="clear && nim c -d:release -o:ttdiff src/gitrelief/diff.nim && ./ttdiff"
+alias dd="clear && nim c -o:ttdiff src/gitrelief/diff.nim && ./ttdiff"
 
-alias ff="clear && nim c -d:release -o:ttfollow src/page/follow.nim && ./ttfollow"
-alias hh="clear && nim c -d:release -o:tthelper src/mehr/helper.nim && ./tthelper"
+alias ff="clear && nim c -o:ttfollow src/page/follow.nim && ./ttfollow"
+alias hh="clear && nim c -o:tthelper src/mehr/helper.nim && ./tthelper"
