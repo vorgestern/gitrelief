@@ -50,13 +50,15 @@ func url_diff*(parent, commit: SecureHash, staged: bool, op: CommittedOperation)
 #               gitdiff_staged
 
 type
-    NABR* =enum N, A, B, R
+    NABR* =enum N, A, B, R, M
     DiffSection* =object
         case kind*: NABR
         of N, A, B:
             zeilen*: seq[string]
         of R:
             razeilen*, rbzeilen*: seq[string]
+        of M:
+            ours, expected, theirs: seq[DiffSection]
     FileDiff* =object
         op*: FileCommitStatus
         apath*, bpath*: string
@@ -66,9 +68,20 @@ func numlines(S: DiffSection): int=
     case S.kind
     of N, A, B: S.zeilen.len
     of R: S.razeilen.len
+    of M:
+        var
+            num1=0
+            num2=0
+            num3=0
+        for k in S.ours: num1+=numlines(k)
+        for k in S.expected: num2+=numlines(k)
+        for k in S.theirs: num3+=numlines(k)
+        let a=max(num1, num2)
+        max(a, num3)
 
 proc addline(S: var DiffSection, z: string): bool=
     if z.len<1: return false
+    if S.kind==M: return false
     let
         neu=numlines(S)==0
         k=z[0]
@@ -104,10 +117,11 @@ proc addline(S: var DiffSection, z: string): bool=
 proc parse_diff*(patch: seq[string]): seq[FileDiff]=
     type
         parsercontext=object
-            na, nb: int
+            na, nb, nc: int
             FE: ptr seq[FileDiff]
-    const diffcontrolparserparser=peg("entry", e: parsercontext):
+    const diffcontrolparser=peg("entry", e: parsercontext):
         path <- +{1..31, 33..255}
+        name <- +{1..31, 33..255}
         hash <- +{'0'..'9', 'a'..'f'}
         flags <- +{'0'..'9'}
         num <- +{'0'..'9'}
@@ -119,8 +133,10 @@ proc parse_diff*(patch: seq[string]): seq[FileDiff]=
             add(e.FE[], FileDiff())
             e.FE[^1].apath=substr($1, 2)
             e.FE[^1].bpath=substr($1, 2)
-        index <- "index" * @>hash * ".." * @>hash * @flags:
+        index1 <- "index" * @>hash * ".." * @>hash * @flags:
             # Beachte: Die Hashes sind keine Commit-Hashes, sondern bezeichnen Blobs im Index.
+            discard
+        index2 <- "index" * @>hash * ',' * @>hash * ".." * @>hash:
             discard
         aaa <- "---" * @>path: e.FE[^1].apath= substr($1, 2)
         bbb <- "+++" * @>path:
@@ -140,15 +156,81 @@ proc parse_diff*(patch: seq[string]): seq[FileDiff]=
         atat2 <- "@@" * @'-' * >num * @'+' * >num * @"@@":
             e.na=1
             e.nb=1
-        sonst <- >(*1) * !1: discard
-        entry <- diff_git | diff_cc | index | newfile | deletedfile | aaa | bbb | rename_from | rename_to | similarity | atat | atat1 | atat2 | sonst
+        atatat <- "@@@" * @'-' * >num * ',' * >num * @'-' * >num * ',' * >num * @'+' * >num * ',' * >num * @"@@@":
+            e.na=parseint $2
+            e.nb=parseint $4
+            e.nc=parseint $6
+            echo "atatat ", e.na, e.nb, e.nc
+        sonst <- >(*1) * !1:
+            echo "Sonst '", $1, "'"
+            discard
+        entry <- diff_git | diff_cc | index1 | index2 | newfile | deletedfile | aaa | bbb | rename_from | rename_to | similarity | atatat | atat | atat1 | atat2 | sonst
+
+    type
+        mergecontext=enum none,ours,expected,theirs,merged
+        mparsercontext=object
+            transition: mergecontext
+            name: string
+
+    const mergecontrolparser=peg("entry", e: mparsercontext):
+        name <- +{1..31, 33..255}
+        ours <- "++<<<<<<<" * @>name:
+            e.transition=ours
+            e.name= $1
+        expected <- "++|||||||" * @>name:
+            e.transition=expected
+            e.name= $1
+        theirs <- "++=======":
+            e.transition=theirs
+        merged <- "++>>>>>>>" * @>name:
+            e.transition=merged
+            e.name= $1
+        entry <- ours | expected | theirs | merged
 
     var
         na=0
         nb=0
+        nc=0
+        mergeptr: ptr seq[DiffSection]
 
     for z in patch:
-        if na>0 or nb>0:
+        if nc>0:
+            {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
+                echo nc, " Merging '", z, "'"
+                var e=mparsercontext(transition: none)
+                if mergecontrolparser.match(strip z, e).ok:
+                    if e.transition==ours: result[^1].sections.add DiffSection(kind: M)
+                    mergeptr=case e.transition
+                    of ours:     addr result[^1].sections[^1].ours
+                    of expected: addr result[^1].sections[^1].expected
+                    of theirs:   addr result[^1].sections[^1].theirs
+                    else:        nil
+                elif mergeptr!=nil:
+                    if mergeptr[].len==0: mergeptr[].add DiffSection(kind: M)
+                    let z1=substr(z, 2)
+                    let added=mergeptr[^1].addline z1
+                    if not added:
+                        case z[1]
+                        of '+': mergeptr[].add DiffSection(kind: B, zeilen: @[z1])
+                        of '-': mergeptr[].add DiffSection(kind: A, zeilen: @[z1])
+                        of ' ': mergeptr[].add DiffSection(kind: N, zeilen: @[z1])
+                        else: discard
+                else:
+                    result[^1].sections.add DiffSection(kind: N)
+                    mergeptr=addr result[^1].sections
+                    let z1=substr(z, 2)
+                    let added=mergeptr[^1].addline z1
+                    if not added:
+                        case z[1]
+                        of '+': mergeptr[].add DiffSection(kind: B, zeilen: @[z1])
+                        of '-': mergeptr[].add DiffSection(kind: A, zeilen: @[z1])
+                        of ' ': mergeptr[].add DiffSection(kind: N, zeilen: @[z1])
+                        else: discard
+            dec nc
+            if nc==0:
+                na=0
+                nb=0
+        elif na>0 or nb>0:
             if result[^1].sections.len==0: result[^1].sections.add DiffSection()
             let added=result[^1].sections[^1].addline z
             if not added:
@@ -169,8 +251,12 @@ proc parse_diff*(patch: seq[string]): seq[FileDiff]=
         else:
             {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
                 var e=parsercontext(FE: addr result)
-                if diffcontrolparserparser.match(strip z, e).ok:
-                    if e.na>0 or e.nb>0:
+                if diffcontrolparser.match(strip z, e).ok:
+                    if e.nc>0:
+                        na=e.na
+                        nb=e.nb
+                        nc=e.nc
+                    elif e.na>0 or e.nb>0:
                         na=e.na
                         nb=e.nb
                 else:
@@ -549,11 +635,16 @@ index 0cd6007,b0f9840..0000000
 ++||||||| 8b4d1a5
 ++=======
 + Add line in branch 1.
-++>>>>>>> branch1
-"""
+++>>>>>>> branch1"""
         echo "parse_diff:"
         let X=parse_diff(demo.split '\n')
-        echo "seq[FileDiff]: ", $X
+        # echo "seq[FileDiff]: ", $X
         for F in X:
-            echo "FileDiff ", F.apath, " ", F.bpath
-            for s in F.sections: echo "section ", s.kind, " ", $s
+            echo "FileDiff ", F.apath, " ", F.bpath, " (", F.sections.len, " Abschnitte)"
+            for s in F.sections:
+                echo "section ", s.kind, "=========="
+                if s.kind==M:
+                    echo "\tours: ", s.ours
+                    echo "\texpected: ", s.expected
+                    echo "\ttheirs: ", s.theirs
+                else: echo $s

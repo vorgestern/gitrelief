@@ -31,8 +31,9 @@ func format_repostatus(Status: RepoStatus_v2): tuple[a,b: string]=
                 Controlled.add "<h3>Not merged</h3><table class='nolines'>"
                 for index,entry in Status.unmerged:
                         let path=entry
+                        let diff="\n    <a href='" & url_diff(shanull, shanull, false, path) & "'>diff</a>"
                         let follow="\n    <a href='" & url_follow(path) & "'>follow</a>"
-                        Controlled.add "\n" & fmt"<tr><td>Unmerged</td><td>{follow}</td><td>{path}</td></tr>"
+                        Controlled.add "\n" & fmt"<tr><td>Unmerged</td><td>{diff} {follow}</td><td>{path}</td></tr>"
                 Controlled.add "</table>"
 
         var NotControlled=""

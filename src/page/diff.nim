@@ -97,6 +97,8 @@ func format_html_diff(fileentry: FileDiff, staged: bool, ahash, bhash: SecureHas
                                                 X.add fmt"<span>{b}</span>{htmlescape z}{'\n'}"
                                         X
                                 result.add fmt"{'\n'}<tr><td class='Acmp'>{A}</td><td class='Bcmp'>{B}</td></tr>"
+                        of M:
+                                result.add "\n<tr><td numspan='2'>merge Platzhalter</td></tr>"
                 result.add "</table></p>"
 
 type
