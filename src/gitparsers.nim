@@ -92,26 +92,15 @@ proc addline(S: var DiffSection, z: string): bool=
         return S.kind==A
     of '+':
         if neu: S=DiffSection(kind: B, zeilen: @[])
-        if S.kind==B:
-            S.zeilen.add z1
-            return true
-        elif S.kind==A:
-            let temp=S.zeilen
-            S=DiffSection(kind: R, razeilen: temp, rbzeilen: @[z1])
-            return true
-        elif S.kind==R:
-            S.rbzeilen.add z1
-            return true
-        else: return false
+        if S.kind==B:   S.zeilen.add z1;                                             return true
+        elif S.kind==A: S=DiffSection(kind: R, razeilen: S.zeilen, rbzeilen: @[z1]); return true
+        elif S.kind==R: S.rbzeilen.add z1;                                           return true
+        else:                                                                        return false
     of ' ':
         if neu: S=DiffSection(kind: N, zeilen: @[])
-        if S.kind==N:
-            S.zeilen.add z1
-            return true
-        else: return false
-    else:
-        # error
-        return false
+        if S.kind==N:   S.zeilen.add z1; return true
+        else:                            return false
+    else: return false # Fehler, wird noch nicht richtig behandelt.
 
 proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
     type
@@ -228,6 +217,7 @@ proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
                         else: discard
             dec nc
             if nc==0:
+                # Vorläufig
                 na=0
                 nb=0
         elif na>0 or nb>0:
@@ -239,15 +229,11 @@ proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
                 of '+': result[^1].sections.add DiffSection(kind: B, zeilen: @[z1])
                 of '-': result[^1].sections.add DiffSection(kind: A, zeilen: @[z1])
                 of ' ': result[^1].sections.add DiffSection(kind: N, zeilen: @[z1])
-                else:
-                    # error
-                    discard
+                else: discard # Fehler, wird noch nicht richtig behandelt.
             case z[0]
             of '+': dec nb
             of '-': dec na
-            else:
-                dec na
-                dec nb
+            else:   dec na; dec nb
         else:
             {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
                 var e=cparsercontext(FE: addr result)
@@ -259,10 +245,7 @@ proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
                     elif e.na>0 or e.nb>0:
                         na=e.na
                         nb=e.nb
-                else:
-                    # error
-                    # e.zeile="??????"
-                    discard
+                else: discard # Fehler, wird noch nicht richtig behandelt.
 
 # =====================================================================
 # gitstatus_v2
