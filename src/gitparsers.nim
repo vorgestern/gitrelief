@@ -102,9 +102,7 @@ proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
                         na, nb, nc: int
                         FE: ptr seq[FileDiff]
                 mergecontext=enum none,ours,expected,theirs
-                mparsercontext=object
-                        transition: mergecontext
-                        name: string
+                mparsercontext=tuple[transition: mergecontext, name: string]
 
         const DiffControlParser=peg("entry", e: cparsercontext):
                 path <- +{1..31, 33..255}
@@ -162,17 +160,10 @@ proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
 
         const MergeControlParser=peg("entry", e: mparsercontext):
                 name <- +{1..31, 33..255}
-                ours <- "++<<<<<<<" * @>name:
-                        e.transition=ours
-                        e.name= $1
-                expected <- "++|||||||" * @>name:
-                        e.transition=expected
-                        e.name= $1
-                theirs <- "++=======":
-                        e.transition=theirs
-                merged <- "++>>>>>>>" * @>name:
-                        e.transition=none
-                        e.name= $1
+                ours <- "++<<<<<<<" * @>name: e=(transition: ours, name: $1)
+                expected <- "++|||||||" * @>name: e=(transition: expected, name: $1)
+                theirs <- "++=======": e=(transition: theirs, name: "")
+                merged <- "++>>>>>>>" * @>name: e=(transition: none, name: $1)
                 entry <- ours | expected | theirs | merged
 
         var
@@ -188,7 +179,7 @@ proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
                                 # echo nc, " Merging '", z, "'"
                                 let X=addr result[^1].sections[^1]
                                 if X[].kind!=M: raise newException(ValueError, "Merge inkonsistent")
-                                var e=mparsercontext(transition: none)
+                                var e: mparsercontext=(transition: none, name: "")
                                 if MergeControlParser.match(strip z, e).ok:
                                         cxmerge=e.transition
                                         case cxmerge
