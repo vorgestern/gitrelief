@@ -52,76 +52,76 @@ proc addline(S: var DiffSection, z: string): bool=
                 else:                            return false
         else: return false # Fehler, wird noch nicht richtig behandelt.
 
+type
+        cxcontrolparser=object
+                na, nb, nc: int
+                FE: ptr seq[FileDiff]
+        mergestage=enum none,ours,expected,theirs
+        cxmergeparser=tuple[transition: mergestage, name: string]
+
+const DiffControlParser=peg("entry", e: cxcontrolparser):
+        path <- +{1..31, 33..255}
+        name <- +{1..31, 33..255}
+        hash <- +{'0'..'9', 'a'..'f'}
+        flags <- +{'0'..'9'}
+        num <- +{'0'..'9'}
+        diff_git <- "diff --git" * @>path * @>path:
+                add(e.FE[], FileDiff())
+                assert(e.FE[].len>0, "A")
+                e.FE[^1].apath= substr($1, 2)
+                e.FE[^1].bpath= substr($2, 2)
+        diff_cc <- "diff --cc" * @>path:
+                add(e.FE[], FileDiff())
+                assert(e.FE[].len>0, "B")
+                e.FE[^1].apath=substr($1, 2)
+                e.FE[^1].bpath=substr($1, 2)
+        index1 <- "index" * @>hash * ".." * @>hash * @flags: discard # Beachte: Die Hashes sind keine Commit-Hashes, sondern bezeichnen Blobs im Index.
+        index2 <- "index" * @>hash * ',' * @>hash * ".." * @>hash: discard
+        aaa <- "---" * @>path: assert(e.FE[].len>0, "C"); e.FE[^1].apath= substr($1, 2)
+        bbb <- "+++" * @>path:
+                assert(e.FE[].len>0, "D")
+                e.FE[^1].bpath= substr($1, 2)
+                if e.FE[^1].op==Other: e.FE[^1].op=Modified
+        newfile <- "new file mode" * @>flags:
+                assert(e.FE[].len>0, "E")
+                e.FE[^1].op=Added
+        deletedfile <- "deleted file mode" * @>flags:
+                assert(e.FE[].len>0, "F")
+                e.FE[^1].op=Deleted
+        similarity <- "similarity index" * @>num * '%': discard
+        rename_from <- "rename from" * @>path:
+                assert(e.FE[].len>0, "G")
+                e.FE[^1].op=Renamed
+        rename_to <- "rename to" * @>path:
+                assert(e.FE[].len>0, "H")
+                e.FE[^1].op=Renamed
+        atat <- "@@" * @'-' * >num * ',' * >num * @'+' * >num * ',' * >num * @"@@":
+                e.na=parseint $2
+                e.nb=parseint $4
+        atat1 <- "@@" * @'-' * >num * ',' * >num * @'+' * >num * @"@@":
+                e.na=parseint($2)
+                e.nb=1
+        atat2 <- "@@" * @'-' * >num * @'+' * >num * @"@@":
+                e.na=1
+                e.nb=1
+        atatat <- "@@@" * @'-' * >num * ',' * >num * @'-' * >num * ',' * >num * @'+' * >num * ',' * >num * @"@@@":
+                e.na=parseint $2
+                e.nb=parseint $4
+                e.nc=parseint $6
+                # echo "atatat ", e.na, e.nb, e.nc
+        sonst <- >(*1) * !1:
+                echo "Sonst '", $1, "'"
+        entry <- diff_git | diff_cc | index1 | index2 | newfile | deletedfile | aaa | bbb | rename_from | rename_to | similarity | atatat | atat | atat1 | atat2 | sonst
+
+const MergeControlParser=peg("entry", e: cxmergeparser):
+        name <- +{1..31, 33..255}
+        ours <- "++<<<<<<<" * @>name: e=(transition: ours, name: $1)
+        expected <- "++|||||||" * @>name: e=(transition: expected, name: $1)
+        theirs <- "++=======": e=(transition: theirs, name: "")
+        merged <- "++>>>>>>>" * @>name: e=(transition: none, name: $1)
+        entry <- ours | expected | theirs | merged
+
 proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
-        type
-                cxcontrolparser=object
-                        na, nb, nc: int
-                        FE: ptr seq[FileDiff]
-                mergestage=enum none,ours,expected,theirs
-                cxmergeparser=tuple[transition: mergestage, name: string]
-
-        const DiffControlParser=peg("entry", e: cxcontrolparser):
-                path <- +{1..31, 33..255}
-                name <- +{1..31, 33..255}
-                hash <- +{'0'..'9', 'a'..'f'}
-                flags <- +{'0'..'9'}
-                num <- +{'0'..'9'}
-                diff_git <- "diff --git" * @>path * @>path:
-                        add(e.FE[], FileDiff())
-                        assert(e.FE[].len>0, "A")
-                        e.FE[^1].apath= substr($1, 2)
-                        e.FE[^1].bpath= substr($2, 2)
-                diff_cc <- "diff --cc" * @>path:
-                        add(e.FE[], FileDiff())
-                        assert(e.FE[].len>0, "B")
-                        e.FE[^1].apath=substr($1, 2)
-                        e.FE[^1].bpath=substr($1, 2)
-                index1 <- "index" * @>hash * ".." * @>hash * @flags: discard # Beachte: Die Hashes sind keine Commit-Hashes, sondern bezeichnen Blobs im Index.
-                index2 <- "index" * @>hash * ',' * @>hash * ".." * @>hash: discard
-                aaa <- "---" * @>path: assert(e.FE[].len>0, "C"); e.FE[^1].apath= substr($1, 2)
-                bbb <- "+++" * @>path:
-                        assert(e.FE[].len>0, "D")
-                        e.FE[^1].bpath= substr($1, 2)
-                        if e.FE[^1].op==Other: e.FE[^1].op=Modified
-                newfile <- "new file mode" * @>flags:
-                        assert(e.FE[].len>0, "E")
-                        e.FE[^1].op=Added
-                deletedfile <- "deleted file mode" * @>flags:
-                        assert(e.FE[].len>0, "F")
-                        e.FE[^1].op=Deleted
-                similarity <- "similarity index" * @>num * '%': discard
-                rename_from <- "rename from" * @>path:
-                        assert(e.FE[].len>0, "G")
-                        e.FE[^1].op=Renamed
-                rename_to <- "rename to" * @>path:
-                        assert(e.FE[].len>0, "H")
-                        e.FE[^1].op=Renamed
-                atat <- "@@" * @'-' * >num * ',' * >num * @'+' * >num * ',' * >num * @"@@":
-                        e.na=parseint $2
-                        e.nb=parseint $4
-                atat1 <- "@@" * @'-' * >num * ',' * >num * @'+' * >num * @"@@":
-                        e.na=parseint($2)
-                        e.nb=1
-                atat2 <- "@@" * @'-' * >num * @'+' * >num * @"@@":
-                        e.na=1
-                        e.nb=1
-                atatat <- "@@@" * @'-' * >num * ',' * >num * @'-' * >num * ',' * >num * @'+' * >num * ',' * >num * @"@@@":
-                        e.na=parseint $2
-                        e.nb=parseint $4
-                        e.nc=parseint $6
-                        # echo "atatat ", e.na, e.nb, e.nc
-                sonst <- >(*1) * !1:
-                        echo "Sonst '", $1, "'"
-                entry <- diff_git | diff_cc | index1 | index2 | newfile | deletedfile | aaa | bbb | rename_from | rename_to | similarity | atatat | atat | atat1 | atat2 | sonst
-
-        const MergeControlParser=peg("entry", e: cxmergeparser):
-                name <- +{1..31, 33..255}
-                ours <- "++<<<<<<<" * @>name: e=(transition: ours, name: $1)
-                expected <- "++|||||||" * @>name: e=(transition: expected, name: $1)
-                theirs <- "++=======": e=(transition: theirs, name: "")
-                merged <- "++>>>>>>>" * @>name: e=(transition: none, name: $1)
-                entry <- ours | expected | theirs | merged
-
         var
                 na=0
                 nb=0
