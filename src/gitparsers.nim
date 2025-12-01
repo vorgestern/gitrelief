@@ -49,9 +49,9 @@ func url_diff*(parent, commit: SecureHash, staged: bool, op: CommittedOperation)
 # gitdiff
 
 type
-        NABR* =enum N, A, B, R, M
+        NABRM* =enum N, A, B, R, M
         DiffSection* =object
-                case kind*: NABR
+                case kind*: NABRM
                 of N, A, B:
                         zeilen*: seq[string]
                 of R:
@@ -524,7 +524,7 @@ when ismainmodule:
                 for a in args:
                         var k: uint
                         if parseuint(a, k)>0: Tests.incl uint8 k
-                        else: echo "Failed to parse argument '", a, "'"
+                        else: echo "Failed to parse argument '", a, "', expected numbers in 1..6"
         if 1 in Tests:
                 const X=parse_show_branches(staticread("testdata/show_branches_1.txt").split('\n'))
                 echo "Zweige: ", X.branches
