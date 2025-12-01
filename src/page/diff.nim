@@ -182,7 +182,6 @@ proc format_commitinfo(X: Commit, fileentry: FileDiff, current_parent: SecureHas
 
 proc page_diff*(Args: Table[string,string]): string=
         let
-                html_title= $servertitle & " diff"
                 A=parseargs Args
                 staged=case A.uc
                 of A12, A3: A.staged
@@ -196,6 +195,8 @@ proc page_diff*(Args: Table[string,string]): string=
                         else:
                                 if Info.parents.len>0: Info.parents[0] else: shanull
                 (Diffs,cmd)=gitdiff(parent, commit, staged, paths A)
+        let
+                html_title= $servertitle & " diff"
                 html_cmd=htmlescape cmd
                 html_content = if Diffs.len>1:
                         format_html_toc(Diffs, staged, parent, commit)
