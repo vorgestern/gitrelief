@@ -70,18 +70,22 @@ local mergedemo=function(conflictstyle)
         print("Verwende conflict style:", git.config("merge.conflictStyle", conflictstyle))
 
         local hoppla=edproc "hoppla.txt"
+        local mehr=edproc "mehr.txt"
 
         hoppla "a\nZeile 1\nZeile 2\nZeile 3\n.\nw\nq\n"
+        mehr "a\nDies ist Zeile 1\nDies ist Zeile 2\nDies ist Zeile 3\n.\nw\nq\n"
         git.add "."
         git.commit "Start"
 
         git.newbranch "branch1"
         hoppla "a\nAdd line in branch 1.\n.\n2\nc\nZeile 2 (branch1)\n.\nw\nq\n"
+        mehr "2\nc\nDIES IST ZEILE 2\n.\nw\nq\n"
         git.add "."
         git.commit "Änderung in branch1"
 
         git.checkout "master"
         hoppla "a\nAdd line in master.\n.\n2\nc\nZeile 2 (master)\n.\nw\nq\n"
+        mehr "2\nc\nDies sollte Zeile 2 sein.\n.\nw\nq\n"
         git.add "."
         git.commit "Änderung in master"
 
