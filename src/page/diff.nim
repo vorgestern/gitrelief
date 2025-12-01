@@ -98,8 +98,6 @@ func format_html_diff(fileentry: FileDiff, staged: bool, ahash, bhash: SecureHas
                                         X
                                 result.add fmt"{'\n'}<tr><td class='Acmp'>{A}</td><td class='Bcmp'>{B}</td></tr>"
                         of M:
-                                # result.add "\n<tr><td numspan='2'>merge Platzhalter</td></tr>"
-                                # let (ours,expected,theirs)=separate_merge(section.ours, section.expected, section.theirs)
                                 result.add "\n<tr><td class='Acmp'>"
                                 for z in section.expected: inc a; result.add fmt"<span>{a}</span>{htmlescape z}{'\n'}"
                                 result.add "</td><td class='Bcmp'>"
