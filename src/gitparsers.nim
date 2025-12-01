@@ -157,7 +157,7 @@ proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
                         e.na=parseint $2
                         e.nb=parseint $4
                         e.nc=parseint $6
-                        echo "atatat ", e.na, e.nb, e.nc
+                        # echo "atatat ", e.na, e.nb, e.nc
                 sonst <- >(*1) * !1:
                         echo "Sonst '", $1, "'"
                 entry <- diff_git | diff_cc | index1 | index2 | newfile | deletedfile | aaa | bbb | rename_from | rename_to | similarity | atatat | atat | atat1 | atat2 | sonst
@@ -203,9 +203,8 @@ proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
                                         of theirs:   addr result[^1].sections[^1].theirs
                                         else:        nil
                                 elif mergeptr!=nil:
-                                        if mergeptr[].len==0: mergeptr[].add DiffSection(kind: M)
                                         let z1=substr(z, 2)
-                                        let added=mergeptr[^1].addline z1
+                                        let added=mergeptr[].len>0 and mergeptr[^1].addline z1
                                         if not added:
                                                 case z[1]
                                                 of '+': mergeptr[].add DiffSection(kind: B, zeilen: @[z1])
@@ -557,6 +556,7 @@ when ismainmodule:
                 echo "currentbranch: ", X.currentbranch
                 echo "unparsed: ", X.unparsed
                 echo "unmerged: ", X.unmerged
+
         if 5 in Tests:
                 # Wenn man diese Beispieldaten zur Compilezeit parst (const X=parse_diff(...)),
                 # erhält man eine unverstandene Fehlermeldung. Deshalb wird hier mit let X=parse_diff()
@@ -566,7 +566,7 @@ when ismainmodule:
                 for F in X:
                         # echo "FileDiff ", F.apath, " ", F.bpath, " (", F.sections.len, " Abschnitte)"
                         for s in F.sections:
-                                echo "section ", s.kind, "=========="
+                                # echo "section ", s.kind, "=========="
                                 if s.kind==M:
                                         echo "\tours: ", s.ours
                                         echo "\texpected: ", s.expected
