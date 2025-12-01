@@ -98,13 +98,13 @@ proc addline(S: var DiffSection, z: string): bool=
 
 proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
         type
-                cparsercontext=object
+                cxcontrolparser=object
                         na, nb, nc: int
                         FE: ptr seq[FileDiff]
                 mergestage=enum none,ours,expected,theirs
-                mparsercontext=tuple[transition: mergestage, name: string]
+                cxmergeparser=tuple[transition: mergestage, name: string]
 
-        const DiffControlParser=peg("entry", e: cparsercontext):
+        const DiffControlParser=peg("entry", e: cxcontrolparser):
                 path <- +{1..31, 33..255}
                 name <- +{1..31, 33..255}
                 hash <- +{'0'..'9', 'a'..'f'}
@@ -158,7 +158,7 @@ proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
                         echo "Sonst '", $1, "'"
                 entry <- diff_git | diff_cc | index1 | index2 | newfile | deletedfile | aaa | bbb | rename_from | rename_to | similarity | atatat | atat | atat1 | atat2 | sonst
 
-        const MergeControlParser=peg("entry", e: mparsercontext):
+        const MergeControlParser=peg("entry", e: cxmergeparser):
                 name <- +{1..31, 33..255}
                 ours <- "++<<<<<<<" * @>name: e=(transition: ours, name: $1)
                 expected <- "++|||||||" * @>name: e=(transition: expected, name: $1)
@@ -179,7 +179,7 @@ proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
                                 # echo nc, " Merging '", z, "'"
                                 let X=addr result[^1].sections[^1]
                                 if X[].kind!=M: raise newException(ValueError, "Merge inkonsistent")
-                                var e: mparsercontext=(transition: none, name: "")
+                                var e: cxmergeparser=(transition: none, name: "")
                                 if MergeControlParser.match(strip z, e).ok:
                                         cxmerge=e.transition
                                         case cxmerge
@@ -214,7 +214,7 @@ proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
                         else:   dec na; dec nb
                 else:
                         {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
-                                var e=cparsercontext(FE: addr result)
+                                var e=cxcontrolparser(FE: addr result)
                                 if DiffControlParser.match(strip z, e).ok:
                                         if e.nc>0:
                                                 na=e.na
