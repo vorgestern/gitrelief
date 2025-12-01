@@ -1,0 +1,34 @@
+diff --cc hoppla.txt
+index 0cd6007,b0f9840..0000000
+--- a/hoppla.txt
++++ b/hoppla.txt
+@@@ -1,4 -1,4 +1,15 @@@
+  Zeile 1
+++<<<<<<< HEAD
+ +Zeile 2 (master)
+++||||||| d1d7889
+++Zeile 2
+++=======
++ Zeile 2 (branch1)
+++>>>>>>> branch1
+  Zeile 3
+++<<<<<<< HEAD
+ +Add line in master.
+++||||||| d1d7889
+++=======
++ Add line in branch 1.
+++>>>>>>> branch1
+diff --cc mehr.txt
+index b8c1307,d4626e2..0000000
+--- a/mehr.txt
++++ b/mehr.txt
+@@@ -1,3 -1,3 +1,9 @@@
+  Dies ist Zeile 1
+++<<<<<<< HEAD
+ +Dies sollte Zeile 2 sein.
+++||||||| d1d7889
+++Dies ist Zeile 2
+++=======
++ DIES IST ZEILE 2
+++>>>>>>> branch1
+  Dies ist Zeile 3

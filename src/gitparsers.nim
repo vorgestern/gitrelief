@@ -519,7 +519,7 @@ when ismainmodule:
         var Tests=inithashset[uint8]()
         let args=commandlineparams()
         if args.len==0:
-                for k in 1..5: Tests.incl uint8 k
+                for k in 1..6: Tests.incl uint8 k
         else:
                 for a in args:
                         var k: uint
@@ -558,6 +558,18 @@ when ismainmodule:
                         # echo "FileDiff ", F.apath, " ", F.bpath, " (", F.sections.len, " Abschnitte)"
                         for s in F.sections:
                                 # echo "section ", s.kind, "=========="
+                                if s.kind==M:
+                                        echo "\tours: ", s.ours
+                                        echo "\texpected: ", s.expected
+                                        echo "\ttheirs: ", s.theirs
+                                else: echo $s
+
+        if 6 in Tests:
+                const data=staticread "testdata/diff_2.txt"
+                let X=parse_diff(data.split '\n')
+                for F in X:
+                        echo "File ", F.apath
+                        for s in F.sections:
                                 if s.kind==M:
                                         echo "\tours: ", s.ours
                                         echo "\texpected: ", s.expected
