@@ -525,29 +525,39 @@ proc format_commits*(L: seq[Commit], leading: string, followfile=false, highligh
         result.add "</table>"
 
 when ismainmodule:
-        if false:
+        import std/[cmdline, sets, parseutils]
+        var Tests=inithashset[uint8]()
+        let args=commandlineparams()
+        if args.len==0:
+                for k in 1..5: Tests.incl uint8 k
+        else:
+                for a in args:
+                        var k: uint
+                        if parseuint(a, k)>0: Tests.incl uint8 k
+                        else: echo "Failed to parse argument '", a, "'"
+        if 1 in Tests:
                 const X=parse_show_branches(staticread("testdata/show_branches_1.txt").split('\n'))
                 echo "Zweige: ", X.branches
                 echo "Commits: ", X.commits
 
-        if false:
+        if 2 in Tests:
                 const X=parse_status_v2(staticread("testdata/status_v2_1.txt").split '\n')
                 echo "currentcommit: ", X.currentcommit
                 echo "currentbranch: ", X.currentbranch
 
-        if false:
+        if 3 in Tests:
                 const X=parse_status_v2(staticread("testdata/status_v2_2.txt").split '\n')
                 echo "currentcommit: ", X.currentcommit
                 echo "currentbranch: ", X.currentbranch
                 echo "unparsed: ", X.unparsed
 
-        if false:
+        if 4 in Tests:
                 const X=parse_status_v2(staticread("testdata/status_v2_3.txt").split '\n')
                 echo "currentcommit: ", X.currentcommit
                 echo "currentbranch: ", X.currentbranch
                 echo "unparsed: ", X.unparsed
                 echo "unmerged: ", X.unmerged
-        if true:
+        if 5 in Tests:
                 # Wenn man diese Beispieldaten zur Compilezeit parst (const X=parse_diff(...)),
                 # erhält man eine unverstandene Fehlermeldung. Deshalb wird hier mit let X=parse_diff()
                 # ein Parsen zur Laufzeit zugelassen.
