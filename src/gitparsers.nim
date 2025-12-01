@@ -69,12 +69,8 @@ func numlines(S: DiffSection): int=
         of N, A, B: S.zeilen.len
         of R: S.razeilen.len
         of M:
-                let
-                        num1=S.ours.len
-                        num2=S.expected.len
-                        num3=S.theirs.len
-                let a=max(num1, num2)
-                max(a, num3)
+                let a=max(S.ours.len, S.expected.len)
+                max(a, S.theirs.len)
 
 proc addline(S: var DiffSection, z: string): bool=
         if z.len<1: return false
@@ -105,6 +101,10 @@ proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
                 cparsercontext=object
                         na, nb, nc: int
                         FE: ptr seq[FileDiff]
+                mergecontext=enum none,ours,expected,theirs
+                mparsercontext=object
+                        transition: mergecontext
+                        name: string
 
         const DiffControlParser=peg("entry", e: cparsercontext):
                 path <- +{1..31, 33..255}
@@ -159,12 +159,6 @@ proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
                 sonst <- >(*1) * !1:
                         echo "Sonst '", $1, "'"
                 entry <- diff_git | diff_cc | index1 | index2 | newfile | deletedfile | aaa | bbb | rename_from | rename_to | similarity | atatat | atat | atat1 | atat2 | sonst
-
-        type
-                mergecontext=enum none,ours,expected,theirs
-                mparsercontext=object
-                        transition: mergecontext
-                        name: string
 
         const MergeControlParser=peg("entry", e: mparsercontext):
                 name <- +{1..31, 33..255}
