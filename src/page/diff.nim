@@ -44,6 +44,69 @@ func format_html_heading(fileentry: FileDiff, hash: SecureHash): string=
         of Copied:   result.add fmt"{'\n'}<p>Copied {fileentry.apath} to {fileentry.bpath} <span><a href='{followurl}'>Follow</a></span></p>"
         of Other:    result.add fmt"{'\n'}<p>Unknown operation {fileentry.apath} <span><a href='{followurl}'>Follow</a></span></p>"
 
+func separate_merge(ours, expected, theirs: seq[DiffSection]): tuple[ours, expected, theirs: seq[string]]=
+        for s in ours:
+                case s.kind
+                of N:
+                        for z in s.zeilen: result.ours.add z
+                of A:
+                        for z in s.zeilen: result.ours.add "-" & z
+                of B:
+                        for z in s.zeilen: result.ours.add "+" & z
+                of R: raise newexception(ValueError, "R Block unexpected")
+                of M:
+                        for s1 in s.ours:
+                                case s1.kind
+                                of N:
+                                        for z in s1.zeilen: result.ours.add z
+                                of A:
+                                        for z in s1.zeilen: result.ours.add "-" & z
+                                of B:
+                                        for z in s1.zeilen: result.ours.add "+" & z
+                                of R: raise newexception(ValueError, "R Block unexpected")
+                                of M: raise newexception(ValueError, "M Block unexpected")
+        for s in expected:
+                case s.kind
+                of N:
+                        for z in s.zeilen: result.expected.add z
+                of A:
+                        for z in s.zeilen: result.expected.add "-" & z
+                of B:
+                        for z in s.zeilen: result.expected.add "+" & z
+                of R:   raise newexception(ValueError, "R Block unexpected")
+                of M:
+                        for s1 in s.ours:
+                                case s1.kind
+                                of N:
+                                        for z in s1.zeilen: result.expected.add z
+                                of A:
+                                        for z in s1.zeilen: result.expected.add "-" & z
+                                of B:
+                                        for z in s1.zeilen: result.expected.add "+" & z
+                                of R: raise newexception(ValueError, "R Block unexpected")
+                                of M: raise newexception(ValueError, "M Block unexpected")
+        for s in theirs:
+                case s.kind
+                of N:
+                        for z in s.zeilen: result.theirs.add z
+                of A:
+                        for z in s.zeilen: result.theirs.add "-" & z
+                of B:
+                        for z in s.zeilen: result.theirs.add "+" & z
+                of R:   raise newexception(ValueError, "R Block unexpected")
+                of M:
+                        for s1 in s.ours:
+                                case s1.kind
+                                of N:
+                                        for z in s1.zeilen: result.theirs.add z
+                                of A:
+                                        for z in s1.zeilen: result.theirs.add "-" & z
+                                of B:
+                                        for z in s1.zeilen: result.theirs.add "+" & z
+                                of R: raise newexception(ValueError, "R Block unexpected")
+                                of M: raise newexception(ValueError, "M Block unexpected")
+
+
 func format_html_diff(fileentry: FileDiff, staged: bool, ahash, bhash: SecureHash): string=
         if fileentry.op!=Other:
                 result.add "<p><table class='diff'>"
@@ -98,7 +161,17 @@ func format_html_diff(fileentry: FileDiff, staged: bool, ahash, bhash: SecureHas
                                         X
                                 result.add fmt"{'\n'}<tr><td class='Acmp'>{A}</td><td class='Bcmp'>{B}</td></tr>"
                         of M:
-                                result.add "\n<tr><td numspan='2'>merge Platzhalter</td></tr>"
+                                # result.add "\n<tr><td numspan='2'>merge Platzhalter</td></tr>"
+                                let (ours,expected,theirs)=separate_merge(section.ours, section.expected, section.theirs)
+                                result.add "\n<tr><td class='Acmp'>"
+                                for z in expected:
+                                        inc a
+                                        result.add fmt"<span>{a}</span>{htmlescape z}{'\n'}"
+                                result.add "</td><td class='Bcmp'>"
+                                for z in theirs: inc a; result.add fmt"<span>{a}</span>{htmlescape z}{'\n'}"
+                                result.add "</td></tr>\n<tr><td class='Acmp'/><td class='Bcmp'>"
+                                for z in ours: inc a; result.add fmt"<span>{a}</span>{htmlescape z}{'\n'}"
+                                result.add "</td></tr>"
                 result.add "</table></p>"
 
 type
