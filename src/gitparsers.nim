@@ -57,7 +57,8 @@ type
                 of R:
                         razeilen*, rbzeilen*: seq[string]
                 of M:
-                        ours*, expected*, theirs*: seq[DiffSection]
+                        ourname, expectedname, theirname: string
+                        ours*, expected*, theirs*: seq[string]
         FileDiff* =object
                 op*: FileCommitStatus
                 apath*, bpath*: string
@@ -68,13 +69,10 @@ func numlines(S: DiffSection): int=
         of N, A, B: S.zeilen.len
         of R: S.razeilen.len
         of M:
-                var
-                        num1=0
-                        num2=0
-                        num3=0
-                for k in S.ours: num1+=numlines(k)
-                for k in S.expected: num2+=numlines(k)
-                for k in S.theirs: num3+=numlines(k)
+                let
+                        num1=S.ours.len
+                        num2=S.expected.len
+                        num3=S.theirs.len
                 let a=max(num1, num2)
                 max(a, num3)
 
@@ -163,7 +161,7 @@ proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
                 entry <- diff_git | diff_cc | index1 | index2 | newfile | deletedfile | aaa | bbb | rename_from | rename_to | similarity | atatat | atat | atat1 | atat2 | sonst
 
         type
-                mergecontext=enum none,ours,expected,theirs,merged
+                mergecontext=enum none,ours,expected,theirs
                 mparsercontext=object
                         transition: mergecontext
                         name: string
@@ -179,7 +177,7 @@ proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
                 theirs <- "++=======":
                         e.transition=theirs
                 merged <- "++>>>>>>>" * @>name:
-                        e.transition=merged
+                        e.transition=none
                         e.name= $1
                 entry <- ours | expected | theirs | merged
 
@@ -187,37 +185,29 @@ proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
                 na=0
                 nb=0
                 nc=0
-                mergeptr: ptr seq[DiffSection]
+                cxmerge: mergecontext=none
 
         for z in Difflines:
                 # echo "=====> ", z
                 if nc>0:
                         {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
                                 # echo nc, " Merging '", z, "'"
+                                let X=addr result[^1].sections[^1]
+                                if X[].kind!=M: raise newException(ValueError, "Merge inkonsistent")
                                 var e=mparsercontext(transition: none)
                                 if MergeControlParser.match(strip z, e).ok:
-                                        if e.transition==ours: result[^1].sections.add DiffSection(kind: M)
-                                        mergeptr=case e.transition
-                                        of ours:     addr result[^1].sections[^1].ours
-                                        of expected: addr result[^1].sections[^1].expected
-                                        of theirs:   addr result[^1].sections[^1].theirs
-                                        else:        nil
-                                elif mergeptr!=nil:
-                                        let z1=substr(z, 2)
-                                        let added=mergeptr[].len>0 and mergeptr[^1].addline z1
-                                        if not added:
-                                                case z[1]
-                                                of '+': mergeptr[].add DiffSection(kind: B, zeilen: @[z1])
-                                                of '-': mergeptr[].add DiffSection(kind: A, zeilen: @[z1])
-                                                of ' ': mergeptr[].add DiffSection(kind: N, zeilen: @[z1])
-                                                else: discard
+                                        cxmerge=e.transition
+                                        case cxmerge
+                                        of ours:     result[^1].sections[^1].ourname=e.name
+                                        of expected: result[^1].sections[^1].expectedname=e.name
+                                        of theirs:   result[^1].sections[^1].theirname=e.name
+                                        of none:     discard
                                 else:
-                                        let z1=substr(z, 2)
-                                        case z[1]
-                                        of '+': result[^1].sections.add DiffSection(kind: B, zeilen: @[z1])
-                                        of '-': result[^1].sections.add DiffSection(kind: A, zeilen: @[z1])
-                                        of ' ': result[^1].sections.add DiffSection(kind: N, zeilen: @[z1])
-                                        else: discard
+                                        case cxmerge
+                                        of none: X.ours.add z; X.expected.add z; X.theirs.add z
+                                        of ours: X.ours.add z
+                                        of expected: X.expected.add z
+                                        of theirs: X.theirs.add z
                         dec nc
                         if nc==0:
                                 # Vorläufig
@@ -245,6 +235,7 @@ proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
                                                 na=e.na
                                                 nb=e.nb
                                                 nc=e.nc
+                                                result[^1].sections.add DiffSection(kind: M)
                                         elif e.na>0 or e.nb>0:
                                                 na=e.na
                                                 nb=e.nb
