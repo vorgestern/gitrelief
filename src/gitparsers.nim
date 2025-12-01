@@ -101,8 +101,8 @@ proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
                 cparsercontext=object
                         na, nb, nc: int
                         FE: ptr seq[FileDiff]
-                mergecontext=enum none,ours,expected,theirs
-                mparsercontext=tuple[transition: mergecontext, name: string]
+                mergestage=enum none,ours,expected,theirs
+                mparsercontext=tuple[transition: mergestage, name: string]
 
         const DiffControlParser=peg("entry", e: cparsercontext):
                 path <- +{1..31, 33..255}
@@ -170,7 +170,7 @@ proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
                 na=0
                 nb=0
                 nc=0
-                cxmerge: mergecontext=none
+                cxmerge: mergestage=none
 
         for z in Difflines:
                 # echo "=====> ", z
