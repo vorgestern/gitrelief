@@ -57,7 +57,7 @@ type
                 of R:
                         razeilen*, rbzeilen*: seq[string]
                 of M:
-                        ours, expected, theirs: seq[DiffSection]
+                        ours*, expected*, theirs*: seq[DiffSection]
         FileDiff* =object
                 op*: FileCommitStatus
                 apath*, bpath*: string
