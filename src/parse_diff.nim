@@ -2,7 +2,7 @@
 import std/[strutils, strformat, tables, times, assertions]
 import checksums/sha1
 import npeg
-import helper, gitparsers
+import helper, parse_others
 
 type
         NABRM* =enum N, A, B, R, M
