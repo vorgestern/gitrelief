@@ -98,12 +98,18 @@ func format_html_diff(fileentry: FileDiff, staged: bool, ahash, bhash: SecureHas
                                         X
                                 result.add fmt"{'\n'}<tr><td class='Acmp'>{A}</td><td class='Bcmp'>{B}</td></tr>"
                         of M:
+                                let a0=a;
                                 result.add "\n<tr><td class='Acmp'>"
-                                for z in section.merge.expected: inc a; result.add fmt"<span>{a}</span>{htmlescape z}{'\n'}"
-                                result.add "</td><td class='Bcmp'>"
+                                var e=a0;
+                                for z in section.merge.expected: inc e; result.add fmt"<span>{e}</span>{htmlescape z}{'\n'}"
+                                result.add "</td><td class='Tcmp'>"
                                 for z in section.merge.theirs: inc a; result.add fmt"<span>{a}</span>{htmlescape z}{'\n'}"
-                                result.add "</td></tr>\n<tr><td class='Acmp'/><td class='Bcmp'>"
-                                for z in section.merge.ours: inc a; result.add fmt"<span>{a}</span>{htmlescape z}{'\n'}"
+                                result.add "</td></tr>"
+                                e=a0;
+                                result.add "\n<tr><td class='Acmp'>"
+                                for z in section.merge.expected: inc e; result.add fmt"<span>{e}</span>{htmlescape z}{'\n'}"
+                                result.add "</td><td class='Bcmp'>"
+                                for z in section.merge.ours: inc b; result.add fmt"<span>{b}</span>{htmlescape z}{'\n'}"
                                 result.add "</td></tr>"
                 result.add "</table></p>"
 
