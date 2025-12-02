@@ -1,10 +1,10 @@
 
 import std/[osproc, strformat, streams, paths]
 import checksums/sha1
-import helper, parse_diff, parse_others
+import helper, parse_diff, parse_status, parse_others
 
 export sha1
-export parse_diff, parse_others
+export parse_diff, parse_status, parse_others
 
 proc exec_path(command: string, args: openarray[string]): seq[string]=
     let p=startprocess(command, args=args, options={poUsePath})
