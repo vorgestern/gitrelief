@@ -99,11 +99,11 @@ func format_html_diff(fileentry: FileDiff, staged: bool, ahash, bhash: SecureHas
                                 result.add fmt"{'\n'}<tr><td class='Acmp'>{A}</td><td class='Bcmp'>{B}</td></tr>"
                         of M:
                                 result.add "\n<tr><td class='Acmp'>"
-                                for z in section.expected: inc a; result.add fmt"<span>{a}</span>{htmlescape z}{'\n'}"
+                                for z in section.merge.expected: inc a; result.add fmt"<span>{a}</span>{htmlescape z}{'\n'}"
                                 result.add "</td><td class='Bcmp'>"
-                                for z in section.theirs: inc a; result.add fmt"<span>{a}</span>{htmlescape z}{'\n'}"
+                                for z in section.merge.theirs: inc a; result.add fmt"<span>{a}</span>{htmlescape z}{'\n'}"
                                 result.add "</td></tr>\n<tr><td class='Acmp'/><td class='Bcmp'>"
-                                for z in section.ours: inc a; result.add fmt"<span>{a}</span>{htmlescape z}{'\n'}"
+                                for z in section.merge.ours: inc a; result.add fmt"<span>{a}</span>{htmlescape z}{'\n'}"
                                 result.add "</td></tr>"
                 result.add "</table></p>"
 

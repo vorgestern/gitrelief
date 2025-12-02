@@ -5,6 +5,9 @@ import npeg
 import helper, parse_others
 
 type
+        MergeCollection=object
+                ourname, expectedname, theirname: string
+                ours*, expected*, theirs*: seq[string]
         NABRM* =enum N, A, B, R, M
         DiffSection* =object
                 case kind*: NABRM
@@ -13,8 +16,7 @@ type
                 of R:
                         razeilen*, rbzeilen*: seq[string]
                 of M:
-                        ourname, expectedname, theirname: string
-                        ours*, expected*, theirs*: seq[string]
+                        merge*: MergeCollection
         FileDiff* =object
                 op*: FileCommitStatus
                 apath*, bpath*: string
@@ -25,8 +27,8 @@ func numlines(S: DiffSection): int=
         of N, A, B: S.zeilen.len
         of R: S.razeilen.len
         of M:
-                let a=max(S.ours.len, S.expected.len)
-                max(a, S.theirs.len)
+                let a=max(S.merge.ours.len, S.merge.expected.len)
+                max(a, S.merge.theirs.len)
 
 proc addline(S: var DiffSection, z: string): bool=
         if z.len<1: return false
@@ -127,28 +129,48 @@ proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
                 nb=0
                 nc=0
                 cxmerge: mergestage=none
+                MC: ptr MergeCollection
 
         for z in Difflines:
                 # echo "=====> ", z
                 if nc>0:
                         {.gcsafe.}: # Ohne dies lässt sich der parser nicht in einer Multithreaded-Umgebung verwenden.
                                 # echo nc, " Merging '", z, "'"
-                                let X=addr result[^1].sections[^1]
-                                if X[].kind!=M: raise newException(ValueError, "Merge inkonsistent")
                                 var e: cxmergeparser=(transition: none, name: "")
                                 if MergeControlParser.match(strip z, e).ok:
                                         cxmerge=e.transition
                                         case cxmerge
-                                        of ours:     result[^1].sections[^1].ourname=e.name
-                                        of expected: result[^1].sections[^1].expectedname=e.name
-                                        of theirs:   result[^1].sections[^1].theirname=e.name
-                                        of none:     discard
+                                        of ours:
+                                                result[^1].sections.add DiffSection(kind: M, merge: MergeCollection(ourname: e.name))
+                                                MC=addr result[^1].sections[^1].merge
+                                        of expected: assert(MC!=nil); MC[].expectedname=e.name
+                                        of theirs:   assert(MC!=nil); MC[].theirname=e.name
+                                        of none: MC=nil
                                 else:
-                                        case cxmerge
-                                        of none: X.ours.add z; X.expected.add z; X.theirs.add z
-                                        of ours: X.ours.add z
-                                        of expected: X.expected.add z
-                                        of theirs: X.theirs.add z
+                                        let
+                                                z2=substr(z, 2)
+                                                X=addr result[^1].sections
+                                        case substr(z, 0, 1)
+                                        of "  ":
+                                                assert(cxmerge==none)
+                                                if X[].len==0 or X[][^1].kind!=N: X[].add DiffSection(kind: N, zeilen: @[z2])
+                                                else: X[][^1].zeilen.add z2
+                                                assert(na>0); dec na
+                                                assert(nb>0); dec nb
+                                        of " +":
+                                                assert(cxmerge==ours)
+                                                assert(MC!=nil)
+                                                MC[].ours.add z2
+                                                assert(na>0); dec na
+                                        of "+ ":
+                                                assert(cxmerge==theirs)
+                                                assert(MC!=nil)
+                                                MC[].theirs.add z2
+                                                assert(nb>0); dec nb
+                                        of "++":
+                                                assert(cxmerge==expected)
+                                                assert(MC!=nil)
+                                                MC[].expected.add z2
                         dec nc
                         if nc==0:
                                 # Vorläufig
@@ -176,7 +198,7 @@ proc parse_diff*(Difflines: seq[string]): seq[FileDiff]=
                                                 na=e.na
                                                 nb=e.nb
                                                 nc=e.nc
-                                                result[^1].sections.add DiffSection(kind: M)
+                                                MC=nil
                                         elif e.na>0 or e.nb>0:
                                                 na=e.na
                                                 nb=e.nb
