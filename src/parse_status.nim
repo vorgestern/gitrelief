@@ -76,6 +76,9 @@ proc parse_status_v2*(Lines: seq[string]): RepoStatus_v2=
                 Rx <- "2 R. " * sub * (@octalmode[3]) * (@hash[2]) * @xscore * @>path * '\t' * >path:
                         # echo "Rx '", $1, "'"
                         e.res.staged.add (status: Renamed, path: strip $2, oldpath: strip $1)
+                RM <- "2 RM " * sub * (@octalmode[3]) * (@hash[2]) * @xscore * @>path * '\t' * >path:
+                        # echo "Rx '", $1, "'"
+                        e.res.staged.add (status: Renamed, path: strip $2, oldpath: strip $1)
                 xC <- "2 .C " * sub * (@octalmode[3]) * (@hash[2]) * @xscore * @>path * '\t' * >path:
                         # echo "xC '", $1, "'"
                         e.res.unstaged.add (status: Copied, path: strip $2, oldpath: strip $1)
@@ -84,7 +87,7 @@ proc parse_status_v2*(Lines: seq[string]): RepoStatus_v2=
                         e.res.staged.add (status: Copied, path: strip $2, oldpath: strip $1)
                 sonst <- >(*1) * !1: e.res.unparsed.add $1
                 # ===============================
-                entry <- oid | oid_initial | head | head_detached | branch_upstream | branch_ab | xM | Mx | MM | Ax | AM | xD | Dx | xR | Rx | xC | Cx | unmerged | untracked | ignored | sonst
+                entry <- oid | oid_initial | head | head_detached | branch_upstream | branch_ab | xM | Mx | MM | Ax | AM | xD | Dx | xR | Rx | RM | xC | Cx | unmerged | untracked | ignored | sonst
         var e=parsercontext(res: addr result)
         for z in Lines:
                 {.gcsafe.}:
