@@ -184,31 +184,13 @@ when ismainmodule:
         var Tests=inithashset[uint8]()
         let args=commandlineparams()
         if args.len==0:
-                for k in 1..4: Tests.incl uint8 k
+                for k in 1..1: Tests.incl uint8 k
         else:
                 for a in args:
                         var k: uint
                         if parseuint(a, k)>0: Tests.incl uint8 k
-                        else: echo "Failed to parse argument '", a, "', expected numbers in 1..4"
+                        else: echo "Failed to parse argument '", a, "', expected numbers in 1..1"
         if 1 in Tests:
                 const X=parse_show_branches(staticread("testdata/show_branches_1.txt").split('\n'))
                 echo "Zweige: ", X.branches
                 echo "Commits: ", X.commits
-
-        if 2 in Tests:
-                const X=parse_status_v2(staticread("testdata/status_v2_1.txt").split '\n')
-                echo "currentcommit: ", X.currentcommit
-                echo "currentbranch: ", X.currentbranch
-
-        if 3 in Tests:
-                const X=parse_status_v2(staticread("testdata/status_v2_2.txt").split '\n')
-                echo "currentcommit: ", X.currentcommit
-                echo "currentbranch: ", X.currentbranch
-                echo "unparsed: ", X.unparsed
-
-        if 4 in Tests:
-                const X=parse_status_v2(staticread("testdata/status_v2_3.txt").split '\n')
-                echo "currentcommit: ", X.currentcommit
-                echo "currentbranch: ", X.currentbranch
-                echo "unparsed: ", X.unparsed
-                echo "unmerged: ", X.unmerged

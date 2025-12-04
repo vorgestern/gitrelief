@@ -91,3 +91,47 @@ proc parse_status_v2*(Lines: seq[string]): RepoStatus_v2=
                         let mr=statuslineparser.match(z, e)
                         if not mr.ok: echo "failed to parse: ", z
 
+when ismainmodule:
+        import std/[cmdline, sets, parseutils]
+        var Tests=inithashset[uint8]()
+        let args=commandlineparams()
+        if args.len==0:
+                for k in 1..4: Tests.incl uint8 k
+        else:
+                for a in args:
+                        var k: uint
+                        if parseuint(a, k)>0: Tests.incl uint8 k
+                        else: echo "Failed to parse argument '", a, "', expected numbers in 1..4"
+
+        # Beachte bei diesen Tests, dass sie zur Laufzeit ausgeführt werden sollen.
+        # Erzeuge die Eingabedaten zur Kompilezeit (const), aber die Rückgabedaten
+        # des Parsers zur Laufzeit (let X=parse_status_v2(inp)).
+        if 1 in Tests:
+                const inp=staticread("testdata/status_v2_1.txt").split 
+                let X=parse_status_v2(inp)
+                echo "currentcommit: ", X.currentcommit
+                echo "currentbranch: ", X.currentbranch
+
+        if 2 in Tests:
+                const inp=staticread("testdata/status_v2_2.txt").split '\n'
+                let X=parse_status_v2(inp)
+                echo "currentcommit: ", X.currentcommit
+                echo "currentbranch: ", X.currentbranch
+                echo "unparsed: ", X.unparsed
+
+        if 3 in Tests:
+                const inp=staticread("testdata/status_v2_3.txt").split '\n'
+                let X=parse_status_v2(inp)
+                echo "currentcommit: ", X.currentcommit
+                echo "currentbranch: ", X.currentbranch
+                echo "unparsed: ", X.unparsed
+                echo "unmerged: ", X.unmerged
+
+        if 4 in Tests:
+                echo "Parse Status Test 4"
+                const inp=staticread("testdata/status_v2_4.txt").split '\n'
+                let X=parse_status_v2(inp)
+                echo "currentcommit: ", X.currentcommit
+                echo "currentbranch: ", X.currentbranch
+                echo "unparsed: ", X.unparsed
+                echo "unmerged: ", X.unmerged
