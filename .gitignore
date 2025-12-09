@@ -1,9 +1,7 @@
 
-./gitrelief
-tt*
+*
+!*.*
+!*/
+
 .vscode/
 test/demo_*
-
-parse_diff
-parse_status
-parse_other
