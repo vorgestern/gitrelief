@@ -9,7 +9,7 @@ type
                 name*: string
                 port*: int
 
-proc newrepo(r, n: string, p: int): Repo=Repo(root: r, name: n, port: p)
+proc newrepo(r, n: string, p: int): Repo {.used.}=Repo(root: r, name: n, port: p)
 
 proc parse_repos*(content: string): seq[Repo]=
         let L=content.split '\n'
