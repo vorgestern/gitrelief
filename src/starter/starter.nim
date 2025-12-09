@@ -110,7 +110,7 @@ method view(app: AppState): Widget=
 
 proc main=
         const configfile="repositories.txt"
-        var state: AppData=AppData(repos: @[])
+        var state=AppData(repos: @[])
         if fileexists Path configfile: state.repos=parse_repos readfile configfile
         adw.brew(gui App(state=state))
         writefile(configfile, serialise_repos state.repos)
