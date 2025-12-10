@@ -8,6 +8,7 @@ type
                 root*: string
                 name*: string
                 port*: int
+                running: bool
 
 proc newrepo(r, n: string, p: int): Repo {.used.}=Repo(root: r, name: n, port: p)
 
@@ -39,17 +40,18 @@ func checkroot(s: string): bool=s.len>0
 
 viewable RepoLine:
         repo: Repo
-        running: bool
 
 method view(RLS: RepoLineState): Widget=
         gui:
                 Box(orient=OrientX, spacing=0):
                         Checkbutton {.expand: false, halign: AlignStart.}:
                                 sensitive=iscomplete(RLS.repo)
-                                proc changed(x: bool)= RLS.running=x
+                                proc changed(x: bool)=
+                                        RLS.repo.running=x
+                                        echo "Running ", RLS.repo.name, " ", RLS.repo.running
                         EditableLabel {.expand: false, halign: AlignStart.}:
                                 text= $RLS.repo.port
-                                sensitive=not RLS.running
+                                sensitive=not RLS.repo.running
                                 sizeRequest=(1,1)
                                 proc changed(x: string)= RLS.repo.port=parseint x
                                 proc editstatechanged(start: bool)=
@@ -59,7 +61,7 @@ method view(RLS: RepoLineState): Widget=
                                                 RLS.repo.port=merki
                         EditableLabel {.expand: false, halign: AlignStart.}:
                                 text=RLS.repo.name
-                                sensitive=not RLS.running
+                                sensitive=not RLS.repo.running
                                 sizeRequest=(1,1)
                                 proc changed(x: string)=RLS.repo.name=x
                                 proc editstatechanged(start: bool)=
@@ -69,7 +71,7 @@ method view(RLS: RepoLineState): Widget=
                                                 RLS.repo.name=merks
                         EditableLabel {.expand: false, halign: AlignStart.}:
                                 text=RLS.repo.root
-                                sensitive=not RLS.running
+                                sensitive=not RLS.repo.running
                                 sizeRequest=(1,1)
                                 proc changed(x: string)=RLS.repo.root=x
                                 proc editstatechanged(start: bool)=
