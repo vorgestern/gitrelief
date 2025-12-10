@@ -102,13 +102,12 @@ method view(app: AppState): Widget=
                                                 app.state.repos.add Repo(root: "-", name: "-", port: p+1)
                                 # Button {.addRight.}: icon="open-menu-symbolic"
                         ScrolledWindow:
-                                Grid:
-                                        margin=0
-                                        rowspacing=1
-                                        columnspacing=0
-                                        rowhomogeneous=false
-                                        columnhomogeneous=true
-                                        for (j,r) in pairs(app.state.repos): RepoLine(repo=r, running=false) {.y: j.}
+                                Listbox:
+                                        margin=20
+                                        for (j,r) in pairs(app.state.repos):
+                                                ListboxRow:
+                                                        proc activate()=echo "Aktiviere ", r.name
+                                                        RepoLine(repo=r)
 
 proc main=
         const configfile="repositories.txt"
