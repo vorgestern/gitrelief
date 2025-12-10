@@ -25,7 +25,7 @@ proc serialise_repos*(R: seq[Repo]): string=
         for r in R:
                 result.add fmt"{r.port} {r.name} {r.root}" & '\n'
 
-func iscomplete(port: int, name, root: string): bool= port>0 and name.len>0 and root.len>0
+func iscomplete(port: int, name, root: string): bool= port>0 and name.len>0 and name!="-" and root.len>0 and root!="-"
 func iscomplete(r: Repo): bool= iscomplete(r.port, r.name, r.root)
 
 # =====================================================================
