@@ -43,42 +43,46 @@ viewable RepoLine:
 
 method view(RLS: RepoLineState): Widget=
         gui:
-                Box(orient=OrientX, spacing=0):
-                        Checkbutton {.expand: false, halign: AlignStart.}:
-                                sensitive=iscomplete(RLS.repo)
-                                proc changed(x: bool)=
-                                        RLS.repo.running=x
-                                        echo "Running ", RLS.repo.name, " ", RLS.repo.running
-                        EditableLabel {.expand: false, halign: AlignStart.}:
-                                text= $RLS.repo.port
-                                sensitive=not RLS.repo.running
-                                sizeRequest=(1,1)
-                                proc changed(x: string)= RLS.repo.port=parseint x
-                                proc editstatechanged(start: bool)=
-                                        if start: merki=RLS.repo.port
-                                        elif not checkport(RLS.repo.port):
-                                                echo "check port failed: ", RLS.repo.port, " gegen ", merki
-                                                RLS.repo.port=merki
-                        EditableLabel {.expand: false, halign: AlignStart.}:
-                                text=RLS.repo.name
-                                sensitive=not RLS.repo.running
-                                sizeRequest=(1,1)
-                                proc changed(x: string)=RLS.repo.name=x
-                                proc editstatechanged(start: bool)=
-                                        if start: merks=RLS.repo.name
-                                        elif not checkname(RLS.repo.name):
-                                                echo "check name failed: '", RLS.repo.name, "' gegen ", merks
-                                                RLS.repo.name=merks
-                        EditableLabel {.expand: false, halign: AlignStart.}:
-                                text=RLS.repo.root
-                                sensitive=not RLS.repo.running
-                                sizeRequest=(1,1)
-                                proc changed(x: string)=RLS.repo.root=x
-                                proc editstatechanged(start: bool)=
-                                        if start: merks=RLS.repo.root
-                                        elif not checkroot(RLS.repo.root):
-                                                echo "check root failed: '", RLS.repo.root, "' gegen ", merks
-                                                RLS.repo.root=merks
+                # Box(orient=OrientX, spacing=0):
+                ListboxRow:
+                        proc activate()=echo "Aktiviere ", RLS.repo.name
+                        Flowbox(homogeneous=true):
+                                Checkbutton {.addchild.}:
+                                        sensitive=iscomplete(RLS.repo)
+                                        proc changed(x: bool)=
+                                                RLS.repo.running=x
+                                                echo "Running ", RLS.repo.name, " ", RLS.repo.running
+                                # Label(text="Hoppla")
+                                EditableLabel {.addchild.}:
+                                        text= $RLS.repo.port
+                                        sensitive=not RLS.repo.running
+                                        sizeRequest=(1,1)
+                                        proc changed(x: string)= RLS.repo.port=parseint x
+                                        proc editstatechanged(start: bool)=
+                                                if start: merki=RLS.repo.port
+                                                elif not checkport(RLS.repo.port):
+                                                        echo "check port failed: ", RLS.repo.port, " gegen ", merki
+                                                        RLS.repo.port=merki
+                                EditableLabel {.addchild.}:
+                                        text=RLS.repo.name
+                                        sensitive=not RLS.repo.running
+                                        sizeRequest=(1,1)
+                                        proc changed(x: string)=RLS.repo.name=x
+                                        proc editstatechanged(start: bool)=
+                                                if start: merks=RLS.repo.name
+                                                elif not checkname(RLS.repo.name):
+                                                        echo "check name failed: '", RLS.repo.name, "' gegen ", merks
+                                                        RLS.repo.name=merks
+                                EditableLabel {.addchild.}:
+                                        text=RLS.repo.root
+                                        sensitive=not RLS.repo.running
+                                        sizeRequest=(1,1)
+                                        proc changed(x: string)=RLS.repo.root=x
+                                        proc editstatechanged(start: bool)=
+                                                if start: merks=RLS.repo.root
+                                                elif not checkroot(RLS.repo.root):
+                                                        echo "check root failed: '", RLS.repo.root, "' gegen ", merks
+                                                        RLS.repo.root=merks
 
 # =====================================================================
 
@@ -105,9 +109,7 @@ method view(app: AppState): Widget=
                                 Listbox:
                                         margin=20
                                         for (j,r) in pairs(app.state.repos):
-                                                ListboxRow:
-                                                        proc activate()=echo "Aktiviere ", r.name
-                                                        RepoLine(repo=r)
+                                                RepoLine(repo=r)
 
 proc main=
         const configfile="repositories.txt"
