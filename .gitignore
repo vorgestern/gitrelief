@@ -3,6 +3,7 @@
 !*.*
 !*/
 
+bb
 .vscode/
 test/demo_*
 repositories.txt

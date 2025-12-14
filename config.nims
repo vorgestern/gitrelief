@@ -19,3 +19,9 @@ switch("warning", "UnusedImport:off")
 
 # Allerdings sollte der Parser (der sich const deklarieren lässt) sowieso immer gcsafe sein.
 # Der Compiler scheint das in der gegenwärtigen Implementierung von npeg nicht erkennen zu können.
+
+--outdir:"bb"
+--nimcache:"bb/nimcache"
+
+task starter, "starter release build":
+        setcommand "c", "startergui/startergui.nim"

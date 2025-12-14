@@ -1,0 +1,33 @@
+
+label#hinweis {
+    border-width: 2px;
+    border-color: #00f;
+    color: #ff00ea;
+    font: 8pt Monospace;
+}
+
+row {
+    color: black;
+    font: 6pt Monospace;
+}
+
+button#hoppla {
+    background-color: #808000;
+    color: #ff00ea;
+    font: 16pt Monospace;
+}
+
+button {
+    background-color: #f0a810;
+    color: #ff00ea;
+    font: 8pt Monospace;
+}
+
+.reporow {
+    /* background-color: cyan; */
+    /* padding: 4px 0 4px; */
+}
+
+.repodetail {
+    color: #111;
+}
