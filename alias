@@ -7,4 +7,4 @@ alias dd="clear && nim c -o:ttdiff src/gitrelief/diff.nim && ./ttdiff"
 alias ff="clear && nim c -o:ttfollow src/page/follow.nim && ./ttfollow"
 alias hh="clear && nim c -o:tthelper src/mehr/helper.nim && ./tthelper"
 
-alias ss="clear && nim c -o:starter src/starter/starter.nim"
+# alias ss="clear && nim c -o:starter obsolet/starter/starter.nim"
