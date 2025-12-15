@@ -12,7 +12,7 @@ type
                 name: string
                 port: int
 
-proc `$`(X: Repo): string = "repo(" & $X.port & ", '" & X.name & "', '" & X.root & "')"
+# proc `$`(X: Repo): string = "repo(" & $X.port & ", '" & X.name & "', '" & X.root & "')"
 
 proc newrepo(r, n: string, p: int): Repo {.used.}=Repo(root: r, name: n, port: p)
 
@@ -29,8 +29,8 @@ proc serialise_repos*(R: seq[Repo]): string=
         for r in R:
                 result.add fmt"{r.port} {r.name} {r.root}" & '\n'
 
-func iscomplete(port: int, name, root: string): bool= port>0 and name.len>0 and name!="-" and root.len>0 and root!="-"
-func iscomplete(r: Repo): bool= iscomplete(r.port, r.name, r.root)
+# func iscomplete(port: int, name, root: string): bool= port>0 and name.len>0 and name!="-" and root.len>0 and root!="-"
+# func iscomplete(r: Repo): bool= iscomplete(r.port, r.name, r.root)
 
 # =====================================================================
 
