@@ -34,6 +34,28 @@ proc serialise_repos*(R: seq[Repo]): string=
 
 # =====================================================================
 
+proc dumphierarchy(X: Widget, level=0)=
+        if X==nil:
+                echo repeat("    ", level), "nil"
+                return
+        let name=gtk_widget_get_name(X)
+        if bool GTK_IS_CONTAINER(X):
+                echo repeat("    ", level), "Container ", name
+                let Cs=gtk_container_get_children(Container X)
+                var C=Cs
+                while C!=nil:
+                        let Y=cast[Widget](C.data)
+                        if Y!=nil: dumphierarchy(Y, level+1)
+                        C=C.next
+                g_list_free(Cs)
+        elif bool GTK_IS_BIN(X):
+                echo repeat("    ", level), "Bin ", name
+                dump_hierarchy(gtk_bin_get_child(Bin X), level+1)
+        else:
+                echo repeat("    ", level), name
+
+# =====================================================================
+
 proc compile_css(): string=
         discard staticexec("glib-compile-resources --sourcedir . --target start.gresource start.gresource.xml")
         staticread "start.gresource"
@@ -109,7 +131,7 @@ proc clicked_repobutton(B: CheckButton, data: GPointer) {.cdecl.}=
         var cx=(index:0, state: false, port: "", name: "", root: "")
         gtk_container_foreach(cast[FlowBox](data), f, addr cx)
 
-        if cx.state:
+        if false and cx.state:
                 let args= @["--port", cx.port, "--name", cx.name]
                 let env: StringTableRef=nil
                 let options={poUsePath}
@@ -239,6 +261,7 @@ proc main=
                 gtk_window_set_title(MainWindow, "Demo simple4") # MainWindow.title="Demo simple4"
                 gtk_window_set_default_size(MainWindow, 700, 300)
                 gtk_container_set_border_width(MainWindow, 10)
+                dump_hierarchy(Widget MainWindow)
                 discard g_signal_connect(MainWindow, "destroy", gtk_main_quit)
                 gtk_widget_show_all(MainWindow)
                 gtk_main()
