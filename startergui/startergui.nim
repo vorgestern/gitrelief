@@ -143,7 +143,7 @@ proc mkrepodetail(detail, default: string, width: int, instance: GPointer, role:
 proc reporow(repo: Repo): ListboxRow=
         result=gtk_list_box_row_new()
         if valid result:
-                gtk_widget_set_margin_bottom(result, 10)
+                # gtk_widget_set_margin_bottom(result, 10)
                 # gtk_widget_set_can_focus(result, Gboolean false) ListboxRow muss anscheinend fokussierbar sein, sonst bleibt die ganze Zeile mit der Tabulatortaste unerreichbar.
                 let context=gtk_widget_get_style_context(result)
                 gtk_style_context_add_class(context, "reporow") # CSS-Klasse .repodetail
@@ -155,7 +155,7 @@ proc reporow(repo: Repo): ListboxRow=
                         let cb=gtk_check_button_new_with_label "running"
                         if valid cb:
                                 # gtk_widget_set_halign(cb, START)
-                                gtk_style_context_add_class(gtk_widget_get_style_context(cb), "repodetail")
+                                gtk_style_context_add_class(gtk_widget_get_style_context(cb), "reporunning")
                                 gtk_container_add(F, cb)
                                 discard g_signal_connect(GPointer cb, cstring "toggled", cast[GCallback](clicked_repobutton), cast[GPointer](F))
                         gtk_container_add(F, mkrepodetail($repo.port, "port", 6, cast[GPointer](repo), port))
@@ -177,11 +177,7 @@ proc repolist(content: seq[Repo]): tuple[S: ScrolledWindow, L: Listbox]=
                         gtk_scrolled_window_set_propagate_natural_height(S, Gboolean true)
                         result=(S: S, L: L)
 
-var Repos: seq[Repo]= @[
-        # Repo(root: "root1", name: "name1", port:8080),
-        # Repo(root: "root2", name: "name2", port:8081),
-        # Repo(root: "root3", name: "name3", port:8082)
-]
+var Repos: seq[Repo]= @[]
 
 proc main=
         var
@@ -231,8 +227,6 @@ proc main=
                 discard g_signal_connect(MainWindow, "destroy", gtk_main_quit)
                 gtk_widget_show_all(MainWindow)
                 gtk_main()
-                # echo "Repos"
-                # for k in Repos: echo $k
                 writefile(configfile, serialise_repos Repos)
 
 main()

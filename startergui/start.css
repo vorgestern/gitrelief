@@ -31,3 +31,12 @@ button {
 .repodetail {
     color: #111;
 }
+
+.reporunning {
+    background-color: white;
+    color: cyan;
+}
+
+.reporunning .check {
+    color: orange;
+}
