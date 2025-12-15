@@ -1,5 +1,5 @@
 
-import std/strutils
+import std/[strformat, strutils, files, paths]
 import gio, gtk3
 
 type
@@ -13,6 +13,26 @@ type
                 port: int
 
 proc `$`(X: Repo): string = "repo(" & $X.port & ", '" & X.name & "', '" & X.root & "')"
+
+proc newrepo(r, n: string, p: int): Repo {.used.}=Repo(root: r, name: n, port: p)
+
+proc parse_repos*(content: string): seq[Repo]=
+        let L=content.split '\n'
+        for k in L:
+                let A=k.split ' '
+                if A.len==3:
+                        let p=parseint A[0]
+                        result.add Repo(port: p, name: A[1], root: A[2])
+
+proc serialise_repos*(R: seq[Repo]): string=
+        echo "Serialise ", R.len, " repositories."
+        for r in R:
+                result.add fmt"{r.port} {r.name} {r.root}" & '\n'
+
+func iscomplete(port: int, name, root: string): bool= port>0 and name.len>0 and name!="-" and root.len>0 and root!="-"
+func iscomplete(r: Repo): bool= iscomplete(r.port, r.name, r.root)
+
+# =====================================================================
 
 proc compile_css(): string=
         discard staticexec("glib-compile-resources --sourcedir . --target start.gresource start.gresource.xml")
@@ -139,8 +159,8 @@ proc reporow(repo: Repo): ListboxRow=
                                 gtk_container_add(F, cb)
                                 discard g_signal_connect(GPointer cb, cstring "toggled", cast[GCallback](clicked_repobutton), cast[GPointer](F))
                         gtk_container_add(F, mkrepodetail($repo.port, "port", 6, cast[GPointer](repo), port))
-                        gtk_container_add(F, mkrepodetail(repo.name, "page title", 10, cast[GPointer](repo), name))
-                        gtk_container_add(F, mkrepodetail(repo.root, "repo path", 40, cast[GPointer](repo), root))
+                        gtk_container_add(F, mkrepodetail(repo.name, "page title", 30, cast[GPointer](repo), name))
+                        gtk_container_add(F, mkrepodetail(repo.root, "repo path", 80, cast[GPointer](repo), root))
                         gtk_container_forall(F, Callback unfocus, GPointer nil)
 
 proc repolist(content: seq[Repo]): tuple[S: ScrolledWindow, L: Listbox]=
@@ -158,9 +178,9 @@ proc repolist(content: seq[Repo]): tuple[S: ScrolledWindow, L: Listbox]=
                         result=(S: S, L: L)
 
 var Repos: seq[Repo]= @[
-        Repo(root: "root1", name: "name1", port:8080),
-        Repo(root: "root2", name: "name2", port:8081),
-        Repo(root: "root3", name: "name3", port:8082)
+        # Repo(root: "root1", name: "name1", port:8080),
+        # Repo(root: "root2", name: "name2", port:8081),
+        # Repo(root: "root3", name: "name3", port:8082)
 ]
 
 proc main=
@@ -168,6 +188,9 @@ proc main=
                 argc: cint=0
                 argv: cstringArray
         gtk_init(argc, argv)
+
+        const configfile="repositories.txt"
+        if fileexists Path configfile: Repos=parse_repos readfile configfile
 
         const css=compile_css()
         discard cssload_from_memory(css, "/path/for/bundle/start.css")
@@ -203,12 +226,13 @@ proc main=
                                 gtk_container_add(VertikalBox, Buttons)
                         gtk_container_add(MainWindow, VertikalBox)
                 gtk_window_set_title(MainWindow, "Demo simple4") # MainWindow.title="Demo simple4"
-                gtk_window_set_default_size(MainWindow, 500, 300)
+                gtk_window_set_default_size(MainWindow, 700, 300)
                 gtk_container_set_border_width(MainWindow, 10)
                 discard g_signal_connect(MainWindow, "destroy", gtk_main_quit)
                 gtk_widget_show_all(MainWindow)
                 gtk_main()
-                echo "Repos"
-                for k in Repos: echo $k
+                # echo "Repos"
+                # for k in Repos: echo $k
+                writefile(configfile, serialise_repos Repos)
 
 main()
