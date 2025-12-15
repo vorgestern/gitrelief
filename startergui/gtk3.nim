@@ -247,6 +247,14 @@ proc gtk_container_get_children*(X: Container): GList {.importc: "gtk_container_
 proc gtk_container_foreach*(X: Container; cb: Callback; data: Gpointer) {.importc: "gtk_container_foreach", libgtk.}
 proc gtk_container_forall*(X: Container; cb: Callback; data: Gpointer) {.importc: "gtk_container_forall", libgtk.}
 
+# GTK_IS...
+proc gtk_bin_get_type*(): GType {.importc: "gtk_bin_get_type", libgtk.}
+proc gtk_widget_get_type*(): GType {.importc: "gtk_widget_get_type", libgtk.}
+proc gtk_entry_get_type*(): GType {.importc: "gtk_entry_get_type", libgtk.}
+proc GTK_IS_BIN(obj: Widget): Gboolean= g_type_check_instance_is_a(cast[GTypeInstance](obj), gtk_bin_get_type())
+proc GTK_IS_WIDGET(obj: Widget): Gboolean= g_type_check_instance_is_a(cast[GTypeInstance](obj), gtk_widget_get_type())
+proc GTK_IS_ENTRY(obj: Widget): Gboolean= g_type_check_instance_is_a(cast[GTypeInstance](obj), gtk_entry_get_type())
+
 proc gtk_css_provider_new*(): CssProvider {.importc: "gtk_css_provider_new", libgtk.}
 proc gtk_css_provider_to_string*(X: CssProvider): cstring {.importc: "gtk_css_provider_to_string", libgtk.}
 proc gtk_css_provider_load_from_resource*(X: CssProvider; ResourcePath: cstring) {.importc: "gtk_css_provider_load_from_resource", libgtk.}

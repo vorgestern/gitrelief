@@ -123,6 +123,17 @@ type
                 data*: Gpointer
                 notifiers*: GClosureNotifyData
 
+proc g_type_check_instance*(X: GTypeInstance): Gboolean {.importc: "g_type_check_instance", libgobj.}
+proc g_type_check_instance_cast*(X: GTypeInstance; T: GType): GTypeInstance {.importc: "g_type_check_instance_cast", libgobj.}
+proc g_type_check_instance_is_a*(X: GTypeInstance; T: GType): Gboolean {.importc: "g_type_check_instance_is_a", libgobj.}
+proc g_type_check_instance_is_fundamentally_a*(X: GTypeInstance; T: GType): Gboolean {.importc: "g_type_check_instance_is_fundamentally_a", libgobj.}
+proc g_type_check_class_cast*(X: GTypeClass; T: GType): GTypeClass {.importc: "g_type_check_class_cast", libgobj.}
+proc g_type_check_class_is_a*(X: GTypeClass; T: GType): Gboolean {.importc: "g_type_check_class_is_a", libgobj.}
+proc g_type_check_is_value_type*(X: GType): Gboolean {.importc: "g_type_check_is_value_type", libgobj.}
+proc g_type_check_value*(X: GValue): Gboolean {.importc: "g_type_check_value", libgobj.}
+proc g_type_check_value_holds*(X: GValue; T: GType): Gboolean {.importc: "g_type_check_value_holds", libgobj.}
+proc g_type_test_flags*(X: GType; flags: cuint): Gboolean {.importc: "g_type_test_flags", libgobj.}
+
 proc g_object_get_data*(X: GObject; key: cstring): Gpointer {.importc: "g_object_get_data", libgobj.}
 proc data*(X: GObject; key: cstring): Gpointer {.importc: "g_object_get_data", libgobj.}
 proc g_object_set_data*(X: GObject; key: cstring; data: Gpointer) {.importc: "g_object_set_data", libgobj.}
