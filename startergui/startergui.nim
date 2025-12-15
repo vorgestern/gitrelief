@@ -1,5 +1,5 @@
 
-import std/[strformat, strutils, files, paths]
+import std/[strformat, strutils, strtabs, files, paths, osproc]
 import gio, gtk3
 
 type
@@ -86,7 +86,7 @@ proc clicked_hoppla(B: Button, data: GPointer) {.cdecl.}=
 
 # Iteriere direkt über die Kinder eines Containers.
 proc clicked_repobutton(B: CheckButton, data: GPointer) {.cdecl.}=
-        type cxtype=tuple[index: int, state: bool]
+        type cxtype=tuple[index: int, state: bool, port: string, name: string, root: string]
         proc f(X: Widget; inst: Gpointer) {.cdecl.}=
                 var cx=cast[ptr cxtype](inst)
                 inc cx[].index
@@ -96,10 +96,25 @@ proc clicked_repobutton(B: CheckButton, data: GPointer) {.cdecl.}=
                 of 1:
                         let cb=cast[ToggleButton](C)
                         cx[].state=bool gtk_toggle_button_get_active(cb)
-                of 2, 3, 4: gtk_widget_set_sensitive(C, Gboolean(not cx[].state))
+                of 2:
+                        gtk_widget_set_sensitive(C, Gboolean(not cx[].state))
+                        cx[].port= $gtk_entry_get_text(Entry C)
+                of 3:
+                        gtk_widget_set_sensitive(C, Gboolean(not cx[].state))
+                        cx[].name= $gtk_entry_get_text(Entry C)
+                of 4:
+                        gtk_widget_set_sensitive(C, Gboolean(not cx[].state))
+                        cx[].root= $gtk_entry_get_text(Entry C)
                 else: discard
-        var cx=(index:0, state: false)
+        var cx=(index:0, state: false, port: "", name: "", root: "")
         gtk_container_foreach(cast[FlowBox](data), f, addr cx)
+
+        if cx.state:
+                let args= @["--port", cx.port, "--name", cx.name]
+                let env: StringTableRef=nil
+                let options={poUsePath}
+                let process=startprocess("gitrelief", cx.root, args, env, options)
+                echo "process=", processid(process)
 
 proc entry_changed(X: Entry, data: GPointer) {.cdecl.}=
         let repo=cast[Repo](g_object_get_data(cast[GObject](X), "repo"))
