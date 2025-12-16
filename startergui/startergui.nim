@@ -113,7 +113,6 @@ proc entry_changed(X: Entry, data: GPointer) {.cdecl.}=
                 echo "changed root to ", repo.root
 
 proc unfocus(X: Widget, data: GPointer) {.cdecl.}=
-        # echo "unfocus ", gtk_widget_get_name(X)
         gtk_widget_set_name(X, "FBC99")
         gtk_widget_set_can_focus(X, Gboolean false)
 
@@ -125,20 +124,13 @@ proc mkrepodetail(detail, default: string, width: int, instance: GPointer, role:
                 gtk_entry_set_text(result, cstring detail)
                 gtk_entry_set_width_chars(result, cint width)
                 gtk_entry_set_has_frame(result, Gboolean false)
-                gtk_style_context_add_class(gtk_widget_get_style_context(result), "repodetail") # CSS-Klasse .repodetail
+                gtk_style_context_add_class(gtk_widget_get_style_context(result), "repodetail")
                 g_object_set_data(cast[GObject](result), "repo", instance)
-                # g_object_set_data(cast[GObject](result), "role", role.symbolname)
                 discard g_signal_connect(GPointer result, cstring "changed", cast[GCallback](entry_changed), cast[GPointer](role))
-                # gtk_entry_set_alignment(result, 0)
-                # gtk_entry_set_visibility(result, Gboolean false)
-                # gtk_entry_set_invisible_char(result, 0x2055)
-                # gtk_entry_set_overwrite_mode(result, Gboolean true)
 
 proc reporow(repo: Repo): ListboxRow=
         result=gtk_list_box_row_new()
         if valid result:
-                # gtk_widget_set_margin_bottom(result, 10)
-                # gtk_widget_set_can_focus(result, Gboolean false) ListboxRow muss anscheinend fokussierbar sein, sonst bleibt die ganze Zeile mit der Tabulatortaste unerreichbar.
                 let context=gtk_widget_get_style_context(result)
                 gtk_style_context_add_class(context, "reporow") # CSS-Klasse .repodetail
                 let F=gtk_flow_box_new()
@@ -148,7 +140,6 @@ proc reporow(repo: Repo): ListboxRow=
                         gtk_container_add(result, F)
                         let cb=gtk_check_button_new_with_label "running"
                         if valid cb:
-                                # gtk_widget_set_halign(cb, START)
                                 gtk_style_context_add_class(gtk_widget_get_style_context(cb), "reporunning")
                                 gtk_container_add(F, cb)
                                 discard g_signal_connect(GPointer cb, cstring "toggled", cast[GCallback](clicked_repobutton), cast[GPointer](F))
