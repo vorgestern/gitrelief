@@ -35,28 +35,6 @@ proc serialise_repos*(R: seq[Repo]): string=
 
 # =====================================================================
 
-proc compile_css(sourcedir, name, xmlfile: string): string=
-        discard staticexec fmt"glib-compile-resources --sourcedir {sourcedir} --target {name}.gresource {xmlfile}"
-        staticread "start.gresource"
-
-proc cssload_from_memory(X: string, csspath: string): bool=
-        var E: GError
-        let
-                start=cast[ptr UncheckedArray[char]](addr X[0])
-                len: Gsize=cast[uint](X.len)
-                B=g_bytes_new_static(start, len)
-                R=g_resource_new_from_data(B, E)
-        if E==nil:
-                g_resources_register R
-                let P=gtk_css_provider_new()
-                gtk_css_provider_load_from_resource(P, csspath)
-                gtk_style_context_add_provider_for_screen(gdk_screen_get_default(), cast[StyleProvider](P), STYLE_PROVIDER_PRIORITY_USER)
-                return true
-        else:
-                g_print("Fehlermeldung: %d '%s'\n", E.code, E.message)
-                g_error_free E
-                return false
-
 proc clicked_close(B: Button, data: GPointer) {.cdecl.}=
         g_print("Knopf '%s' geklickt!\n", gtk_button_get_label(B))
         echo "clicked_close"
