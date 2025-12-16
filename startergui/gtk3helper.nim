@@ -20,4 +20,4 @@ proc dumphierarchy*(X: Widget, level=0)=
                 echo repeat("    ", level), "Bin ", name
                 dump_hierarchy(gtk_bin_get_child(Bin X), level+1)
         else:
-                echo repeat("    ", level), name
+                echo repeat("    ", level), name, " ", $X.path

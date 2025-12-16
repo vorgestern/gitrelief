@@ -83,6 +83,9 @@ type
         StyleContext* =ptr StyleContextObj
         StyleContextObj* {.final.} =object of GObjectObj
 
+        WidgetPath* =ptr WidgetPathObj
+        WidgetPathObj* =object
+
 type
         Orientation*    {.size: sizeof(cint), pure.}=enum HORIZONTAL, VERTICAL
         Align*          {.size: sizeof(cint), pure.}=enum FILL, START, `END`, CENTER, BASELINE
@@ -178,6 +181,23 @@ proc gtk_widget_set_focus_on_click*(X: Widget; f: Gboolean) {.importc: "gtk_widg
 proc `focus_on_click=`*(X: Widget; f: Gboolean) {.importc: "gtk_widget_set_focus_on_click", libgtk.}
 proc gtk_widget_get_focus_on_click*(X: Widget): Gboolean {.importc: "gtk_widget_get_focus_on_click", libgtk.}
 proc focus_on_click*(X: Widget): Gboolean {.importc: "gtk_widget_get_focus_on_click", libgtk.}
+
+proc gtk_widget_get_path*(X: Widget): WidgetPath {.importc: "gtk_widget_get_path", libgtk.}
+proc path*(X: Widget): WidgetPath {.importc: "gtk_widget_get_path", libgtk.}
+
+proc gtk_widget_path_new*(): WidgetPath {.importc: "gtk_widget_path_new", libgtk.}
+proc gtk_widget_path_free*(X: WidgetPath) {.importc: "gtk_widget_path_free", libgtk.}
+proc gtk_widget_path_get_type*(): GType {.importc: "gtk_widget_path_get_type", libgtk.}
+
+proc gtk_widget_path_to_string(X: WidgetPath): cstring {.importc: "gtk_widget_path_to_string", libgtk.}
+proc `$`*(X: WidgetPath): string= $gtk_widget_path_to_string(X)
+proc gtk_widget_path_copy*(X: WidgetPath): WidgetPath {.importc: "gtk_widget_path_copy", libgtk.}
+proc gtk_widget_path_ref*(X: WidgetPath): WidgetPath {.importc: "gtk_widget_path_ref", libgtk.}
+proc gtk_widget_path_unref*(X: WidgetPath) {.importc: "gtk_widget_path_unref", libgtk.}
+proc gtk_widget_path_length*(X: WidgetPath): cint {.importc: "gtk_widget_path_length", libgtk.}
+proc gtk_widget_path_append_type*(X: WidgetPath; T: GType): cint {.importc: "gtk_widget_path_append_type", libgtk.}
+proc gtk_widget_path_prepend_type*(X: WidgetPath; T: GType) {.importc: "gtk_widget_path_prepend_type", libgtk.}
+proc gtk_widget_path_append_with_siblings*(X: WidgetPath; siblings: WidgetPath; siblingindex: cuint): cint {.importc: "gtk_widget_path_append_with_siblings", libgtk.}
 
 # =====================================================================
 
