@@ -10,7 +10,7 @@ type
                 port: int
                 process: owned Process
 
-proc `$`(X: Repo): string =
+proc `$`(X: Repo): string {.used.}=
         if X.process!=nil: "repo(" & $X.port & ", '" & X.name & "', '" & X.root & "', " & $processid(X.process) & ")"
         else:              "repo(" & $X.port & ", '" & X.name & "', '" & X.root & "')"
 
@@ -58,43 +58,20 @@ proc clicked_hoppla(B: Button, data: GPointer) {.cdecl.}=
 #                 inc indexpointer[]
 #         g_list_foreach(Cs, f, addr index)
 
-var P99: owned Process
-
-# Iteriere direkt über die Kinder eines Containers.
 proc clicked_repobutton(B: CheckButton, data: GPointer) {.cdecl.}=
         let active=bool cast[ToggleButton](B).gtk_toggle_button_get_active
         let repo=cast[Repo](data)
-        echo "Clicked Repobutton active=", active, " ", $repo
-
-        when false:
-                if active and P99==nil:
-                        let root="/home/josef/MPLABXProjects/harmony206/sc3/1/2/firmware"
-                        echo "Starte den Server in ", root
-                        let args= @["--port", "8081", "--name", "relief"]
-                        let env: StringTableRef=nil
-                        let options={poUsePath}
-                        P99=startprocess("gitrelief", root, args, env, options)
-                        echo "\tpid=", processid(P99), ", running=", running(P99)
-                elif not active and P99!=nil:
-                        echo "Beende den Server mit pid=", processid(P99)
-                        # terminate repo.serverprocess
-                        # close P99
-                        terminate P99
-                        echo "Nach terminate: P99=", running(P99), ", ", processid(P99)
-                        P99=nil
-        else:
-                if active and repo.process==nil:
-                        echo "Starte den Server in ", repo.root
-                        let args= @["--port", "8081", "--name", "relief"]
-                        let env: StringTableRef=nil
-                        let options={poUsePath}
-                        repo.process=startprocess("gitrelief", "/home/josef/MPLABXProjects/harmony206/sc3/1/2/firmware", args, env, options)
-                        echo "\tpid=", processid(repo.process)
-                elif not active and repo.process!=nil:
-                        echo "Beende den Server mit pid=", processid(repo.process)
-                        terminate(repo.process)
-                        # close P99
-                        repo.process=nil
+        if active and repo.process==nil:
+                let
+                        args= @["--port", "8081", "--name", "relief"]
+                        env: StringTableRef=nil
+                        options={poUsePath}
+                repo.process=startprocess("gitrelief", "/home/josef/MPLABXProjects/harmony206/sc3/1/2/firmware", args, env, options)
+                echo "pid=", processid(repo.process), ", root=", repo.root
+        elif not active and repo.process!=nil:
+                echo "Beende den Server mit pid=", processid(repo.process)
+                terminate(repo.process)
+                repo.process=nil
 
 proc port_edited(X: Entry, data: GPointer) {.cdecl.}= cast[Repo](data).port=parseint $gtk_entry_get_text X
 proc name_edited(X: Entry, data: GPointer) {.cdecl.}= cast[Repo](data).name= $gtk_entry_get_text X
