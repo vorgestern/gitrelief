@@ -4,10 +4,6 @@ import gio, gtk3
 import gtk3helper
 
 type
-        repodetail=enum
-                root # =(1, "root") # import std/enumutils
-                name # =(2, "name")
-                port # =(3, "port")
         Repo=ref object
                 root: string
                 name: string
@@ -110,20 +106,8 @@ proc name_edited(X: Entry, data: GPointer) {.cdecl.}=
 
 proc root_edited(X: Entry, data: GPointer) {.cdecl.}=
         let repo=cast[Repo](g_object_get_data(cast[GObject](X), "repo"))
-        let role=cast[repodetail](data)
-        case role
-        of port:
-                let text=gtk_entry_get_text X
-                let str= $text
-                let p=parseint(str)
-                echo "changed port to ", p
-                repo.port=p
-        of name:
-                repo.name= $gtk_entry_get_text X
-                echo "changed name to ", repo.name
-        of root:
-                repo.root= $gtk_entry_get_text X
-                echo "changed root to ", repo.root
+        repo.root= $gtk_entry_get_text X
+        echo "changed root to ", repo.root
 
 proc unfocus(X: Widget, data: GPointer) {.cdecl.}=
         gtk_widget_set_name(X, "FBC99")
