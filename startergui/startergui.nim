@@ -8,6 +8,7 @@ type
                 root: string
                 name: string
                 port: int
+                serverprocess: int
 
 # proc `$`(X: Repo): string = "repo(" & $X.port & ", '" & X.name & "', '" & X.root & "')"
 
@@ -57,13 +58,20 @@ proc clicked_hoppla(B: Button, data: GPointer) {.cdecl.}=
 
 # Iteriere direkt über die Kinder eines Containers.
 proc clicked_repobutton(B: CheckButton, data: GPointer) {.cdecl.}=
+        let active=bool cast[ToggleButton](B).gtk_toggle_button_get_active
         let repo=cast[Repo](data)
-        if false:
-                let args= @["--port", $repo.port, "--name", repo.name]
-                let env: StringTableRef=nil
-                let options={poUsePath}
-                let process=startprocess("gitrelief", repo.root, args, env, options)
-                echo "process=", processid(process)
+        if active and repo.serverprocess==0:
+                echo "Starte den Server"
+                repo.serverprocess=99
+                #let args= @["--port", $repo.port, "--name", repo.name]
+                #let env: StringTableRef=nil
+                #let options={poUsePath}
+                #let process=startprocess("gitrelief", repo.root, args, env, options)
+                #echo "process=", processid(process)
+                #repo.serverprocess=processid(process)
+        elif not active and repo.serverprocess!=0:
+                echo "Beende den Server"
+                repo.serverprocess=0
 
 proc port_edited(X: Entry, data: GPointer) {.cdecl.}= cast[Repo](data).port=parseint $gtk_entry_get_text X
 proc name_edited(X: Entry, data: GPointer) {.cdecl.}= cast[Repo](data).name= $gtk_entry_get_text X
