@@ -95,7 +95,20 @@ proc clicked_repobutton(B: CheckButton, data: GPointer) {.cdecl.}=
                 let process=startprocess("gitrelief", cx.root, args, env, options)
                 echo "process=", processid(process)
 
-proc entry_changed(X: Entry, data: GPointer) {.cdecl.}=
+proc port_edited(X: Entry, data: GPointer) {.cdecl.}=
+        let repo=cast[Repo](g_object_get_data(cast[GObject](X), "repo"))
+        let text=gtk_entry_get_text X
+        let str= $text
+        let p=parseint(str)
+        echo "changed port to ", p
+        repo.port=p
+
+proc name_edited(X: Entry, data: GPointer) {.cdecl.}=
+        let repo=cast[Repo](g_object_get_data(cast[GObject](X), "repo"))
+        repo.name= $gtk_entry_get_text X
+        echo "changed name to ", repo.name
+
+proc root_edited(X: Entry, data: GPointer) {.cdecl.}=
         let repo=cast[Repo](g_object_get_data(cast[GObject](X), "repo"))
         let role=cast[repodetail](data)
         case role
@@ -116,7 +129,7 @@ proc unfocus(X: Widget, data: GPointer) {.cdecl.}=
         gtk_widget_set_name(X, "FBC99")
         gtk_widget_set_can_focus(X, Gboolean false)
 
-proc mkrepodetail(detail, default: string, width: int, instance: GPointer, role: repodetail): Entry=
+proc mkrepodetail(detail, default: string, width: int, instance: GPointer): Entry=
         result=gtk_entry_new()
         if valid result:
                 gtk_widget_set_halign(result, START)
@@ -126,7 +139,6 @@ proc mkrepodetail(detail, default: string, width: int, instance: GPointer, role:
                 gtk_entry_set_has_frame(result, Gboolean false)
                 gtk_style_context_add_class(gtk_widget_get_style_context(result), "repodetail")
                 g_object_set_data(cast[GObject](result), "repo", instance)
-                discard g_signal_connect(GPointer result, cstring "changed", cast[GCallback](entry_changed), cast[GPointer](role))
 
 proc mkreporow(repo: Repo): ListboxRow=
         result=gtk_list_box_row_new()
@@ -142,9 +154,15 @@ proc mkreporow(repo: Repo): ListboxRow=
                                 gtk_style_context_add_class(gtk_widget_get_style_context(cb), "reporunning")
                                 gtk_container_add(F, cb)
                                 discard g_signal_connect(GPointer cb, cstring "toggled", cast[GCallback](clicked_repobutton), cast[GPointer](F))
-                        gtk_container_add(F, mkrepodetail($repo.port, "port", 6, cast[GPointer](repo), port))
-                        gtk_container_add(F, mkrepodetail(repo.name, "page title", 30, cast[GPointer](repo), name))
-                        gtk_container_add(F, mkrepodetail(repo.root, "repo path", 80, cast[GPointer](repo), root))
+                        let E1=mkrepodetail($repo.port, "port", 6, cast[GPointer](repo))
+                        discard g_signal_connect(GPointer E1, cstring "changed", cast[GCallback](port_edited), nil)
+                        gtk_container_add(F, E1)
+                        let E2=mkrepodetail(repo.name, "page title", 30, cast[GPointer](repo))
+                        discard g_signal_connect(GPointer E2, cstring "changed", cast[GCallback](name_edited), nil)
+                        gtk_container_add(F, E2)
+                        let E3=mkrepodetail(repo.root, "repo path", 80, cast[GPointer](repo))
+                        discard g_signal_connect(GPointer E3, cstring "changed", cast[GCallback](root_edited), nil)
+                        gtk_container_add(F, E3)
                         gtk_container_forall(F, Callback unfocus, GPointer nil)
 
 proc mkrepolist(repos: seq[Repo]): tuple[S: ScrolledWindow, L: Listbox]=
