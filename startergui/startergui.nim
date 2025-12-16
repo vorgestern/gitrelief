@@ -31,11 +31,7 @@ proc serialise_repos*(R: seq[Repo]): string=
 
 # =====================================================================
 
-proc clicked_close(B: Button, data: GPointer) {.cdecl.}=
-        g_print("Knopf '%s' geklickt!\n", gtk_button_get_label(B))
-        echo "clicked_close"
-        gtk_main_quit()
-
+proc clicked_close(B: Button, data: GPointer) {.cdecl.}= g_print("Knopf '%s' geklickt!\n", gtk_button_get_label(B)); gtk_main_quit()
 proc clicked_hoppla(B: Button, data: GPointer) {.cdecl.}=
         g_print "Klick Knopf:\n"
         g_print "\tlabel='%s'\n", gtk_button_get_label(B)
