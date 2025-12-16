@@ -61,34 +61,12 @@ proc clicked_hoppla(B: Button, data: GPointer) {.cdecl.}=
 
 # Iteriere direkt über die Kinder eines Containers.
 proc clicked_repobutton(B: CheckButton, data: GPointer) {.cdecl.}=
-        type cxtype=tuple[index: int, state: bool, port: string, name: string, root: string]
-        proc f(X: Widget; inst: Gpointer) {.cdecl.}=
-                var cx=cast[ptr cxtype](inst)
-                inc cx[].index
-                let C=gtk_bin_get_child cast[FlowBoxChild](X)
-                if not valid C: return
-                case cx[].index
-                of 1:
-                        let cb=cast[ToggleButton](C)
-                        cx[].state=bool gtk_toggle_button_get_active(cb)
-                of 2:
-                        gtk_widget_set_sensitive(C, Gboolean(not cx[].state))
-                        cx[].port= $gtk_entry_get_text(Entry C)
-                of 3:
-                        gtk_widget_set_sensitive(C, Gboolean(not cx[].state))
-                        cx[].name= $gtk_entry_get_text(Entry C)
-                of 4:
-                        gtk_widget_set_sensitive(C, Gboolean(not cx[].state))
-                        cx[].root= $gtk_entry_get_text(Entry C)
-                else: discard
-        var cx=(index:0, state: false, port: "", name: "", root: "")
-        gtk_container_foreach(cast[FlowBox](data), f, addr cx)
-
-        if false and cx.state:
-                let args= @["--port", cx.port, "--name", cx.name]
+        let repo=cast[Repo](data)
+        if false:
+                let args= @["--port", $repo.port, "--name", repo.name]
                 let env: StringTableRef=nil
                 let options={poUsePath}
-                let process=startprocess("gitrelief", cx.root, args, env, options)
+                let process=startprocess("gitrelief", repo.root, args, env, options)
                 echo "process=", processid(process)
 
 proc port_edited(X: Entry, data: GPointer) {.cdecl.}= cast[Repo](data).port=parseint $gtk_entry_get_text X
@@ -122,7 +100,7 @@ proc mkreporow(repo: Repo): ListboxRow=
                         if valid cb:
                                 gtk_style_context_add_class(gtk_widget_get_style_context(cb), "reporunning")
                                 gtk_container_add(F, cb)
-                                discard g_signal_connect(GPointer cb, cstring "toggled", cast[GCallback](clicked_repobutton), cast[GPointer](F))
+                                discard g_signal_connect(GPointer cb, cstring "toggled", cast[GCallback](clicked_repobutton), cast[GPointer](repo))
                         let E1=mkrepodetail($repo.port, "port", 6)
                         discard g_signal_connect(GPointer E1, cstring "changed", cast[GCallback](port_edited), cast[GPointer](repo))
                         gtk_container_add(F, E1)
@@ -139,7 +117,7 @@ proc mkrepolist(repos: seq[Repo]): tuple[S: ScrolledWindow, L: Listbox]=
         if valid SW:
                 let LB=gtk_list_box_new()
                 if valid LB:
-                        gtk_container_add(SW, LB);
+                        gtk_container_add(SW, LB)
                         for repo in repos:
                                 let LBR=mkreporow(repo)
                                 if valid LBR: gtk_container_add(LB, LBR)
