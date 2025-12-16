@@ -32,6 +32,19 @@ proc serialise_repos*(R: seq[Repo]): string=
 # func iscomplete(port: int, name, root: string): bool= port>0 and name.len>0 and name!="-" and root.len>0 and root!="-"
 # func iscomplete(r: Repo): bool= iscomplete(r.port, r.name, r.root)
 
+proc running(X: Repo): bool= X.process!=nil and running(X.process)
+
+proc startserver(X: Repo)=
+        let
+                args= @["--port", $X.port, "--name", X.name]
+                env: StringTableRef=nil
+                options={poUsePath}
+        X.process=startprocess("gitrelief", X.root, args, env, options)
+
+proc terminateserver(X: Repo)=
+        terminate(X.process)
+        X.process=nil
+
 # =====================================================================
 
 proc clicked_close(B: Button, data: GPointer) {.cdecl.}= g_print("Knopf '%s' geklickt!\n", gtk_button_get_label(B)); gtk_main_quit()
@@ -40,17 +53,12 @@ proc clicked_hoppla(B: Button, data: GPointer) {.cdecl.}= g_print "Klick ", gtk_
 proc clicked_repobutton(B: CheckButton, data: GPointer) {.cdecl.}=
         let active=bool cast[ToggleButton](B).gtk_toggle_button_get_active
         let repo=cast[Repo](data)
-        if active and repo.process==nil:
-                let
-                        args= @["--port", $repo.port, "--name", repo.name]
-                        env: StringTableRef=nil
-                        options={poUsePath}
-                repo.process=startprocess("gitrelief", repo.root, args, env, options)
+        if active and not running(repo):
+                repo.startserver()
                 echo "pid=", processid(repo.process), ", root=", repo.root
-        elif not active and repo.process!=nil:
+        elif not active and running(repo):
                 echo "Beende den Server mit pid=", processid(repo.process)
-                terminate(repo.process)
-                repo.process=nil
+                repo.terminateserver()
 
 proc port_edited(X: Entry, data: GPointer) {.cdecl.}= cast[Repo](data).port=parseint $gtk_entry_get_text X
 proc name_edited(X: Entry, data: GPointer) {.cdecl.}= cast[Repo](data).name= $gtk_entry_get_text X
@@ -160,6 +168,8 @@ proc main=
                 discard g_signal_connect(MainWindow, "destroy", gtk_main_quit)
                 gtk_widget_show_all(MainWindow)
                 gtk_main()
+                for repo in Repos:
+                        if running(repo): repo.terminateserver()
                 writefile(configfile, serialise_repos Repos)
 
 main()
