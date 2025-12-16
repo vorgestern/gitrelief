@@ -128,7 +128,7 @@ proc mkrepodetail(detail, default: string, width: int, instance: GPointer, role:
                 g_object_set_data(cast[GObject](result), "repo", instance)
                 discard g_signal_connect(GPointer result, cstring "changed", cast[GCallback](entry_changed), cast[GPointer](role))
 
-proc reporow(repo: Repo): ListboxRow=
+proc mkreporow(repo: Repo): ListboxRow=
         result=gtk_list_box_row_new()
         if valid result:
                 let context=gtk_widget_get_style_context(result)
@@ -148,14 +148,14 @@ proc reporow(repo: Repo): ListboxRow=
                         gtk_container_add(F, mkrepodetail(repo.root, "repo path", 80, cast[GPointer](repo), root))
                         gtk_container_forall(F, Callback unfocus, GPointer nil)
 
-proc repolist(content: seq[Repo]): tuple[S: ScrolledWindow, L: Listbox]=
+proc mkrepolist(content: seq[Repo]): tuple[S: ScrolledWindow, L: Listbox]=
         let S=gtk_scrolled_window_new(nil, nil)
         if valid S:
                 let L=gtk_list_box_new()
                 if valid L:
                         gtk_container_add(S, L);
                         for k in content:
-                                let F=reporow(k)
+                                let F=mkreporow(k)
                                 if valid F: gtk_container_add(L, F)
                         gtk_scrolled_window_set_shadow_type(S, NONE)
                         gtk_scrolled_window_set_propagate_natural_width(S, Gboolean true)
@@ -186,7 +186,7 @@ proc main=
                                 gtk_widget_set_halign(Hinweis, START)
                                 gtk_container_add(VertikalBox, Hinweis)
 
-                        let (S,L)=repolist(Repos)
+                        let (S,L)=mkrepolist(Repos)
                         if valid(S) and valid(L):
                                 gtk_container_add(VertikalBox, S)
 
