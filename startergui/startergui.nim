@@ -35,38 +35,17 @@ proc serialise_repos*(R: seq[Repo]): string=
 # =====================================================================
 
 proc clicked_close(B: Button, data: GPointer) {.cdecl.}= g_print("Knopf '%s' geklickt!\n", gtk_button_get_label(B)); gtk_main_quit()
-proc clicked_hoppla(B: Button, data: GPointer) {.cdecl.}=
-        g_print "Klick Knopf:\n"
-        g_print "\tlabel='%s'\n", gtk_button_get_label(B)
-        g_print "\tname='%s'\n", gtk_widget_get_name(B)
-
-# Iteriere mit Hilfe einer Liste.
-# proc clicked_repobutton1(B: CheckButton, data: GPointer) {.cdecl.}=
-#         g_print "Klick Repobutton:\n"
-#         let F=cast[FlowBox](data)
-#         let Cs=gtk_container_get_children(F)
-#         var index: int=0
-#         proc f(data: Gpointer; inst: Gpointer) {.cdecl.}=
-#                 var indexpointer=cast[ptr int](inst)
-#                 case indexpointer[]
-#                 of 99:
-#                         let cb=cast[ToggleButton](data)
-#                         let p=gtk_toggle_button_get_active(cb)
-#                         echo "checkbutton ", bool p
-#                 else:
-#                         echo "function f ", indexpointer[], "\n"
-#                 inc indexpointer[]
-#         g_list_foreach(Cs, f, addr index)
+proc clicked_hoppla(B: Button, data: GPointer) {.cdecl.}= g_print "Klick ", gtk_button_get_label(B)
 
 proc clicked_repobutton(B: CheckButton, data: GPointer) {.cdecl.}=
         let active=bool cast[ToggleButton](B).gtk_toggle_button_get_active
         let repo=cast[Repo](data)
         if active and repo.process==nil:
                 let
-                        args= @["--port", "8081", "--name", "relief"]
+                        args= @["--port", $repo.port, "--name", repo.name]
                         env: StringTableRef=nil
                         options={poUsePath}
-                repo.process=startprocess("gitrelief", "/home/josef/MPLABXProjects/harmony206/sc3/1/2/firmware", args, env, options)
+                repo.process=startprocess("gitrelief", repo.root, args, env, options)
                 echo "pid=", processid(repo.process), ", root=", repo.root
         elif not active and repo.process!=nil:
                 echo "Beende den Server mit pid=", processid(repo.process)
