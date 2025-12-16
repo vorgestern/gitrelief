@@ -35,8 +35,8 @@ proc serialise_repos*(R: seq[Repo]): string=
 
 # =====================================================================
 
-proc compile_css(): string=
-        discard staticexec("glib-compile-resources --sourcedir . --target start.gresource start.gresource.xml")
+proc compile_css(sourcedir, name, xmlfile: string): string=
+        discard staticexec fmt"glib-compile-resources --sourcedir {sourcedir} --target {name}.gresource {xmlfile}"
         staticread "start.gresource"
 
 proc cssload_from_memory(X: string, csspath: string): bool=
@@ -204,7 +204,7 @@ proc main=
         const configfile="repositories.txt"
         if fileexists Path configfile: Repos=parse_repos readfile configfile
 
-        const css=compile_css()
+        const css=compile_css(".", "start", "start.gresource.xml")
         discard cssload_from_memory(css, "/path/for/bundle/start.css")
 
         let MainWindow=gtk_window_new(TOPLEVEL)
