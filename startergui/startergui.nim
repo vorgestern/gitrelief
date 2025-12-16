@@ -131,8 +131,7 @@ proc mkrepodetail(detail, default: string, width: int, instance: GPointer, role:
 proc mkreporow(repo: Repo): ListboxRow=
         result=gtk_list_box_row_new()
         if valid result:
-                let context=gtk_widget_get_style_context(result)
-                gtk_style_context_add_class(context, "reporow") # CSS-Klasse .repodetail
+                gtk_style_context_add_class(gtk_widget_get_style_context(result), "reporow")
                 let F=gtk_flow_box_new()
                 if valid F:
                         gtk_widget_set_name(F, "F99")
@@ -148,19 +147,19 @@ proc mkreporow(repo: Repo): ListboxRow=
                         gtk_container_add(F, mkrepodetail(repo.root, "repo path", 80, cast[GPointer](repo), root))
                         gtk_container_forall(F, Callback unfocus, GPointer nil)
 
-proc mkrepolist(content: seq[Repo]): tuple[S: ScrolledWindow, L: Listbox]=
-        let S=gtk_scrolled_window_new(nil, nil)
-        if valid S:
-                let L=gtk_list_box_new()
-                if valid L:
-                        gtk_container_add(S, L);
-                        for k in content:
-                                let F=mkreporow(k)
-                                if valid F: gtk_container_add(L, F)
-                        gtk_scrolled_window_set_shadow_type(S, NONE)
-                        gtk_scrolled_window_set_propagate_natural_width(S, Gboolean true)
-                        gtk_scrolled_window_set_propagate_natural_height(S, Gboolean true)
-                        result=(S: S, L: L)
+proc mkrepolist(repos: seq[Repo]): tuple[S: ScrolledWindow, L: Listbox]=
+        let SW=gtk_scrolled_window_new(nil, nil)
+        if valid SW:
+                let LB=gtk_list_box_new()
+                if valid LB:
+                        gtk_container_add(SW, LB);
+                        for repo in repos:
+                                let LBR=mkreporow(repo)
+                                if valid LBR: gtk_container_add(LB, LBR)
+                        gtk_scrolled_window_set_shadow_type(SW, NONE)
+                        gtk_scrolled_window_set_propagate_natural_width(SW, Gboolean true)
+                        gtk_scrolled_window_set_propagate_natural_height(SW, Gboolean true)
+                        result=(S: SW, L: LB)
 
 var Repos: seq[Repo]= @[]
 
