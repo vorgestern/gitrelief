@@ -1,6 +1,6 @@
 
 import std/strutils
-import gio, gtk3
+import gtk3
 
 proc dumphierarchy*(X: Widget, level=0)=
         if X==nil:
