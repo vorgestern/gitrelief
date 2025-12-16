@@ -122,7 +122,10 @@ proc gtk_window_set_default_size*(window: Window; width: cint; height: cint) {.i
 
 # =====================================================================
 
-proc gtk_widget_destroy*(widget: Widget) {.importc: "gtk_widget_destroy", libgtk.}
+proc gtk_widget_destroy*(X: Widget) {.importc: "gtk_widget_destroy", libgtk.}
+
+proc gtk_widget_get_ancestor*(X: Widget; T: GType): Widget {.importc: "gtk_widget_get_ancestor", libgtk.}
+proc ancestor*(X: Widget; T: GType): Widget {.importc: "gtk_widget_get_ancestor", libgtk.}
 
 proc gtk_widget_get_name*(X: Widget): cstring {.importc: "gtk_widget_get_name", libgtk.}
 proc gtk_widget_set_name*(X: Widget; name: cstring) {.importc: "gtk_widget_set_name", libgtk.}
@@ -253,11 +256,21 @@ proc gtk_container_forall*(X: Container; cb: Callback; data: Gpointer) {.importc
 proc gtk_bin_get_type*(): GType {.importc: "gtk_bin_get_type", libgtk.}
 proc gtk_container_get_type*(): GType {.importc: "gtk_container_get_type", libgtk.}
 proc gtk_widget_get_type*(): GType {.importc: "gtk_widget_get_type", libgtk.}
+proc gtk_label_get_type*(): GType {.importc: "gtk_label_get_type", libgtk.}
 proc gtk_entry_get_type*(): GType {.importc: "gtk_entry_get_type", libgtk.}
+proc gtk_box_get_type*(): GType {.importc: "gtk_box_get_type", libgtk.}
+proc GTK_TYPE_BIN*(): GType {.importc: "gtk_bin_get_type", libgtk.}
+proc GTK_TYPE_CONTAINER*(): GType {.importc: "gtk_container_get_type", libgtk.}
+proc GTK_TYPE_WIDGET*(): GType {.importc: "gtk_widget_get_type", libgtk.}
+proc GTK_TYPE_LABEL*(): GType {.importc: "gtk_label_get_type", libgtk.}
+proc GTK_TYPE_ENTRY*(): GType {.importc: "gtk_entry_get_type", libgtk.}
+proc GTK_TYPE_BOX*(): GType {.importc: "gtk_box_get_type", libgtk.}
 proc GTK_IS_BIN*(obj: Widget): Gboolean= g_type_check_instance_is_a(cast[GTypeInstance](obj), gtk_bin_get_type())
 proc GTK_IS_CONTAINER*(obj: Widget): Gboolean= g_type_check_instance_is_a(cast[GTypeInstance](obj), gtk_container_get_type())
 proc GTK_IS_WIDGET*(obj: Widget): Gboolean= g_type_check_instance_is_a(cast[GTypeInstance](obj), gtk_widget_get_type())
+proc GTK_IS_LABEL*(obj: Widget): Gboolean= g_type_check_instance_is_a(cast[GTypeInstance](obj), gtk_label_get_type())
 proc GTK_IS_ENTRY*(obj: Widget): Gboolean= g_type_check_instance_is_a(cast[GTypeInstance](obj), gtk_entry_get_type())
+proc GTK_IS_BOX*(obj: Widget): Gboolean= g_type_check_instance_is_a(cast[GTypeInstance](obj), gtk_box_get_type())
 
 proc gtk_css_provider_new*(): CssProvider {.importc: "gtk_css_provider_new", libgtk.}
 proc gtk_css_provider_to_string*(X: CssProvider): cstring {.importc: "gtk_css_provider_to_string", libgtk.}
