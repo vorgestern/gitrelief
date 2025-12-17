@@ -1,8 +1,8 @@
 [submodule "npeg"]
-	path = npeg
+	path = deps/npeg
 	url = https://github.com/zevv/npeg.git
 [submodule "checksums"]
-	path = checksums
+	path = deps/checksums
 	url = https://github.com/nim-lang/checksums
 [submodule "deps/httpbeast_fork"]
 	path = deps/httpbeast_fork

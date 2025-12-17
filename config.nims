@@ -1,8 +1,8 @@
 
 switch("path", "deps/httpbeast_fork/src")
 switch("path", "deps/jester_fork")
-switch("path", "npeg")
-switch("path", "checksums/src")
+switch("path", "deps/npeg")
+switch("path", "deps/checksums/src")
 switch("path", "src")
 switch("warning", "UnusedImport:off")
 
