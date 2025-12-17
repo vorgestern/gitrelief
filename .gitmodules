@@ -1,6 +1,3 @@
-[submodule "jester_fork"]
-	path = jester_fork
-	url = https://github.com/ThomasTJdev/jester_fork.git
 [submodule "npeg"]
 	path = npeg
 	url = https://github.com/zevv/npeg.git
