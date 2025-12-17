@@ -205,7 +205,7 @@ proc page_diff*(Args: Table[string,string]): string=
                                 if Info.parents.len>0: Info.parents[0] else: shanull
                 (Diffs,cmd)=gitdiff(parent, commit, staged, paths A)
         let
-                html_title= $servertitle & " diff"
+                html_title= "&#x1D507; " & $servertitle
                 html_cmd=htmlescape cmd
                 html_content = if Diffs.len>1:
                         format_html_toc(Diffs, staged, parent, commit)

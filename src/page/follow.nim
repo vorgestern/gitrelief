@@ -34,7 +34,7 @@ proc page_follow*(Args: Table[string,string]): string=
         let
                 (L,html_cmd)=gitfollow(pathtofollow, num)
                 thereismore=if L.len<num: false else: true
-                html_title= $servertitle & " follow"
+                html_title= "&#x1D509; " & $servertitle
                 html_pathtofollow=format_pathtofollow(pathtofollow, num, commithash)
                 html_plus100_top=if thereismore: fmt"<a href='{url_follow $pathtofollow, num+100, commithash}'>100 more</a>" else: ""
                 html_plus100_bottom=html_plus100_top

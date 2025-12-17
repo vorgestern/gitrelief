@@ -11,7 +11,7 @@ proc page_log*(Args: Table[string,string]): string=
                         X
                 (L,cmd)=                gitlog num
         let
-                html_title=             $servertitle & " log"
+                html_title=             "&#x1D50F; " & $servertitle
                 html_add100_top=        if L.len>=num: fmt"<td><a href='{url_log num+100}'>100 more</a></td>"
                                         else: ""
                 html_add100_bottom=     if L.len>=num: fmt"<td><a href='{url_log num+100, num}'>100 more</a></td>"

@@ -12,7 +12,7 @@ proc page_branches*(Args: Table[string,string]): string=
         branchname=if Args.contains "b": Args["b"] else: ""
         branchnames=gitbranches_local()
     let
-        html_title= $servertitle & " branches"
+        html_title= "&#x1D505; " & $servertitle
         html_selectbranches=block:
             var X=""
             for b in branchnames:
