@@ -3,10 +3,8 @@ import std/[strutils, files, paths]
 import gio, gtk3
 import repo, gtk3helper
 
-# =====================================================================
-
 proc clicked_close(B: Button, data: GPointer) {.cdecl.}= g_print("Knopf '%s' geklickt!\n", gtk_button_get_label(B)); gtk_main_quit()
-proc clicked_hoppla(B: Button, data: GPointer) {.cdecl.}= g_print "Klick ", gtk_button_get_label(B)
+proc clicked_addrepo(B: Button, data: GPointer) {.cdecl.}= g_print "Klick ", gtk_button_get_label(B)
 
 proc clicked_repobutton(B: CheckButton, data: GPointer) {.cdecl.}=
         let active=bool cast[ToggleButton](B).gtk_toggle_button_get_active
@@ -111,11 +109,12 @@ proc main=
                                         gtk_container_add(Buttons, B0)
                                         discard g_signal_connect(GPointer B0, cstring "clicked", cast[GCallback](clicked_close), GPointer nil)
 
-                                let B1=gtk_button_new_with_label("more ..")
-                                if valid B1:
-                                        gtk_container_add(Buttons, B1);
-                                        gtk_widget_set_name(B1, "hoppla")
-                                        discard g_signal_connect(GPointer B1, cstring "clicked", cast[GCallback](clicked_hoppla), GPointer nil)
+                                when false:
+                                        let B1=gtk_button_new_with_label("Add Repo")
+                                        if valid B1:
+                                                gtk_container_add(Buttons, B1);
+                                                gtk_widget_set_name(B1, "hoppla")
+                                                discard g_signal_connect(GPointer B1, cstring "clicked", cast[GCallback](clicked_addrepo), GPointer nil)
 
                                 gtk_container_add(VertikalBox, Buttons)
                         gtk_container_add(MainWindow, VertikalBox)
