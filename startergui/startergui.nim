@@ -121,7 +121,7 @@ proc main=
                 gtk_window_set_title(MainWindow, "Demo simple4") # MainWindow.title="Demo simple4"
                 gtk_window_set_default_size(MainWindow, 700, 300)
                 gtk_container_set_border_width(MainWindow, 10)
-                dump_hierarchy(Widget MainWindow)
+                # dump_hierarchy(Widget MainWindow)
                 discard g_signal_connect(MainWindow, "destroy", gtk_main_quit)
                 gtk_widget_show_all(MainWindow)
                 gtk_main()
