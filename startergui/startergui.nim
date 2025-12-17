@@ -1,5 +1,5 @@
 
-import std/[strutils, files, paths]
+import std/[strutils, files, dirs, paths, envvars]
 import gio, gtk3
 import repo, gtk3helper
 
@@ -73,6 +73,34 @@ proc mkrepolist(repos: seq[Repo]): tuple[S: ScrolledWindow, L: Listbox]=
                         gtk_scrolled_window_set_propagate_natural_height(SW, Gboolean true)
                         result=(S: SW, L: LB)
 
+# std/paths
+# func parentdir(path: Path): Path
+# std/dirs
+# proc direxists(dir: Path): bool
+# std/files
+# proc fileexists(filename: Path): bool
+
+proc loadconfig(Repos: var seq[Repo], configfile: Path): Path=
+        const repositories=Path "repositories.txt"
+        if $configfile!="":
+                if fileexists configfile: Repos=parse_repos readfile $configfile
+                let configdir=parentdir configfile
+                if not direxists configdir: createdir configdir
+                return configfile
+        if existsenv "XDG_CONFIG_HOME":
+                let configdir=(Path getenv "XDG_CONFIG_HOME") / Path "gitrelief"
+                let configfile=configdir/repositories
+                if fileexists configfile: Repos=parse_repos readfile $configfile
+                if not direxists configdir: createdir configdir
+                return configfile
+        if existsenv "HOME":
+                let configdir=(Path getenv "HOME") / Path ".config/gitrelief"
+                let configfile=configdir / repositories
+                if fileexists configfile: Repos=parse_repos readfile $configfile
+                if not direxists configdir: createdir configdir
+                return configfile
+        return repositories
+
 var Repos: seq[Repo]= @[]
 
 proc main=
@@ -81,8 +109,7 @@ proc main=
                 argv: cstringArray
         gtk_init(argc, argv)
 
-        const configfile="repositories.txt"
-        if fileexists Path configfile: Repos=parse_repos readfile configfile
+        let configfile=loadconfig(Repos, Path "")
 
         const css=compile_css(".", "start", "start.gresource.xml")
         discard cssload_from_memory(css, "/path/for/bundle/start.css")
@@ -127,6 +154,7 @@ proc main=
                 gtk_main()
                 for repo in Repos:
                         if running(repo): repo.terminateserver()
-                writefile(configfile, serialise_repos Repos)
+
+                writefile($configfile, serialise_repos Repos)
 
 main()
