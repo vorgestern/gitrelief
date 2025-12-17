@@ -6,22 +6,17 @@ switch("path", "checksums/src")
 switch("path", "src")
 switch("warning", "UnusedImport:off")
 
-# Diese Einstellung brauchte es zunächst noch, damit man die Npeg-Parser benutzen kann.
-# switch("threads", "off")
-# Später stellte sich heraus, dass man die Eigenschaft {.gcsafe.} auch einem Block zuschreiben kann.
-# Wenn man den Parser in einem {.gcsafe.}-Block verwendet, lässt sich das Programm ebenfalls kompilieren.
-# {.gcsafe.}:
-#     let r=logentryparser.match(cl, e)
-#     if not r.ok:
-#         e.datum=""
-#         e.zeit=""
-#         e.subject=cl
+switch("nimcache", "bb/nimcache")
 
-# Allerdings sollte der Parser (der sich const deklarieren lässt) sowieso immer gcsafe sein.
-# Der Compiler scheint das in der gegenwärtigen Implementierung von npeg nicht erkennen zu können.
-
---outdir:"bb"
---nimcache:"bb/nimcache"
+var OUTDIR="bb"
+if existsenv "ROBINSON": OUTDIR=getenv("ROBINSON") & "/userbin/"
+if existsenv "OUTDIR": OUTDIR=getenv "OUTDIR"
 
 task starter, "starter release build":
+        switch("out", "gitreliefstarter")
+        switch("outdir", OUTDIR)
         setcommand "c", "startergui/startergui.nim"
+
+task server, "server release build":
+        switch("outdir", OUTDIR)
+        setcommand "c", "src/gitrelief.nim"
