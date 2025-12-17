@@ -4,3 +4,9 @@
 [submodule "checksums"]
 	path = checksums
 	url = https://github.com/nim-lang/checksums
+[submodule "deps/httpbeast_fork"]
+	path = deps/httpbeast_fork
+	url = https://github.com/ThomasTJdev/httpbeast_fork.git
+[submodule "deps/jester_fork"]
+	path = deps/jester_fork
+	url = https://github.com/ThomasTJdev/jester_fork.git

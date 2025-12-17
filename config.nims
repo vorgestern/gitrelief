@@ -1,6 +1,6 @@
 
-switch("path", "httpbeast_fork/src")
-switch("path", "jester_fork")
+switch("path", "deps/httpbeast_fork/src")
+switch("path", "deps/jester_fork")
 switch("path", "npeg")
 switch("path", "checksums/src")
 switch("path", "src")
