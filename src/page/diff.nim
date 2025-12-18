@@ -44,7 +44,7 @@ func format_html_heading(fileentry: FileDiff, hash: SecureHash): string=
         of Copied:   result.add fmt"{'\n'}<p>Copied {fileentry.apath} to {fileentry.bpath} <span><a href='{followurl}'>Follow</a></span></p>"
         of Other:    result.add fmt"{'\n'}<p>Unknown operation {fileentry.apath} <span><a href='{followurl}'>Follow</a></span></p>"
 
-func format_html_diff(fileentry: FileDiff, staged: bool, ahash, bhash: SecureHash): string=
+func format_html_diff(fileentry: FileDiff, ahash, bhash: SecureHash): string=
         if fileentry.op!=Other:
                 result.add "<p><table class='diff'>"
                 case fileentry.op:
@@ -212,7 +212,7 @@ proc page_diff*(Args: Table[string,string]): string=
                 elif Diffs.len==1:
                         format_html_heading(Diffs[0], commit) &
                         format_commitinfo(Info, Diffs[0], parent) &
-                        format_html_diff(Diffs[0], staged, parent, commit)
+                        format_html_diff(Diffs[0], parent, commit)
                 else:
                         let Diff=FileDiff(op: Other, bpath: Args["path"])
                         fmt"<p>Not Modified: {Diff.bpath}</p>" &
