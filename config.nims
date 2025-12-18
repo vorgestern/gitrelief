@@ -28,3 +28,7 @@ task server, "server release build":
 task ttfollow, "test page follow":
         switch("outdir", "bb")
         setcommand "r", "src/page/follow.nim"
+
+task tthelper, "test helper":
+        switch("outdir", "bb")
+        setcommand "r", "src/helper.nim"
