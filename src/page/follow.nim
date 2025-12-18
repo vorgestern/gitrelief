@@ -54,4 +54,4 @@ when ismainmodule:
                 let P=Path "src/Tabellen/Gruppen/Sonstiges.lua"
                 echo "P=",$P
                 echo "X=",$pathparts(P)
-                echo "X1=",$pathparts1(P)
+                echo "X1=",$pathparts(P)

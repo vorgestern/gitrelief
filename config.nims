@@ -24,3 +24,7 @@ task starter, "starter release build":
 task server, "server release build":
         switch("outdir", OUTDIR)
         setcommand "c", "src/gitrelief.nim"
+
+task ttfollow, "test page follow":
+        switch("outdir", "bb")
+        setcommand "r", "src/page/follow.nim"
