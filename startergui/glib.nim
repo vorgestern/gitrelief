@@ -82,4 +82,7 @@ proc g_list_append*(list: GList; data: Gpointer): GList {.importc: "g_list_appen
 proc g_list_prepend*(list: GList; data: Gpointer): GList {.importc: "g_list_prepend", libglib.}
 proc g_list_insert*(list: GList; data: Gpointer; position: cint): GList {.importc: "g_list_insert", libglib.}
 
+proc g_list_nth*(list: GList; n: cuint): GList {.importc: "g_list_nth", libglib.}
+proc g_list_nth_prev*(list: GList; n: cuint): GList {.importc: "g_list_nth_prev", libglib.}
+
 proc g_list_foreach*(list: GList; f: GFunc; data: Gpointer) {.importc: "g_list_foreach", libglib.}

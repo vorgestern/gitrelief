@@ -3,8 +3,21 @@ import std/[strutils, files, dirs, paths, envvars]
 import gio, gtk3
 import repo, gtk3helper
 
+proc nth[T](C: Container, n: int): T=
+        let children=gtk_container_get_children(C)
+        if children==nil: return nil
+        let cn=g_list_nth(children, cuint n)
+        if cn==nil: return nil
+        if cn.data==nil: return nil
+        result=cast[T](cn.data)
+        g_list_free(children)
+
+proc binchild[T](B: Bin): T=
+        let X=gtk_bin_get_child(B)
+        if X==nil: return nil
+        return cast[T](X)
+
 proc clicked_close(B: Button, data: GPointer) {.cdecl.}= g_print("Knopf '%s' geklickt!\n", gtk_button_get_label(B)); gtk_main_quit()
-proc clicked_addrepo(B: Button, data: GPointer) {.cdecl.}= g_print "Klick ", gtk_button_get_label(B)
 
 proc clicked_repobutton(B: CheckButton, data: GPointer) {.cdecl.}=
         let active=bool cast[ToggleButton](B).gtk_toggle_button_get_active
@@ -73,6 +86,33 @@ proc mkrepolist(repos: seq[Repo]): tuple[S: ScrolledWindow, L: Listbox]=
                         gtk_scrolled_window_set_propagate_natural_height(SW, Gboolean true)
                         result=(S: SW, L: LB)
 
+proc clicked_addrepo(B: Button, data: GPointer) {.cdecl.}=
+        let Repos=cast[ptr seq[Repo]](data)
+        # g_print "Klick " & $gtk_button_get_label(B) & "\n"
+        let BG=gtk_widget_get_ancestor(B.parent, GTK_TYPE_CONTAINER())
+        if BG!=nil:
+                let VB=gtk_widget_get_ancestor(BG.parent, GTK_TYPE_BOX())
+                if VB!=nil:
+                        let SW=nth[ScrolledWindow](Container VB, 1)
+                        if SW!=nil:
+                                let VP=nth[Viewport](SW, 0)
+                                if VP!=nil:
+                                        let LB=binchild[Listbox](VP)
+                                        if LB!=nil:
+                                                echo "Hier ist die Listbox ", bool GTK_IS_LISTBOX(LB), " ", $gtk_widget_get_name(LB)
+                                                let
+                                                        port=8090
+                                                        name="-"
+                                                        root="-"
+                                                let r=Repo(port: port, name: name, root: root)
+                                                var repo=r
+                                                let LBR=mkreporow(repo)
+                                                if valid LBR:
+                                                        echo "Add LBR to LB", LBR.gtk_widget_get_name()
+                                                        gtk_container_add(LB, LBR)
+                                                        gtk_widget_show_all(VB)
+                                                        Repos[].add r
+
 # std/paths
 # func parentdir(path: Path): Path
 # std/dirs
@@ -136,17 +176,16 @@ proc main=
                                         gtk_container_add(Buttons, B0)
                                         discard g_signal_connect(GPointer B0, cstring "clicked", cast[GCallback](clicked_close), GPointer nil)
 
-                                when false:
-                                        let B1=gtk_button_new_with_label("Add Repo")
-                                        if valid B1:
-                                                gtk_container_add(Buttons, B1);
-                                                gtk_widget_set_name(B1, "hoppla")
-                                                discard g_signal_connect(GPointer B1, cstring "clicked", cast[GCallback](clicked_addrepo), GPointer nil)
+                                let B1=gtk_button_new_with_label "Add Repo"
+                                if valid B1:
+                                        gtk_container_add(Buttons, B1)
+                                        gtk_widget_set_name(B1, "hoppla")
+                                        discard g_signal_connect(GPointer B1, cstring "clicked", cast[GCallback](clicked_addrepo), cast[GPointer](addr Repos))
 
                                 gtk_container_add(VertikalBox, Buttons)
                         gtk_container_add(MainWindow, VertikalBox)
                 gtk_window_set_title(MainWindow, "Demo simple4") # MainWindow.title="Demo simple4"
-                gtk_window_set_default_size(MainWindow, 700, 300)
+                gtk_window_set_default_size(MainWindow, 800, 300)
                 gtk_container_set_border_width(MainWindow, 10)
                 # dump_hierarchy(Widget MainWindow)
                 discard g_signal_connect(MainWindow, "destroy", gtk_main_quit)
@@ -155,6 +194,7 @@ proc main=
                 for repo in Repos:
                         if running(repo): repo.terminateserver()
 
+                echo "writefile ", $configfile
                 writefile($configfile, serialise_repos Repos)
 
 main()
