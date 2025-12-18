@@ -32,3 +32,7 @@ task ttfollow, "test page follow":
 task tthelper, "test helper":
         switch("outdir", "bb")
         setcommand "r", "src/helper.nim"
+
+task ttdiff, "test page diff":
+        switch("outdir", "bb")
+        setcommand "r", "src/page/diff.nim"

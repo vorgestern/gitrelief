@@ -240,13 +240,13 @@ when isMainModule:
                                 output_html=true
                                 skip=true
         if patchfile!="":
-                let Patches=parse_patch(split(readfile(patchfile), "\n"))
+                let Patches=parse_diff(split(readfile(patchfile), "\n"))
                 if output_html:
                         let
-                                content=format_html(Patches, "ahash", "bhash", "chash")
-                                cmd="patchfile"
-                                title="diff"
+                                html_content=format_html_diff(Patches[0], parsesecurehash("da4b02a7b26320b919afb04600c53473f236012b"), parsesecurehash("0e83a56d492868737a1f1b4298b48bc8b0a4215b"))
+                                html_cmd="patchfile"
+                                html_title="diff"
                                 cssurl="public/gitrelief.css"
-                        echo fmt html_template
+                        echo fmt staticread "../public/diff.html"
                 else:
                         for f in Patches: echo $f
