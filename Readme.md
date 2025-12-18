@@ -2,13 +2,17 @@
 # Gitrelief
 
 Gitrelief is a git-client that provides various views into a repository as an http-server.
-It offers
+It offers a number of views:
 
-* status-view
-* log-view
-* branches-view
-* diff-view
-* follow-view
+* status
+* log
+* branches
+* diff
+* follow
+
+Currently, stage/unstage in the status view are the only links,
+that change the state of the repository. Everything else is
+a display of status.
 
 ## Usage
 
@@ -23,8 +27,8 @@ View localhost:&lt;port&gt; in a browser.
 
     git submodule init
     git submodule update
-    nim server                                    (build server in preconfigured directory, defaults to ./bb/)
-    nim starter                                   (GUI helper, Linux/gtk3)
+    nim server                 (build server in preconfigured directory, defaults to ./bb/)
+    nim starter                (GUI helper, Linux/gtk3)
 
 To configure the build-directory, set environment variable OUTDIR, e.g. OUTDIR=~/.local/bin/.
 
@@ -33,7 +37,8 @@ To configure the build-directory, set environment variable OUTDIR, e.g. OUTDIR=~
 Only tested on Linux. The server should run on Windows too.
 
 Gitrelief is a robust server.
-It serves html-files that do not use javascript, but contain many useful links.
+It serves html-files that do not use javascript, but contain many useful
+links to context-specific views.
 
 Gitreliefstarter is work in progress.
 It is intended for scenarios that involve several repositories. e.g. worktrees.
