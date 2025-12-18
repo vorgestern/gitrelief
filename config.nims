@@ -1,4 +1,6 @@
 
+import strutils
+
 switch("path", "deps/httpbeast_fork/src")
 switch("path", "deps/jester_fork")
 switch("path", "deps/npeg")
@@ -9,8 +11,10 @@ switch("warning", "UnusedImport:off")
 switch("nimcache", "bb/nimcache")
 
 var OUTDIR="bb"
-if existsenv "ROBINSON": OUTDIR=getenv("ROBINSON") & "/userbin/"
 if existsenv "OUTDIR": OUTDIR=getenv "OUTDIR"
+if fileexists "OUTDIR":
+        let k=readfile "OUTDIR";
+        if k.len>0: OUTDIR=split(k, '\n')[0]
 
 task starter, "starter release build":
         switch("out", "gitreliefstarter")
