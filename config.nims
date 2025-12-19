@@ -14,7 +14,7 @@ var OUTDIR="bb"
 if existsenv "OUTDIR": OUTDIR=getenv "OUTDIR"
 if fileexists "OUTDIR":
         let k=readfile "OUTDIR";
-        if k.len>0: OUTDIR=split(k, '\n')[0]
+        if k.len>0: OUTDIR=split(k, {'\n', '\r'})[0]
 
 task starter, "starter release build":
         switch("out", "gitreliefstarter")
