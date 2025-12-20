@@ -12,7 +12,7 @@ It offers a number of views:
 
 Currently, stage/unstage in the status view are the only links,
 that change the state of the repository. Everything else is
-a display of status.
+a display of current state.
 
 ## Usage
 
@@ -28,18 +28,20 @@ View localhost:&lt;port&gt; in a browser.
     git submodule init
     git submodule update
     nim server                 (build server in preconfigured directory, defaults to ./bb/)
-    nim starter                (GUI helper, Linux/gtk3)
+    nim starter                (Optional GUI helper, Linux/gtk3)
 
-To configure the build-directory, set environment variable OUTDIR, e.g. OUTDIR=~/.local/bin/.
+To configure the build-directory, enter the desired path in
+config.cfg ([Build]/OUTDIR). OUTDIR defaults to ./bb/.
 
 # Development status
 
-Only tested on Linux. The server should run on Windows too.
+Built with Nim 2.2.6 on Linux and Windows 11.
 
-Gitrelief is a robust server.
+**Gitrelief** is a robust server.
 It serves html-files that do not use javascript, but contain many useful
-links to context-specific views.
+links to context-specific views. Runs on Linux and Windows.
 
-Gitreliefstarter is work in progress.
-It is intended for scenarios that involve several repositories. e.g. worktrees.
+**Gitreliefstarter** is work in progress. For using gitrelief, it is optional.
+It is intended for scenarios that involve several repositories, e.g. worktrees.
 Saving the settings for each repository/worktree allows a robust workflow.
+Can only be built on Linux, since it needs gtk3.
