@@ -86,9 +86,7 @@ proc mkrepolist(repos: seq[Repo]): tuple[S: ScrolledWindow, L: Listbox]=
                         gtk_scrolled_window_set_propagate_natural_height(SW, Gboolean true)
                         result=(S: SW, L: LB)
 
-proc clicked_addrepo(B: Button, data: GPointer) {.cdecl.}=
-        let Repos=cast[ptr seq[Repo]](data)
-        # g_print "Klick " & $gtk_button_get_label(B) & "\n"
+proc startbutton_to_listbox(B: Button): tuple[VB: Widget, LB: Listbox]=
         let BG=gtk_widget_get_ancestor(B.parent, GTK_TYPE_CONTAINER())
         if BG!=nil:
                 let VB=gtk_widget_get_ancestor(BG.parent, GTK_TYPE_BOX())
@@ -96,8 +94,11 @@ proc clicked_addrepo(B: Button, data: GPointer) {.cdecl.}=
                         let SW=nth[ScrolledWindow](Container VB, 1)
                         if SW!=nil:
                                 let VP=nth[Viewport](SW, 0)
-                                if VP!=nil:
-                                        let LB=binchild[Listbox](VP)
+                                if VP!=nil: result=(VB: VB, LB: binchild[Listbox](VP))
+
+proc clicked_addrepo(B: Button, data: GPointer) {.cdecl.}=
+                                        let Repos=cast[ptr seq[Repo]](data)
+                                        let (VB,LB)=startbutton_to_listbox(B)
                                         if LB!=nil:
                                                 echo "Hier ist die Listbox ", bool GTK_IS_LISTBOX(LB), " ", $gtk_widget_get_name(LB)
                                                 let
