@@ -63,7 +63,7 @@ proc gitcommit*(hash: string): Commit=
     else: Commit()
 
 proc gitcompletehash*(hash: string): SecureHash=
-    let Lines=exec_path("git", ["rev-list", "--max-count=1", "--skip=#", hash])
+    let Lines=exec_path("git", ["rev-list", "--max-count=1", hash])
     if Lines.len==1: parsesecurehash Lines[0]
     else:            shanull
 
@@ -79,7 +79,7 @@ proc gitbranches_remote*(remotename: string): seq[string]= parse_branches_remote
 
 # Ermittle die Liste der Hashes die von einem der inclbranches erreichbar sind,
 # aber von keinem der exclbranches.
-# Einfachste Anwendung: 
+# Einfachste Anwendung:
 # gitrevlist(["datetime"], ["master"]) ermittelt die commits, die von dem Zweig 'datetime'
 #     erreichbar, aber noch nicht in den Zweig 'master' gemergt wurden. Wenn diese Liste leer ist,
 #     ist der Zweig 'datetime' volltändig in 'master' übernommen.
