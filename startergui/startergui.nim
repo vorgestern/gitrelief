@@ -3,7 +3,7 @@ import std/[strutils, files, dirs, paths, envvars, cmdline]
 import gio, gtk3
 import repo, gtk3helper
 
-proc clicked_close(B: Button, data: GPointer) {.cdecl.}= g_print("Knopf '%s' geklickt!\n", gtk_button_get_label(B)); gtk_main_quit()
+proc clicked_close(B: Button, data: GPointer) {.cdecl.}= gtk_main_quit()
 
 proc clicked_repobutton(B: CheckButton, data: GPointer) {.cdecl.}=
         let active=bool cast[ToggleButton](B).gtk_toggle_button_get_active
@@ -119,6 +119,9 @@ proc clicked_remrepo(B: CheckButton, data: GPointer) {.cdecl.}=
                                 inc index
                         gtk_widget_show_all(VB)
 
+proc row_selected(B: Listbox, R: ListboxRow, data: Gpointer) {.cdecl.}=
+        echo "row_selected"
+
 # std/paths
 # func parentdir(path: Path): Path
 # std/dirs
@@ -179,7 +182,7 @@ proc main=
                         let (S,L)=mkrepolist(Repos)
                         if valid(S) and valid(L):
                                 gtk_container_add(VertikalBox, S)
-                                discard g_signal_connect(GPointer L, cstring "row-selected", cast[GCallback](clicked_addrepo), cast[GPointer](addr Repos))
+                                discard g_signal_connect(GPointer L, cstring "row-selected", cast[GCallback](row_selected), cast[GPointer](addr Repos))
 
                         let Buttons=gtk_button_box_new(HORIZONTAL)
                         if valid Buttons:
