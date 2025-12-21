@@ -1,6 +1,6 @@
 
-import glib, gobject, gdk
-export glib, gobject, gdk
+import glib, gobject, gio, gdk
+export glib, gobject, gio, gdk
 
 when defined(windows):
         const LIB_GTK* ="libgtk-3-0.dll"
@@ -96,6 +96,7 @@ type
         ShadowType*     {.size: sizeof(cint), pure.}=enum NONE, `IN`, `OUT`, ETCHED_IN, ETCHED_OUT
         StateType*      {.size: sizeof(cint), pure.}=enum NORMAL, ACTIVE, PRELIGHT, SELECTED, INSENSITIVE, INCONSISTENT, FOCUSED
         StateFlags*     {.size: sizeof(cint), pure.}=enum FLAG_NORMAL=0, FLAG_ACTIVE=1, FLAG_PRELIGHT=2, FLAG_SELECTED=4, FLAG_INSENSITIVE=8, FLAG_INCONSISTENT=16, FLAG_FOCUSED=32, FLAG_BACKDROP=64, FLAG_DIR_LTR=128, FLAG_DIR_RTL=256, FLAG_LINK=512, FLAG_VISITED=1024, FLAG_CHECKED=2048, FLAG_DROP_ACTIVE=4096
+        SelectionMode*  {.size: sizeof(cint), pure.}=enum NONE, SINGLE, BROWSE, MULTIPLE
 
 type
         Callback* =proc(X: Widget; data: Gpointer) {.cdecl.}
@@ -233,10 +234,79 @@ proc `label=`*(X: Label; str: cstring) {.importc: "gtk_label_set_label", libgtk.
 proc gtk_button_box_set_layout*(X: ButtonBox; S: ButtonBoxStyle) {.importc: "gtk_button_box_set_layout", libgtk.}
 proc `layout=`*(X: ButtonBox; S: ButtonBoxStyle) {.importc: "gtk_button_box_set_layout", libgtk.}
 
+# =====================================================================
+
 proc gtk_list_box_insert*(X: ListBox; C: Widget; position: cint) {.importc: "gtk_list_box_insert", libgtk.}
 proc gtk_list_box_row_get_index*(X: ListBoxRow): cint {.importc: "gtk_list_box_row_get_index", libgtk.}
 proc index*(X: ListBoxRow): cint {.importc: "gtk_list_box_row_get_index", libgtk.}
 proc gtk_list_box_row_get_type*(): GType {.importc: "gtk_list_box_row_get_type", libgtk.}
+
+proc gtk_list_box_row_get_header*(row: ListBoxRow): Widget {.importc: "gtk_list_box_row_get_header", libgtk.}
+proc header*(row: ListBoxRow): Widget {.importc: "gtk_list_box_row_get_header", libgtk.}
+proc gtk_list_box_row_set_header*(row: ListBoxRow; header: Widget) {.importc: "gtk_list_box_row_set_header", libgtk.}
+proc `header=`*(row: ListBoxRow; header: Widget) {.importc: "gtk_list_box_row_set_header", libgtk.}
+proc gtk_list_box_row_changed*(row: ListBoxRow) {.importc: "gtk_list_box_row_changed", libgtk.}
+proc changed*(row: ListBoxRow) {.importc: "gtk_list_box_row_changed", libgtk.}
+proc gtk_list_box_row_is_selected*(row: ListBoxRow): Gboolean {.importc: "gtk_list_box_row_is_selected", libgtk.}
+proc isselected*(row: ListBoxRow): Gboolean {.importc: "gtk_list_box_row_is_selected", libgtk.}
+proc gtk_list_box_row_set_selectable*(row: ListBoxRow; selectable: Gboolean) {.importc: "gtk_list_box_row_set_selectable", libgtk.}
+proc `selectable=`*(row: ListBoxRow; selectable: Gboolean) {.importc: "gtk_list_box_row_set_selectable", libgtk.}
+proc gtk_list_box_row_get_selectable*(row: ListBoxRow): Gboolean {.importc: "gtk_list_box_row_get_selectable", libgtk.}
+proc selectable*(row: ListBoxRow): Gboolean {.importc: "gtk_list_box_row_get_selectable", libgtk.}
+proc gtk_list_box_row_set_activatable*(row: ListBoxRow; activatable: Gboolean) {.importc: "gtk_list_box_row_set_activatable", libgtk.}
+proc `activatable=`*(row: ListBoxRow; activatable: Gboolean) {.importc: "gtk_list_box_row_set_activatable", libgtk.}
+proc gtk_list_box_row_get_activatable*(row: ListBoxRow): Gboolean {.importc: "gtk_list_box_row_get_activatable", libgtk.}
+proc activatable*(row: ListBoxRow): Gboolean {.importc: "gtk_list_box_row_get_activatable", libgtk.}
+proc gtk_list_box_prepend*(box: ListBox; child: Widget) {.importc: "gtk_list_box_prepend", libgtk.}
+proc gtk_list_box_get_selected_row*(box: ListBox): ListBoxRow {.importc: "gtk_list_box_get_selected_row", libgtk.}
+proc selectedrow*(box: ListBox): ListBoxRow {.importc: "gtk_list_box_get_selected_row", libgtk.}
+proc gtk_list_box_get_row_at_index*(box: ListBox; index: cint): ListBoxRow {.importc: "gtk_list_box_get_row_at_index", libgtk.}
+proc rowatindex*(box: ListBox; index: cint): ListBoxRow {.importc: "gtk_list_box_get_row_at_index", libgtk.}
+proc gtk_list_box_get_row_at_y*(box: ListBox; y: cint): ListBoxRow {.importc: "gtk_list_box_get_row_at_y", libgtk.}
+proc rowaty*(box: ListBox; y: cint): ListBoxRow {.importc: "gtk_list_box_get_row_at_y", libgtk.}
+proc gtk_list_box_select_row*(box: ListBox; row: ListBoxRow) {.importc: "gtk_list_box_select_row", libgtk.}
+proc gtk_list_box_set_placeholder*(box: ListBox; placeholder: Widget) {.importc: "gtk_list_box_set_placeholder", libgtk.}
+proc `placeholder=`*(box: ListBox; placeholder: Widget) {.importc: "gtk_list_box_set_placeholder", libgtk.}
+proc gtk_list_box_set_adjustment*(box: ListBox; adjustment: Adjustment) {.importc: "gtk_list_box_set_adjustment", libgtk.}
+proc `adjustment=`*(box: ListBox; adjustment: Adjustment) {.importc: "gtk_list_box_set_adjustment", libgtk.}
+proc gtk_list_box_get_adjustment*(box: ListBox): Adjustment {.importc: "gtk_list_box_get_adjustment", libgtk.}
+proc adjustment*(box: ListBox): Adjustment {.importc: "gtk_list_box_get_adjustment", libgtk.}
+
+type
+        ListBoxForeachFunc* =proc(box: ListBox; row: ListBoxRow; userdata: Gpointer) {.cdecl.}
+        ListBoxFilterFunc* = proc(row: ListBoxRow; userdata: Gpointer): Gboolean {.cdecl.}
+        ListBoxSortFunc* = proc(row1: ListBoxRow; row2: ListBoxRow; userdata: Gpointer): cint {.cdecl.}
+        ListBoxUpdateHeaderFunc* = proc(row: ListBoxRow; before: ListBoxRow; userdata: Gpointer) {.cdecl.}
+        ListBoxCreateWidgetFunc* = proc(item: Gpointer; userdata: Gpointer): Widget {.cdecl.}
+
+proc gtk_list_box_selected_foreach*(box: ListBox; F: ListBoxForeachFunc; data: Gpointer) {.importc: "gtk_list_box_selected_foreach", libgtk.}
+proc gtk_list_box_get_selected_rows*(box: ListBox): glib.GList {.importc: "gtk_list_box_get_selected_rows", libgtk.}
+proc selectedrows*(box: ListBox): glib.GList {.importc: "gtk_list_box_get_selected_rows", libgtk.}
+proc gtk_list_box_unselect_row*(box: ListBox; row: ListBoxRow) {.importc: "gtk_list_box_unselect_row", libgtk.}
+proc gtk_list_box_select_all*(box: ListBox) {.importc: "gtk_list_box_select_all", libgtk.}
+proc gtk_list_box_unselect_all*(box: ListBox) {.importc: "gtk_list_box_unselect_all", libgtk.}
+proc gtk_list_box_set_selection_mode*(box: ListBox; mode: SelectionMode) {.importc: "gtk_list_box_set_selection_mode", libgtk.}
+proc `selectionmode=`*(box: ListBox; mode: SelectionMode) {.importc: "gtk_list_box_set_selection_mode", libgtk.}
+proc gtk_list_box_get_selection_mode*(box: ListBox): SelectionMode {.importc: "gtk_list_box_get_selection_mode", libgtk.}
+proc selectionmode*(box: ListBox): SelectionMode {.importc: "gtk_list_box_get_selection_mode", libgtk.}
+proc gtk_list_box_set_filter_func*(box: ListBox; filterFunc: ListBoxFilterFunc; userData: Gpointer; destroy: GDestroyNotify) {.importc: "gtk_list_box_set_filter_func", libgtk.}
+proc `filterfunc=`*(box: ListBox; filterFunc: ListBoxFilterFunc; userData: Gpointer; destroy: GDestroyNotify) {.importc: "gtk_list_box_set_filter_func", libgtk.}
+proc gtk_list_box_set_header_func*(box: ListBox; updateHeader: ListBoxUpdateHeaderFunc; userData: Gpointer; destroy: GDestroyNotify) {.importc: "gtk_list_box_set_header_func", libgtk.}
+proc `headerfunc=`*(box: ListBox; updateHeader: ListBoxUpdateHeaderFunc; userData: Gpointer; destroy: GDestroyNotify) {.importc: "gtk_list_box_set_header_func", libgtk.}
+proc gtk_list_box_invalidate_filter*(box: ListBox) {.importc: "gtk_list_box_invalidate_filter", libgtk.}
+proc invalidatesort*(box: ListBox) {.importc: "gtk_list_box_invalidate_sort", libgtk.}
+proc gtk_list_box_invalidate_headers*(box: ListBox) {.importc: "gtk_list_box_invalidate_headers", libgtk.}
+proc gtk_list_box_set_sort_func*(box: ListBox; sortFunc: ListBoxSortFunc; userData: Gpointer; destroy: GDestroyNotify) {.importc: "gtk_list_box_set_sort_func", libgtk.}
+proc `sortfunc=`*(box: ListBox; sortFunc: ListBoxSortFunc; userData: Gpointer; destroy: GDestroyNotify) {.importc: "gtk_list_box_set_sort_func", libgtk.}
+proc gtk_list_box_set_activate_on_single_click*(box: ListBox; single: Gboolean) {.importc: "gtk_list_box_set_activate_on_single_click", libgtk.}
+proc `activateonsingleclick=`*(box: ListBox; single: Gboolean) {.importc: "gtk_list_box_set_activate_on_single_click", libgtk.}
+proc gtk_list_box_get_activate_on_single_click*(box: ListBox): Gboolean {.importc: "gtk_list_box_get_activate_on_single_click", libgtk.}
+proc activateonsingleclick*(box: ListBox): Gboolean {.importc: "gtk_list_box_get_activate_on_single_click", libgtk.}
+proc gtk_list_box_drag_unhighlight_row*(box: ListBox) {.importc: "gtk_list_box_drag_unhighlight_row", libgtk.}
+proc gtk_list_box_drag_highlight_row*(box: ListBox; row: ListBoxRow) {.importc: "gtk_list_box_drag_highlight_row", libgtk.}
+proc gtk_list_box_bind_model*(box: ListBox; model: gio.GListModel; createWidgetFunc: ListBoxCreateWidgetFunc; userData: Gpointer; userDataFreeFunc: GDestroyNotify) {.importc: "gtk_list_box_bind_model", libgtk.}
+
+# =====================================================================
 
 proc gtk_scrolled_window_set_shadow_type*(X: ScrolledWindow; `type`: ShadowType) {.importc: "gtk_scrolled_window_set_shadow_type", libgtk.}
 proc `shadowtype=`*(X: ScrolledWindow; `type`: ShadowType) {.importc: "gtk_scrolled_window_set_shadow_type", libgtk.}
@@ -277,6 +347,7 @@ proc gtk_entry_set_overwrite_mode*(X: Entry, f: Gboolean) {.importc: "gtk_entry_
 
 proc gtk_container_set_border_width*(X: Container; width: cuint) {.importc: "gtk_container_set_border_width", libgtk.}
 proc gtk_container_add*(X: Container; W: Widget) {.importc: "gtk_container_add", libgtk.}
+proc gtk_container_remove*(X: Container; W: Widget) {.importc: "gtk_container_remove", libgtk.}
 proc gtk_container_get_children*(X: Container): GList {.importc: "gtk_container_get_children", libgtk.}
 proc gtk_container_foreach*(X: Container; cb: Callback; data: Gpointer) {.importc: "gtk_container_foreach", libgtk.}
 proc gtk_container_forall*(X: Container; cb: Callback; data: Gpointer) {.importc: "gtk_container_forall", libgtk.}

@@ -1,5 +1,5 @@
 
-import glib
+import glib, gobject
 
 when defined(windows):
         const LIB_GIO = "libgio-2.0-0.dll"
@@ -14,5 +14,10 @@ type
         GResource* =ptr GResourceObj
         GResourceObj* =object
 
+        GListModel* =ptr GListModelObj
+        GListModelObj* = object
+
 proc g_resource_new_from_data*(X: glib.GBytes; error: var GError): GResource {.importc: "g_resource_new_from_data", libgio.}
 proc g_resources_register*(X: GResource) {.importc: "g_resources_register", libgio.}
+
+proc listmodelgettype*(): GType {.importc: "g_list_model_get_type", libgio.}

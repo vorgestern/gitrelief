@@ -34,8 +34,9 @@ proc name_edited(X: Entry, data: GPointer) {.cdecl.}= cast[Repo](data).name= $gt
 proc root_edited(X: Entry, data: GPointer) {.cdecl.}= cast[Repo](data).root= $gtk_entry_get_text X
 
 proc unfocus(X: Widget, data: GPointer) {.cdecl.}=
-        gtk_widget_set_name(X, "FBC99")
+        gtk_widget_set_name(X, "FBChildContainer")
         gtk_widget_set_can_focus(X, Gboolean false)
+        gtk_style_context_add_class(gtk_widget_get_style_context(X), "ebox")
 
 proc mkrepodetail(detail, default: string, width: int): Entry=
         result=gtk_entry_new()
@@ -44,7 +45,7 @@ proc mkrepodetail(detail, default: string, width: int): Entry=
                 gtk_entry_set_placeholder_text(result, cstring default)
                 gtk_entry_set_text(result, cstring detail)
                 gtk_entry_set_width_chars(result, cint width)
-                gtk_entry_set_has_frame(result, Gboolean false)
+                gtk_entry_set_has_frame(result, Gboolean true)
                 gtk_style_context_add_class(gtk_widget_get_style_context(result), "repodetail")
 
 proc mkreporow(repo: Repo): ListboxRow=
@@ -53,7 +54,7 @@ proc mkreporow(repo: Repo): ListboxRow=
                 gtk_style_context_add_class(gtk_widget_get_style_context(result), "reporow")
                 let F=gtk_flow_box_new()
                 if valid F:
-                        gtk_widget_set_name(F, "F99")
+                        gtk_style_context_add_class(gtk_widget_get_style_context(F), "reporow")
                         gtk_widget_set_can_focus(F, Gboolean false)
                         gtk_container_add(result, F)
                         let cb=gtk_check_button_new_with_label "running"
@@ -70,6 +71,8 @@ proc mkreporow(repo: Repo): ListboxRow=
                         let E3=mkrepodetail(repo.root, "repo path", 80)
                         discard g_signal_connect(GPointer E3, cstring "changed", cast[GCallback](root_edited), cast[GPointer](repo))
                         gtk_container_add(F, E3)
+                        # Beim Einfügen wickelt die Flowbox jedes Entryfeld in einen weiteren Container ein.
+                        # Hier werden diese Container eingestellt (kein Tastaturfokus, css-Klasse .ebox).
                         gtk_container_forall(F, Callback unfocus, GPointer nil)
 
 proc mkrepolist(repos: seq[Repo]): tuple[S: ScrolledWindow, L: Listbox]=
@@ -113,6 +116,22 @@ proc clicked_addrepo(B: Button, data: GPointer) {.cdecl.}=
                                                         gtk_container_add(LB, LBR)
                                                         gtk_widget_show_all(VB)
                                                         Repos[].add r
+
+proc clicked_remrepo(B: CheckButton, data: GPointer) {.cdecl.}=
+        let Repos=cast[ptr seq[Repo]](data)
+        let (VB,LB)=startbutton_to_listbox(B)
+        if LB!=nil:
+                let R=gtk_list_box_get_selected_row(LB)
+                if R!=nil:
+                        var index=0;
+                        while true:
+                                let J=gtk_list_box_get_row_at_index(LB, cint index);
+                                if J==nil: break
+                                if J==R:
+                                        gtk_container_remove(LB, R)
+                                        Repos[].delete(index)
+                                inc index
+                        gtk_widget_show_all(VB)
 
 # std/paths
 # func parentdir(path: Path): Path
@@ -164,31 +183,41 @@ proc main=
         if valid MainWindow:
                 let VertikalBox=gtk_box_new(VERTICAL, 7)
                 if valid VertikalBox:
+                        VertikalBox.name="columnbox"
                         let Hinweis=gtk_label_new "Repositories"
                         if valid Hinweis:
-                                gtk_widget_set_name(Hinweis, "hinweis")
+                                Hinweis.name="hinweis"
                                 gtk_widget_set_halign(Hinweis, START)
                                 gtk_container_add(VertikalBox, Hinweis)
 
                         let (S,L)=mkrepolist(Repos)
                         if valid(S) and valid(L):
                                 gtk_container_add(VertikalBox, S)
+                                discard g_signal_connect(GPointer L, cstring "clicked", cast[GCallback](clicked_addrepo), cast[GPointer](addr Repos))
 
                         let Buttons=gtk_button_box_new(HORIZONTAL)
                         if valid Buttons:
+                                gtk_container_add(VertikalBox, Buttons)
                                 gtk_button_box_set_layout(Buttons, EXPAND)
-                                let B0=gtk_button_new_with_label "Close"
-                                if valid B0:
-                                        gtk_container_add(Buttons, B0)
-                                        discard g_signal_connect(GPointer B0, cstring "clicked", cast[GCallback](clicked_close), GPointer nil)
-
+                                Buttons.name="buttons"
                                 let B1=gtk_button_new_with_label "Add Repo"
                                 if valid B1:
                                         gtk_container_add(Buttons, B1)
-                                        gtk_widget_set_name(B1, "hoppla")
+                                        B1.name="addrepo"
                                         discard g_signal_connect(GPointer B1, cstring "clicked", cast[GCallback](clicked_addrepo), cast[GPointer](addr Repos))
 
-                                gtk_container_add(VertikalBox, Buttons)
+                                let B2=gtk_button_new_with_label "Remove Repo"
+                                if valid B2:
+                                        gtk_container_add(Buttons, B2)
+                                        B2.name="remrepo"
+                                        discard g_signal_connect(GPointer B2, cstring "clicked", cast[GCallback](clicked_remrepo), cast[GPointer](addr Repos))
+
+                                let B0=gtk_button_new_with_label "Close"
+                                if valid B0:
+                                        gtk_container_add(Buttons, B0)
+                                        B0.name="closebutton"
+                                        discard g_signal_connect(GPointer B0, cstring "clicked", cast[GCallback](clicked_close), GPointer nil)
+
                         gtk_container_add(MainWindow, VertikalBox)
                 gtk_window_set_title(MainWindow, "Demo simple4") # MainWindow.title="Demo simple4"
                 gtk_window_set_default_size(MainWindow, 800, 300)
@@ -200,7 +229,7 @@ proc main=
                 for repo in Repos:
                         if running(repo): repo.terminateserver()
 
-                echo "writefile ", $configfile
+                # echo "writefile ", $configfile
                 writefile($configfile, serialise_repos Repos)
 
 main()

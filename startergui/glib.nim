@@ -32,7 +32,7 @@ type
         # GCompareFunc* =proc (a: Gconstpointer; b: Gconstpointer): cint {.cdecl.}
         # GCompareDataFunc* =proc (a: Gconstpointer; b: Gconstpointer; userData: Gpointer): cint {.cdecl.}
         # GEqualFunc* =proc(a: Gconstpointer; b: Gconstpointer): Gboolean {.cdecl.}
-        # GDestroyNotify* =proc(data: Gpointer) {.cdecl.}
+        GDestroyNotify* =proc(data: Gpointer) {.cdecl.}
         GFunc* =proc(data: Gpointer; inst: Gpointer) {.cdecl.}
         # GHashFunc* =proc(key: Gconstpointer): cuint {.cdecl.}
         # GHFunc* =proc(key: Gpointer; value: Gpointer; userData: Gpointer) {.cdecl.}
