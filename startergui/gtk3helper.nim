@@ -24,6 +24,22 @@ proc dumphierarchy*(X: Widget, level=0)=
 
 # =====================================================================
 
+proc nth*[T](C: Container, n: int): T=
+        let children=gtk_container_get_children(C)
+        if children==nil: return nil
+        let cn=g_list_nth(children, cuint n)
+        if cn==nil: return nil
+        if cn.data==nil: return nil
+        result=cast[T](cn.data)
+        g_list_free(children)
+
+proc binchild*[T](B: Bin): T=
+        let X=gtk_bin_get_child(B)
+        if X==nil: return nil
+        return cast[T](X)
+
+# =====================================================================
+
 proc compile_css*(sourcedir, name, xmlfile: string): string=
         discard staticexec fmt"glib-compile-resources --sourcedir {sourcedir} --target {name}.gresource {xmlfile}"
         staticread "start.gresource"
