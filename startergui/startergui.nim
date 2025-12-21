@@ -179,7 +179,7 @@ proc main=
                         let (S,L)=mkrepolist(Repos)
                         if valid(S) and valid(L):
                                 gtk_container_add(VertikalBox, S)
-                                discard g_signal_connect(GPointer L, cstring "clicked", cast[GCallback](clicked_addrepo), cast[GPointer](addr Repos))
+                                discard g_signal_connect(GPointer L, cstring "row-selected", cast[GCallback](clicked_addrepo), cast[GPointer](addr Repos))
 
                         let Buttons=gtk_button_box_new(HORIZONTAL)
                         if valid Buttons:
