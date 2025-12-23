@@ -112,11 +112,11 @@ const
 
 type
         GApplicationFlags* {.size: sizeof(cint), pure.}=enum
-                NONE, IS_SERVICE = 1 shl 0,
-                IS_LAUNCHER = 1 shl 1, HANDLES_OPEN = 1 shl 2,
-                HANDLES_COMMAND_LINE = 1 shl 3,
-                SEND_ENVIRONMENT = 1 shl 4, NON_UNIQUE = 1 shl 5,
-                CAN_OVERRIDE_APP_ID = 1 shl 6
+                DEFAULT, IS_SERVICE=1,
+                IS_LAUNCHER=2, HANDLES_OPEN=4,
+                HANDLES_COMMAND_LINE=8,
+                SEND_ENVIRONMENT=16, NON_UNIQUE=32,
+                CAN_OVERRIDE_APP_ID=64
         Application* =ptr ApplicationObj
         ApplicationObj* =object of gio.GApplicationObj
         ApplicationWindow* =ptr ApplicationWindowObj
@@ -233,6 +233,7 @@ proc child*(X: Bin): Widget {.importc: "gtk_bin_get_child", libgtk.}
 
 proc gtk_label_new*(str: cstring): Label {.importc: "gtk_label_new", libgtk.}
 proc gtk_box_new*(X: Orientation; S: cint): Box {.importc: "gtk_box_new", libgtk.}
+proc gtk_button_new*(): Button {.importc: "gtk_button_new", libgtk.}
 proc gtk_button_box_new*(X: Orientation): ButtonBox {.importc: "gtk_button_box_new", libgtk.}
 proc gtk_button_new_with_label*(X: cstring): Button {.importc: "gtk_button_new_with_label", libgtk.}
 proc gtk_scrolled_window_new*(horz, vert: Adjustment): ScrolledWindow {.importc: "gtk_scrolled_window_new", libgtk.}
