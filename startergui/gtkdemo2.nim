@@ -3,14 +3,18 @@ import std/[strutils, files, dirs, paths, envvars, cmdline]
 import gio, gtk3
 import gtk3helper
 
+# gtk_button_new:              definitely lost: 0
+# gtk_button_new_with_label:   definitely lost: 7,936 bytes in 28 blocks
+
 proc activate(app: Application, user_data: GPointer) {.cdecl.}=
         let W=gtk_application_window_new(app)
         gtk_window_set_title(W, "Demowindow")
         gtk_window_set_default_size(W, 200, 200)
         let button_box=gtk_button_box_new(HORIZONTAL)
         gtk_container_add(W, button_box)
-        # let button=gtk_button_new_with_label("Hello World")
-        let button=gtk_button_new()
+        const label: cstring="Hello World"
+        let button=gtk_button_new_with_label(label)
+        # let button=gtk_button_new()
         gtk_container_add(button_box, button)
         gtk_widget_show_all(W)
 
