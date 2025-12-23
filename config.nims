@@ -37,3 +37,11 @@ task tthelper, "test helper":
 task ttdiff, "test page diff":
         switch("outdir", "bb")
         setcommand "r", "src/page/diff.nim"
+
+task demo1, "gtkdemo1 build":
+        switch("outdir", "bb")
+        setcommand "c", "startergui/gtkdemo1.nim"
+
+task demo2, "gtkdemo2 build":
+        switch("outdir", "bb")
+        setcommand "c", "startergui/gtkdemo2.nim"

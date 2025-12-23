@@ -123,6 +123,8 @@ type
                 data*: Gpointer
                 notifiers*: GClosureNotifyData
 
+proc g_object_unref*(X: Gpointer) {.importc: "g_object_unref", libgobj.}
+
 proc g_type_check_instance*(X: GTypeInstance): Gboolean {.importc: "g_type_check_instance", libgobj.}
 proc g_type_check_instance_cast*(X: GTypeInstance; T: GType): GTypeInstance {.importc: "g_type_check_instance_cast", libgobj.}
 proc g_type_check_instance_is_a*(X: GTypeInstance; T: GType): Gboolean {.importc: "g_type_check_instance_is_a", libgobj.}

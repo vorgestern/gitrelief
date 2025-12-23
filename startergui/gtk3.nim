@@ -13,6 +13,8 @@ else:
 
 {.pragma: libgtk, cdecl, dynlib: LIB_GTK.}
 
+# =====================================================================
+
 type
         Widget* =ptr WidgetObj
         WidgetObj =object of GInitiallyUnownedObj
@@ -107,6 +109,21 @@ const
         STYLE_PROVIDER_PRIORITY_SETTINGS* =400
         STYLE_PROVIDER_PRIORITY_APPLICATION* =600
         STYLE_PROVIDER_PRIORITY_USER* =800
+
+type
+        GApplicationFlags* {.size: sizeof(cint), pure.}=enum
+                NONE, IS_SERVICE = 1 shl 0,
+                IS_LAUNCHER = 1 shl 1, HANDLES_OPEN = 1 shl 2,
+                HANDLES_COMMAND_LINE = 1 shl 3,
+                SEND_ENVIRONMENT = 1 shl 4, NON_UNIQUE = 1 shl 5,
+                CAN_OVERRIDE_APP_ID = 1 shl 6
+        Application* =ptr ApplicationObj
+        ApplicationObj* =object of gio.GApplicationObj
+        ApplicationWindow* =ptr ApplicationWindowObj
+        ApplicationWindowObj* =object of WindowObj
+
+proc gtk_application_new*(appid: cstring; flags: GApplicationFlags): Application {.importc: "gtk_application_new", libgtk.}
+proc gtk_application_window_new*(X: Application): ApplicationWindow {.importc: "gtk_application_window_new", libgtk.}
 
 proc gtk_init*(argc: var cint; argv: var cstringArray) {.importc: "gtk_init", libgtk.}
 proc gtk_main*() {.importc: "gtk_main", libgtk.}
