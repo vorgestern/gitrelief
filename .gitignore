@@ -9,3 +9,5 @@ test/demo_*
 repositories.txt
 **.gresource
 config.cfg
+
+**/vgdump.txt
