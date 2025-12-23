@@ -18,11 +18,13 @@ if fileexists "config.cfg":
         if X!="": OUTDIR=X
 
 task starter, "starter release build":
+        switch("define", "release")
         switch("out", "gitreliefstarter")
         switch("outdir", OUTDIR)
         setcommand "c", "startergui/startergui.nim"
 
 task server, "server release build":
+        switch("define", "release")
         switch("outdir", OUTDIR)
         setcommand "c", "src/gitrelief.nim"
 
