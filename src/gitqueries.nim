@@ -22,7 +22,7 @@ proc exec_path_text(command: string, args: openarray[string]): string=
 
 # =====================================================================
 
-proc gitdiff*(a, b: SecureHash, staged: bool, paths: openarray[string]): tuple[diffs: seq[FileDiff], cmd: string] =
+proc gitdiff*(a, b: SecureHash, staged: bool, paths: openarray[string]): tuple[diffs: seq[FileDiff], cmd: string]=
     var args= @["diff", "-U999999", "--full-history"]
     if staged: args.add "--staged"
     if a!=shanull and b!=shanull: args.add shaform(a) & ".." & shaform(b)
@@ -32,7 +32,7 @@ proc gitdiff*(a, b: SecureHash, staged: bool, paths: openarray[string]): tuple[d
         for p in paths: args.add p
     (parse_diff(exec_path("git", args)), "git" & concat(args))
 
-proc gitstatus_v2*(): tuple[status: RepoStatus_v2, cmd: string] =
+proc gitstatus_v2*(): tuple[status: RepoStatus_v2, cmd: string]=
     let args= @["status", "-b", "--porcelain=v2", "-uall"]
     (parse_status_v2(exec_path("git", args)), "git" & concat(args))
 
@@ -67,11 +67,11 @@ proc gitcompletehash*(hash: string): SecureHash=
     if Lines.len==1: parsesecurehash Lines[0]
     else:            shanull
 
-proc gitstage*(path: string): string=exec_path_text("git", ["add", path])
+proc gitstage*(path: string): string= exec_path_text("git", ["add", path])
 
-proc gitunstage*(path: string): string=exec_path_text("git", ["restore", "--staged", path])
+proc gitunstage*(path: string): string= exec_path_text("git", ["restore", "--staged", path])
 
-proc gitremotes*(): remoteinfo=parse_remote_v(exec_path("git", ["remote", "-v"]))
+proc gitremotes*(): remoteinfo= parse_remote_v(exec_path("git", ["remote", "-v"]))
 
 proc gitbranches_local*(): seq[string]= parse_branches_local(exec_path("git", ["branch", "-l"]))
 
