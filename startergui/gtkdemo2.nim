@@ -10,8 +10,8 @@ proc activate(app: Application, user_data: GPointer) {.cdecl.}=
         let button_box=gtk_button_box_new(HORIZONTAL)
         gtk_container_add(W, button_box)
         # let button=gtk_button_new_with_label("Hello World")
-        # let button=gtk_button_new()
-        # gtk_container_add(button_box, button)
+        let button=gtk_button_new()
+        gtk_container_add(button_box, button)
         gtk_widget_show_all(W)
 
 proc main()=
