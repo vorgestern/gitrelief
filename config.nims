@@ -17,11 +17,15 @@ if fileexists "config.cfg":
         let X=cfg.getsectionvalue("Build", "OUTDIR")
         if X!="": OUTDIR=X
 
-task starter, "starter release build":
-        switch("define", "release")
-        switch("out", "gitreliefstarter")
-        switch("outdir", OUTDIR)
-        setcommand "c", "startergui/startergui.nim"
+# Startergui is a GUI-program, that allows launching and terminating several servers in different
+# directories, for example in worktrees. It is implemented for gtk3, but further development is
+# on hold until a good binding is available.
+
+# task starter, "starter release build":
+#         switch("define", "release")
+#         switch("out", "gitreliefstarter")
+#         switch("outdir", OUTDIR)
+#         setcommand "c", "startergui/startergui.nim"
 
 task server, "server release build":
         switch("define", "release")

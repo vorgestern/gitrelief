@@ -28,10 +28,9 @@ View localhost:&lt;port&gt; in a browser.
     git submodule init
     git submodule update
     nim server                 (build server in preconfigured directory, defaults to ./bb/)
-    nim starter                (Optional GUI helper, Linux/gtk3)
 
-To configure the build-directory, enter the desired path in
-config.cfg ([Build]/OUTDIR). OUTDIR defaults to ./bb/.
+To configure the build-directory, copy config.cfg.template to config.cfg,
+enter the desired path in config.cfg ([Build]/OUTDIR). OUTDIR defaults to ./bb/.
 
 # Development status
 
@@ -40,8 +39,3 @@ Built with Nim 2.2.6 on Linux and Windows 11.
 **Gitrelief** is a robust server.
 It serves html-files that do not use javascript, but contain many useful
 links to context-specific views. Runs on Linux and Windows.
-
-**Gitreliefstarter** is work in progress. For using gitrelief, it is optional.
-It is intended for scenarios that involve several repositories, e.g. worktrees.
-Saving the settings for each repository/worktree allows a robust workflow.
-Can only be built on Linux, since it needs gtk3.
