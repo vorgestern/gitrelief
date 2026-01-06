@@ -1,6 +1,23 @@
 
-local alltag=require "alltag"
-local fpp=require "luafpp"
+local ok,alltag=pcall(require, "alltag")
+if not ok then
+    error("\n"..[[
+        This test requires module 'alltag'. However,
+            require 'alltag'
+        failed.
+        To install this module, clone and build
+        https://github.com/vorgestern/alltag]])
+end
+
+local ok,fpp=pcall(require, "luafpp")
+if not ok then
+    error("\n"..[[
+        This test requires module 'luafpp'. However,
+            require 'luafpp'
+        failed.
+        To install this module, clone and build
+        https://github.com/vorgestern/luafpp]])
+end
 
 local conflict_styles={merge="merge", diff3="diff3", zdiff3="zdiff3"}
 
