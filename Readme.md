@@ -5,14 +5,18 @@ Gitrelief is a git-client that provides various views into a repository as an ht
 It offers a number of views:
 
 * status
-* log
-* branches
-* diff
-* follow
+* log (includes affected paths and complete log-message)
+* branches (relationship between selectable branches)
+* diff (Side-by-side view of before/after changes)
+* follow (Show only commits that affected a particular file or directory)
 
-Currently, stage/unstage in the status view are the only links,
+Currently, stage/unstage in the status view are the only links
 that change the state of the repository. Everything else is
 a display of current state.
+
+If the repository contains a directory 'public', the server will offer to
+serve contained html-files as they are. This is useful to pin views, e.g.
+of specific commits.
 
 ## Usage
 
